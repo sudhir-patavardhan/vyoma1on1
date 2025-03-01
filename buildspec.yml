@@ -11,6 +11,15 @@ phases:
       python: 3.11
     commands:
       - echo "Using Node.js runtime version 18 and Python 3.11"
+      - echo "Setting up AWS CLI configuration"
+      - aws --version
+      - echo "Creating S3 bucket for Lambda deployments if it doesn't exist"
+      - aws s3 mb s3://sessions-red-lambda-deployments --region us-east-1 || true
+      - echo "Creating S3 bucket for web app deployments if it doesn't exist"
+      - aws s3 mb s3://sessions-red-react-app-deployments --region us-east-1 || true
+      - echo "Installing AWS SAM CLI"
+      - pip install aws-sam-cli
+      - sam --version
       - echo "Installing frontend dependencies"
       - cd session-app
       - echo "Cleaning up node_modules if needed"
@@ -19,7 +28,7 @@ phases:
       - cd ..
       - echo "Installing backend dependencies"
       - cd connectplatform
-      - pip install -r requirements.txt
+      - pip install -r requirements.txt boto3 aws-sam-cli
       - cd ..
 
   build:
@@ -30,7 +39,8 @@ phases:
       - cd ..
       - echo "Packaging the Lambda function"
       - cd connectplatform
-      - aws cloudformation package --template-file template.yml --s3-bucket sessions-red-lambda-deployments --output-template-file packaged-template.yml
+      - echo "Packaging with SAM"
+      - sam package --template-file template.yml --s3-bucket sessions-red-lambda-deployments --output-template-file packaged-template.yml
       - cd ..
 
   post_build:
@@ -39,7 +49,7 @@ phases:
       - aws s3 sync session-app/build/ s3://sessions-red-react-app-deployments/ --delete --exact-timestamps
       - echo "Deploying backend Lambda functions"
       - cd connectplatform
-      - aws cloudformation deploy --template-file packaged-template.yml --stack-name sessions-red-api --capabilities CAPABILITY_IAM
+      - sam deploy --template-file packaged-template.yml --stack-name sessions-red-api --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset
       - cd ..
 
 artifacts:
