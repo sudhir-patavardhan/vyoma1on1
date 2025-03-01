@@ -213,11 +213,29 @@ function App() {
           );
           
           if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Profile error response:", errorText);
             throw new Error(`Profile fetch failed with status: ${response.status}`);
           }
           
-          const data = await response.json();
-          console.log("Profile response:", data);
+          let data;
+          try {
+            const responseText = await response.text();
+            console.log("Raw response:", responseText);
+            
+            // Check if response starts with HTML doctype
+            if (responseText.trim().toLowerCase().startsWith('<!doctype')) {
+              console.error("Received HTML instead of JSON");
+              throw new Error("API returned HTML instead of JSON. The server might be down or misconfigured.");
+            }
+            
+            // Try to parse JSON
+            data = JSON.parse(responseText);
+            console.log("Profile response:", data);
+          } catch (parseError) {
+            console.error("JSON parse error:", parseError);
+            throw new Error(`Failed to parse profile data: ${parseError.message}`);
+          }
           
           if (data && data.profile) {
             setProfile(data.profile);
@@ -268,10 +286,32 @@ function App() {
       );
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Bookings error response:", errorText);
         throw new Error(`Failed to fetch bookings: ${response.status} ${response.statusText}`);
       }
       
-      const bookings = await response.json();
+      let bookings;
+      try {
+        const responseText = await response.text();
+        console.log("Raw bookings response:", responseText);
+        
+        // Check for HTML response
+        if (responseText.trim().toLowerCase().startsWith('<!doctype')) {
+          console.error("Received HTML instead of JSON in bookings");
+          throw new Error("API returned HTML instead of JSON for bookings");
+        }
+        
+        // Only try to parse if we have content
+        if (responseText.trim()) {
+          bookings = JSON.parse(responseText);
+        } else {
+          bookings = []; // Empty response
+        }
+      } catch (parseError) {
+        console.error("JSON parse error in bookings:", parseError);
+        throw new Error(`Failed to parse bookings data: ${parseError.message}`);
+      }
       console.log("Bookings fetched:", bookings);
       
       if (!Array.isArray(bookings)) {
@@ -334,7 +374,23 @@ function App() {
         throw new Error(`Failed to save profile: ${response.status} ${response.statusText}`);
       }
 
-      const result = await response.json();
+      let result;
+      try {
+        const responseText = await response.text();
+        console.log("Raw save profile response:", responseText);
+        
+        // Check if response starts with HTML doctype
+        if (responseText.trim().toLowerCase().startsWith('<!doctype')) {
+          console.error("Received HTML instead of JSON in profile save");
+          throw new Error("API returned HTML instead of JSON. The server might be down or misconfigured.");
+        }
+        
+        // Try to parse JSON
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("JSON parse error in profile save:", parseError);
+        throw new Error(`Failed to parse profile save response: ${parseError.message}`);
+      }
       console.log("Profile successfully created:", result);
       
       // Update the profile state
@@ -458,6 +514,11 @@ function App() {
   
   if (profileError) {
     console.error("Profile error:", profileError);
+    
+    // Check if the error message indicates an HTML response
+    const isServerDown = profileError.includes("HTML instead of JSON") || 
+                          profileError.includes("Failed to parse profile data");
+    
     return (
       <div className="app-layout">
         {renderHeader()}
@@ -466,17 +527,39 @@ function App() {
             <div className="container">
               <div className="card">
                 <div className="card-body text-center">
-                  <h2 className="text-warning mb-4">Profile Error</h2>
+                  <h2 className="text-warning mb-4">
+                    {isServerDown ? "API Server Error" : "Profile Error"}
+                  </h2>
                   <div className="error-message mb-4">
-                    {profileError}
+                    {isServerDown ? (
+                      <>
+                        <p><strong>Our API server appears to be down or misconfigured.</strong></p>
+                        <p>We're experiencing technical difficulties connecting to our servers. Please try again later.</p>
+                        <p className="text-muted small">Technical details: {profileError}</p>
+                      </>
+                    ) : (
+                      profileError
+                    )}
                   </div>
-                  <p>You can continue by creating a new profile</p>
-                  <div className="mt-4">
-                    <ProfileForm
-                      saveUserProfile={saveUserProfile}
-                      profile={null}
-                    />
-                  </div>
+                  
+                  {isServerDown ? (
+                    <button 
+                      className="btn btn-primary"
+                      onClick={() => window.location.reload()}
+                    >
+                      Refresh Page
+                    </button>
+                  ) : (
+                    <>
+                      <p>You can continue by creating a new profile</p>
+                      <div className="mt-4">
+                        <ProfileForm
+                          saveUserProfile={saveUserProfile}
+                          profile={null}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
