@@ -87,9 +87,22 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
     }
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    saveUserProfile({ role, ...formData });
+    setIsSaving(true);
+    setSaveError(null);
+    
+    try {
+      await saveUserProfile({ role, ...formData });
+    } catch (error) {
+      console.error("Error in profile form:", error);
+      setSaveError(error.message || "Failed to save profile. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -198,7 +211,19 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
           </>
         )}
 
-        <button type="submit">Save Profile</button>
+        {saveError && (
+          <div className="error-message alert alert-danger">
+            {saveError}
+          </div>
+        )}
+        
+        <button 
+          type="submit" 
+          disabled={isSaving}
+          className={isSaving ? 'btn-disabled' : ''}
+        >
+          {isSaving ? 'Saving...' : 'Save Profile'}
+        </button>
       </form>
     </div>
   );

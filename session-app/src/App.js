@@ -21,7 +21,9 @@ import {
 function App() {
   const auth = useAuth();
 
+  // Initialize with loading state
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [profileError, setProfileError] = useState(null);
   const [profile, setProfile] = useState(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [activeSession, setActiveSession] = useState(null);
@@ -57,6 +59,10 @@ function App() {
           src="/logo.svg"
           alt="Sessions Red Logo"
           className="header-logo-image"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/logo.jpeg"; // Fallback to jpeg if svg doesn't exist
+          }}
         />
         <span className="header-title">Sessions Red</span>
       </div>
@@ -67,14 +73,16 @@ function App() {
           </button>
         ) : (
           <>
+            {/* Always show the profile button */}
             <button
               className={`header-link ${activeTab === 'profile' ? 'active' : ''}`}
               onClick={() => setActiveTab('profile')}
             >
-              <FaUserCircle className="header-icon" /> {profile.name}
+              <FaUserCircle className="header-icon" /> {profile?.name || 'Profile'}
             </button>
             
-            {profile?.role === "student" && (
+            {/* Only show these buttons if profile is loaded and has a role */}
+            {profile && profile.role === "student" && (
               <button
                 className={`header-link ${activeTab === 'search' ? 'active' : ''}`}
                 onClick={() => setActiveTab('search')}
@@ -83,7 +91,7 @@ function App() {
               </button>
             )}
             
-            {profile?.role === "student" && (
+            {profile && profile.role === "student" && (
               <button
                 className={`header-link ${activeTab === 'bookings' ? 'active' : ''}`}
                 onClick={() => setActiveTab('bookings')}
@@ -92,7 +100,7 @@ function App() {
               </button>
             )}
             
-            {profile?.role === "teacher" && (
+            {profile && profile.role === "teacher" && (
               <button
                 className={`header-link ${activeTab === 'schedule' ? 'active' : ''}`}
                 onClick={() => setActiveTab('schedule')}
@@ -101,7 +109,7 @@ function App() {
               </button>
             )}
             
-            {upcomingSession && (
+            {profile && upcomingSession && (
               <button
                 className="header-link join-session"
                 onClick={() => setActiveSession(upcomingSession)}
@@ -180,9 +188,19 @@ function App() {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (auth.isAuthenticated) {
+      // Reset states when authentication changes
+      setLoadingProfile(true);
+      setProfileError(null);
+      
+      if (auth.isAuthenticated && auth.user && auth.user.profile) {
+        console.log("Auth authenticated, fetching profile");
         try {
-          const userId = auth.user.profile.sub; // Ensure this exists
+          const userId = auth.user.profile.sub; 
+          if (!userId) {
+            throw new Error("User ID not found in authentication data");
+          }
+          
+          console.log("Fetching profile for user:", userId);
           const response = await fetch(
             `${API_BASE_URL}/profiles?user_id=${userId}`,
             {
@@ -193,30 +211,51 @@ function App() {
               },
             }
           );
+          
+          if (!response.ok) {
+            throw new Error(`Profile fetch failed with status: ${response.status}`);
+          }
+          
           const data = await response.json();
-          if (response.ok && data.profile) {
+          console.log("Profile response:", data);
+          
+          if (data && data.profile) {
             setProfile(data.profile);
             
             // Check for upcoming sessions
             checkUpcomingSessions(userId, data.profile.role);
           } else {
+            console.log("No profile found, showing profile form");
             setProfile(null); // No profile found, trigger profile form
           }
         } catch (error) {
           console.error("Error fetching profile:", error);
+          setProfileError(error.message || "Failed to load your profile");
+          // Still set profile to null so the profile form shows
+          setProfile(null);
         } finally {
           setLoadingProfile(false);
         }
+      } else {
+        console.log("Not authenticated or missing user data, skipping profile fetch");
+        setLoadingProfile(false);
       }
     };
 
     fetchUserProfile();
-  }, [auth.isAuthenticated]);
+  }, [auth.isAuthenticated, auth.user]);
   
   const checkUpcomingSessions = async (userId, role) => {
+    if (!auth.isAuthenticated || !auth.user || !auth.user.access_token) {
+      console.log("Skipping upcoming sessions check - not authenticated");
+      return;
+    }
+    
     try {
       // Fetch bookings for the user
       const userType = role === 'student' ? 'student_id' : 'teacher_id';
+      console.log(`Checking upcoming sessions for ${userType}=${userId}`);
+      
       const response = await fetch(
         `${API_BASE_URL}/bookings?${userType}=${userId}`,
         {
@@ -228,29 +267,51 @@ function App() {
         }
       );
       
-      if (response.ok) {
-        const bookings = await response.json();
+      if (!response.ok) {
+        throw new Error(`Failed to fetch bookings: ${response.status} ${response.statusText}`);
+      }
+      
+      const bookings = await response.json();
+      console.log("Bookings fetched:", bookings);
+      
+      if (!Array.isArray(bookings)) {
+        console.warn("Unexpected bookings response format:", bookings);
+        return;
+      }
+      
+      // Check for upcoming sessions (within 15 minutes from now)
+      const now = new Date();
+      const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60000);
+      
+      const upcoming = bookings.find(booking => {
+        if (!booking || !booking.start_time) return false;
         
-        // Check for upcoming sessions (within 15 minutes from now)
-        const now = new Date();
-        const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60000);
-        
-        const upcoming = bookings.find(booking => {
-          const startTime = new Date(booking.start_time);
-          return startTime > now && startTime < fifteenMinutesFromNow;
-        });
-        
-        if (upcoming) {
-          setUpcomingSession(upcoming.session_id);
-        }
+        const startTime = new Date(booking.start_time);
+        return startTime > now && startTime < fifteenMinutesFromNow;
+      });
+      
+      if (upcoming && upcoming.session_id) {
+        console.log("Found upcoming session:", upcoming.session_id);
+        setUpcomingSession(upcoming.session_id);
+      } else {
+        setUpcomingSession(null);
       }
     } catch (error) {
       console.error("Error checking upcoming sessions:", error);
+      // Don't set error state as this is not a critical function
     }
   };
 
   const saveUserProfile = async (profileData) => {
+    if (!auth.isAuthenticated || !auth.user || !auth.user.profile || !auth.user.profile.sub) {
+      const error = new Error("You must be signed in to save a profile");
+      console.error(error);
+      throw error;
+    }
+
     try {
+      console.log("Saving profile for user:", auth.user.profile.sub);
+      
       const response = await fetch(
         `${API_BASE_URL}/profiles`,
         {
@@ -260,29 +321,36 @@ function App() {
             Authorization: `Bearer ${auth.user.access_token}`,
           },
           body: JSON.stringify({
-            user_id: auth.user?.profile.sub,
+            user_id: auth.user.profile.sub,
             role: profileData.role,
             profile_data: profileData,
           }),
         }
       );
 
-      const result = await response.json();
-      if (response.ok) {
-        console.log("Profile successfully created:", result);
-        setProfile(profileData); // Update the profile state
-        
-        // Set appropriate initial tab based on role
-        if (profileData.role === "student") {
-          setActiveTab('search');
-        } else if (profileData.role === "teacher") {
-          setActiveTab('schedule');
-        }
-      } else {
-        console.error("Error saving profile:", result);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Server error response:", errorText);
+        throw new Error(`Failed to save profile: ${response.status} ${response.statusText}`);
       }
+
+      const result = await response.json();
+      console.log("Profile successfully created:", result);
+      
+      // Update the profile state
+      setProfile(profileData); 
+      
+      // Set appropriate initial tab based on role
+      if (profileData.role === "student") {
+        setActiveTab('search');
+      } else if (profileData.role === "teacher") {
+        setActiveTab('schedule');
+      }
+      
+      return result;
     } catch (error) {
       console.error("Error saving profile:", error);
+      throw error; // Re-throw to allow the ProfileForm to handle it
     }
   };
 
@@ -332,7 +400,9 @@ function App() {
     );
   }
 
-  if (auth.isLoading || loadingProfile) {
+  // Both auth.isLoading and loadingProfile can be true even if auth.isAuthenticated
+  // So we need to handle the case where we're authenticated but still loading the profile
+  if (auth.isLoading || (loadingProfile && auth.isAuthenticated)) {
     return (
       <div className="app-layout">
         {renderHeader()}
@@ -344,6 +414,12 @@ function App() {
                   <div className="loading">
                     <div className="loading-spinner"></div>
                     <h2>Loading...</h2>
+                    <p className="text-muted">
+                      {loadingProfile && auth.isAuthenticated ? "Loading your profile..." : "Authenticating..."}
+                    </p>
+                    <p className="text-muted small">
+                      This may take a few moments. Please wait...
+                    </p>
                   </div>
                 </div>
               </div>
@@ -355,6 +431,7 @@ function App() {
   }
 
   if (auth.error) {
+    console.error("Authentication error:", auth.error);
     return (
       <div className="app-layout">
         {renderHeader()}
@@ -363,11 +440,43 @@ function App() {
             <div className="container">
               <div className="card">
                 <div className="card-body text-center">
-                  <h2 className="text-danger mb-4">Something went wrong!</h2>
-                  <div className="error-message mb-4">{auth.error.message}</div>
+                  <h2 className="text-danger mb-4">Authentication Error</h2>
+                  <div className="error-message mb-4">
+                    {auth.error.message || "There was a problem with your authentication"}
+                  </div>
                   <button className="btn btn-primary" onClick={() => auth.signinRedirect()}>
                     Try Signing In Again
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (profileError) {
+    console.error("Profile error:", profileError);
+    return (
+      <div className="app-layout">
+        {renderHeader()}
+        <div className="main-content">
+          <div className="content-area">
+            <div className="container">
+              <div className="card">
+                <div className="card-body text-center">
+                  <h2 className="text-warning mb-4">Profile Error</h2>
+                  <div className="error-message mb-4">
+                    {profileError}
+                  </div>
+                  <p>You can continue by creating a new profile</p>
+                  <div className="mt-4">
+                    <ProfileForm
+                      saveUserProfile={saveUserProfile}
+                      profile={null}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
