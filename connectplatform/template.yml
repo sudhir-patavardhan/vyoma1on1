@@ -1,5 +1,4 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
 Description: 'Sessions Red API - Connecting students with teachers'
 
 Parameters:
@@ -20,108 +19,114 @@ Globals:
 Resources:
   # Lambda function for handling API requests
   SessionsRedFunction:
-    Type: AWS::Serverless::Function
+    Type: AWS::Lambda::Function
     Properties:
       Handler: app.lambda_handler
       Runtime: python3.11
-      CodeUri: ./
+      Code: 
+        S3Bucket: sessions-red-lambda-deployments
+        S3Key: lambda-deployment.zip
       Environment:
         Variables:
           STAGE: !Ref Stage
+      MemorySize: 256
+      Timeout: 30
+      Role: !GetAtt LambdaExecutionRole.Arn
+  
+  # API Gateway for the Lambda function
+  SessionsRedApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub "sessions-red-api-${Stage}"
+      Description: API for Sessions Red platform
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  
+  # Lambda execution role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
       Policies:
-        - DynamoDBCrudPolicy:
-            TableName: '*'
-        - Statement:
-            - Effect: Allow
-              Action:
-                - 's3:GetObject'
-                - 's3:PutObject'
-                - 's3:ListBucket'
-              Resource: '*'
-      Events:
-        # Profile management
-        GetUserProfile:
-          Type: Api
-          Properties:
-            Path: /profiles
-            Method: get
-        CreateUserProfile:
-          Type: Api
-          Properties:
-            Path: /profiles
-            Method: post
-
-        # Service management
-        GetServices:
-          Type: Api
-          Properties:
-            Path: /services
-            Method: get
-        CreateService:
-          Type: Api
-          Properties:
-            Path: /services
-            Method: post
-
-        # Booking management
-        GetBookings:
-          Type: Api
-          Properties:
-            Path: /bookings
-            Method: get
-        CreateBooking:
-          Type: Api
-          Properties:
-            Path: /bookings
-            Method: post
-
-        # Availability management
-        GetAvailability:
-          Type: Api
-          Properties:
-            Path: /availability
-            Method: get
-        CreateAvailability:
-          Type: Api
-          Properties:
-            Path: /availability
-            Method: post
-        DeleteAvailability:
-          Type: Api
-          Properties:
-            Path: /availability/{id}
-            Method: delete
-
-        # Session management
-        CreateSession:
-          Type: Api
-          Properties:
-            Path: /sessions
-            Method: post
-        GetSession:
-          Type: Api
-          Properties:
-            Path: /sessions/{id}
-            Method: get
-        UpdateSession:
-          Type: Api
-          Properties:
-            Path: /sessions/{id}
-            Method: put
-
-        # Teacher search
-        SearchTeachers:
-          Type: Api
-          Properties:
-            Path: /search/teachers
-            Method: get
-
-        # CORS Preflight
-        OptionsHandler:
-          Type: Api
-          Properties:
-            Path: /{proxy+}
-            Method: options
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:*'
+                Resource: '*'
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:PutObject'
+                  - 's3:ListBucket'
+                Resource: '*'
+  
+  # API Gateway deployment
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ApiRootMethod
+    Properties:
+      RestApiId: !Ref SessionsRedApi
+      StageName: !Ref Stage
+  
+  # API Gateway root resource
+  ApiRootMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref SessionsRedApi
+      ResourceId: !GetAtt SessionsRedApi.RootResourceId
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SessionsRedFunction.Arn}/invocations"
+  
+  # API Gateway proxy resource
+  ApiProxyResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref SessionsRedApi
+      ParentId: !GetAtt SessionsRedApi.RootResourceId
+      PathPart: '{proxy+}'
+  
+  # API Gateway proxy method
+  ApiProxyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref SessionsRedApi
+      ResourceId: !Ref ApiProxyResource
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SessionsRedFunction.Arn}/invocations"
+  
+  # Lambda permission for API Gateway
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref SessionsRedFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SessionsRedApi}/*/*/*"
 
   # DynamoDB Tables
   UserProfilesTable:

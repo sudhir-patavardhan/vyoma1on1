@@ -17,9 +17,6 @@ phases:
       - aws s3 mb s3://sessions-red-lambda-deployments --region us-east-1 || true
       - echo "Creating S3 bucket for web app deployments if it doesn't exist"
       - aws s3 mb s3://sessions-red-react-app-deployments --region us-east-1 || true
-      - echo "Installing AWS SAM CLI"
-      - pip install aws-sam-cli
-      - sam --version
       - echo "Installing frontend dependencies"
       - cd session-app
       - echo "Cleaning up node_modules if needed"
@@ -28,7 +25,7 @@ phases:
       - cd ..
       - echo "Installing backend dependencies"
       - cd connectplatform
-      - pip install -r requirements.txt boto3 aws-sam-cli
+      - pip install -r requirements.txt boto3
       - cd ..
 
   build:
@@ -39,24 +36,17 @@ phases:
       - cd ..
       - echo "Packaging the Lambda function"
       - cd connectplatform
-      - echo "Creating SAM build directory"
-      - mkdir -p .aws-sam
-      - echo "Creating SAM configuration file for packaging"
-      - echo -e "
-        \nversion = 0.1
-        \n[default]
-        \n[default.global.parameters]
-        \nstack_name = \"sessions-red-api\"
-        \n[default.build.parameters]
-        \ncached = true
-        \nparallel = true
-        \n[default.package.parameters]
-        \ns3_bucket = \"sessions-red-lambda-deployments\"
-        \ns3_prefix = \"lambda-deployments\"
-        \nregion = \"us-east-1\"
-        \n" > samconfig.toml
-      - echo "Packaging with SAM"
-      - sam package --template-file template.yml --s3-bucket sessions-red-lambda-deployments --output-template-file packaged-template.yml --region us-east-1
+      - echo "Creating deployment package"
+      - mkdir -p build
+      - cp -r *.py requirements.txt build/
+      - pip install -r requirements.txt -t build/
+      - cd build
+      - zip -r ../lambda-deployment.zip .
+      - cd ..
+      - echo "Uploading Lambda deployment package to S3"
+      - aws s3 cp lambda-deployment.zip s3://sessions-red-lambda-deployments/
+      - echo "Processing CloudFormation template"
+      - cp template.yml deployment-template.yml
       - cd ..
 
   post_build:
@@ -65,23 +55,21 @@ phases:
       - aws s3 sync session-app/build/ s3://sessions-red-react-app-deployments/ --delete --exact-timestamps
       - echo "Deploying backend Lambda functions"
       - cd connectplatform
-      - echo "Updating SAM deployment configuration"
-      - echo -e "
-        \n[default.deploy.parameters]
-        \nconfirm_changeset = false
-        \ncapabilities = \"CAPABILITY_IAM CAPABILITY_AUTO_EXPAND\"
-        \ndisable_rollback = true
-        \nparameter_overrides = \"Stage=prod\"
-        \nregion = \"us-east-1\"
-        \n" >> samconfig.toml
-      - cat samconfig.toml
-      - echo "Running SAM deployment with custom config"
-      - sam deploy --template-file packaged-template.yml --no-fail-on-empty-changeset --region us-east-1
+      - echo "Creating/updating CloudFormation stack"
+      - >
+        aws cloudformation deploy 
+        --template-file deployment-template.yml 
+        --stack-name sessions-red-api 
+        --parameter-overrides Stage=prod 
+        --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND 
+        --no-fail-on-empty-changeset 
+        --region us-east-1 || true
       - cd ..
 
 artifacts:
   files:
     - "session-app/build/**/*"
-    - "connectplatform/packaged-template.yml"
+    - "connectplatform/deployment-template.yml"
+    - "connectplatform/lambda-deployment.zip"
   base-directory: '.'
   discard-paths: no
