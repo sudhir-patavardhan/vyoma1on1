@@ -1,0 +1,50 @@
+version: 0.2
+
+cache:
+  paths:
+    - session-app/node_modules/**/*
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+      python: 3.11
+    commands:
+      - echo "Using Node.js runtime version 18 and Python 3.11"
+      - echo "Installing frontend dependencies"
+      - cd session-app
+      - echo "Cleaning up node_modules if needed"
+      - rm -rf node_modules || true
+      - npm install
+      - cd ..
+      - echo "Installing backend dependencies"
+      - cd connectplatform
+      - pip install -r requirements.txt
+      - cd ..
+
+  build:
+    commands:
+      - echo "Building the React frontend"
+      - cd session-app
+      - npm run build
+      - cd ..
+      - echo "Packaging the Lambda function"
+      - cd connectplatform
+      - aws cloudformation package --template-file template.yml --s3-bucket sessions-red-lambda-deployments --output-template-file packaged-template.yml
+      - cd ..
+
+  post_build:
+    commands:
+      - echo "Syncing frontend build artifacts to S3"
+      - aws s3 sync session-app/build/ s3://sessions-red-react-app-deployments/ --delete --exact-timestamps
+      - echo "Deploying backend Lambda functions"
+      - cd connectplatform
+      - aws cloudformation deploy --template-file packaged-template.yml --stack-name sessions-red-api --capabilities CAPABILITY_IAM
+      - cd ..
+
+artifacts:
+  files:
+    - "session-app/build/**/*"
+    - "connectplatform/packaged-template.yml"
+  base-directory: '.'
+  discard-paths: no

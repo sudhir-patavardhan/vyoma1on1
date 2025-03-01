@@ -1,13 +1,183 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Sessions Red API - Connecting students with teachers'
+
+Globals:
+  Function:
+    Timeout: 30  # 30 seconds timeout
+    MemorySize: 256  # 256MB of memory
+
 Resources:
-  MyLambdaFunction:
-    Type: AWS::Lambda::Function
+  # Lambda function for handling API requests
+  SessionsRedFunction:
+    Type: AWS::Serverless::Function
     Properties:
-      Handler: app.lambda_handler          # Specifies the file and function name
-      Runtime: python3.9                   # Python runtime
-      Code:
-        S3Bucket: vnurlshortner       # Replace with your S3 bucket name
-        S3Key: lambda_function.zip         # The key (path) to the zip file in the bucket
-      Role: arn:aws:iam::390844768511:role/lambdadeployerrole
-      MemorySize: 128                      # (optional) Memory size in MB
-      Timeout: 5                           # (optional) Timeout in seconds
-      Description: "Updated Lambda function for new deployment"
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      CodeUri: ./
+      Environment:
+        Variables:
+          STAGE: prod
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: '*'
+        - Statement:
+            - Effect: Allow
+              Action:
+                - 's3:GetObject'
+                - 's3:PutObject'
+                - 's3:ListBucket'
+              Resource: '*'
+      Events:
+        # Profile management
+        GetUserProfile:
+          Type: Api
+          Properties:
+            Path: /profiles
+            Method: get
+        CreateUserProfile:
+          Type: Api
+          Properties:
+            Path: /profiles
+            Method: post
+
+        # Service management
+        GetServices:
+          Type: Api
+          Properties:
+            Path: /services
+            Method: get
+        CreateService:
+          Type: Api
+          Properties:
+            Path: /services
+            Method: post
+
+        # Booking management
+        GetBookings:
+          Type: Api
+          Properties:
+            Path: /bookings
+            Method: get
+        CreateBooking:
+          Type: Api
+          Properties:
+            Path: /bookings
+            Method: post
+
+        # Availability management
+        GetAvailability:
+          Type: Api
+          Properties:
+            Path: /availability
+            Method: get
+        CreateAvailability:
+          Type: Api
+          Properties:
+            Path: /availability
+            Method: post
+        DeleteAvailability:
+          Type: Api
+          Properties:
+            Path: /availability/{id}
+            Method: delete
+
+        # Session management
+        CreateSession:
+          Type: Api
+          Properties:
+            Path: /sessions
+            Method: post
+        GetSession:
+          Type: Api
+          Properties:
+            Path: /sessions/{id}
+            Method: get
+        UpdateSession:
+          Type: Api
+          Properties:
+            Path: /sessions/{id}
+            Method: put
+
+        # Teacher search
+        SearchTeachers:
+          Type: Api
+          Properties:
+            Path: /search/teachers
+            Method: get
+
+        # CORS Preflight
+        OptionsHandler:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: options
+
+  # DynamoDB Tables
+  UserProfilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: UserProfiles
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+
+  TeacherAvailabilityTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: TeacherAvailability
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: availability_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: availability_id
+          KeyType: HASH
+
+  BookingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Bookings
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: booking_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: booking_id
+          KeyType: HASH
+
+  SessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Sessions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: session_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: session_id
+          KeyType: HASH
+
+  ServiceCatalogTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ServiceCatalog
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: service_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: service_id
+          KeyType: HASH
+
+Outputs:
+  SessionsRedApi:
+    Description: "API Gateway endpoint URL for Sessions Red API"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  SessionsRedFunction:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt SessionsRedFunction.Arn
