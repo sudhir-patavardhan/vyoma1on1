@@ -32,10 +32,11 @@ def response_with_cors(status_code, body):
     return {
         "statusCode": status_code,
         "headers": {
-            "Access-Control-Allow-Origin": "https://sessions.red",
+            "Access-Control-Allow-Origin": "*",  # Allow any origin for development, restrict to domain in production
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
-            "Access-Control-Allow-Credentials": True
+            "Access-Control-Allow-Headers": "Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token",
+            "Access-Control-Allow-Credentials": "true",
+            "Content-Type": "application/json"
         },
         "body": json.dumps(body)
     }
