@@ -54,11 +54,11 @@ function App() {
     <header className="header">
       <div className="header-logo">
         <img
-          src="/logo.jpeg"
-          alt="Expert Sessions Logo"
+          src="/logo.svg"
+          alt="Sessions Red Logo"
           className="header-logo-image"
         />
-        <span className="header-title">Expert Sessions</span>
+        <span className="header-title">Sessions Red</span>
       </div>
       <nav className="header-nav">
         {!auth.isAuthenticated ? (
@@ -295,7 +295,7 @@ function App() {
             <div className="container">
               <div className="card">
                 <div className="card-body">
-                  <h1 className="landing-heading">Welcome to Expert Sessions</h1>
+                  <h1 className="landing-heading">Welcome to Sessions Red</h1>
                   <p className="landing-text">
                     Connect with expert teachers for personalized 1:1 learning experiences.
                     Our platform helps students find teachers based on their learning needs,
