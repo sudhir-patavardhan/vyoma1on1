@@ -123,13 +123,15 @@ function App() {
     // If a session is active, show the virtual session component instead of normal content
     if (activeSession) {
       return (
-        <div>
+        <div className="app-layout">
           {renderHeader()}
-          <div className="container full-width">
-            <VirtualSession 
-              sessionId={activeSession} 
-              onEndSession={() => setActiveSession(null)} 
-            />
+          <div className="main-content">
+            <div className="content-area full-width">
+              <VirtualSession 
+                sessionId={activeSession} 
+                onEndSession={() => setActiveSession(null)} 
+              />
+            </div>
           </div>
         </div>
       );
@@ -137,33 +139,39 @@ function App() {
 
     // Normal content based on active tab
     return (
-      <div>
+      <div className="app-layout">
         {renderHeader()}
-        <div className="container">
-          <div className="card">
-            {(!profile || activeTab === 'profile') && (
-              <ProfileForm
-                saveUserProfile={saveUserProfile}
-                profile={profile}
-              />
-            )}
-            
-            {profile?.role === "student" && activeTab === 'search' && (
-              <TeacherSearch />
-            )}
-            
-            {profile?.role === "student" && activeTab === 'bookings' && (
-              <Bookings 
-                userId={auth.user?.profile.sub} 
-                userRole="student"
-                onJoinSession={setActiveSession}
-                onUpcomingSession={setUpcomingSession}
-              />
-            )}
-            
-            {profile?.role === "teacher" && activeTab === 'schedule' && (
-              <TeacherSchedule />
-            )}
+        <div className="main-content">
+          <div className="content-area">
+            <div className="container">
+              <div className="card">
+                <div className="card-body">
+                  {(!profile || activeTab === 'profile') && (
+                    <ProfileForm
+                      saveUserProfile={saveUserProfile}
+                      profile={profile}
+                    />
+                  )}
+                  
+                  {profile?.role === "student" && activeTab === 'search' && (
+                    <TeacherSearch />
+                  )}
+                  
+                  {profile?.role === "student" && activeTab === 'bookings' && (
+                    <Bookings 
+                      userId={auth.user?.profile.sub} 
+                      userRole="student"
+                      onJoinSession={setActiveSession}
+                      onUpcomingSession={setUpcomingSession}
+                    />
+                  )}
+                  
+                  {profile?.role === "teacher" && activeTab === 'schedule' && (
+                    <TeacherSchedule />
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -280,36 +288,44 @@ function App() {
 
   if (!auth.isAuthenticated) {
     return (
-      <div>
+      <div className="app-layout">
         {renderHeader()}
-        <div className="container">
-          <div className="card">
-            <h1 className="landing-heading">Welcome to Expert Sessions</h1>
-            <p className="landing-text">
-              Connect with expert teachers for personalized 1:1 learning experiences.
-              Our platform helps students find teachers based on their learning needs,
-              schedule sessions, and attend virtual meetings - all in one place.
-            </p>
-            <div className="landing-features">
-              <div className="feature">
-                <FaSearch className="feature-icon" />
-                <h3>Find Teachers</h3>
-                <p>Search for teachers by subject or topic</p>
-              </div>
-              <div className="feature">
-                <FaCalendarAlt className="feature-icon" />
-                <h3>Schedule Sessions</h3>
-                <p>Book convenient time slots with your chosen teacher</p>
-              </div>
-              <div className="feature">
-                <FaVideo className="feature-icon" />
-                <h3>Virtual Learning</h3>
-                <p>Join video sessions, share notes, and learn interactively</p>
+        <div className="main-content">
+          <div className="content-area">
+            <div className="container">
+              <div className="card">
+                <div className="card-body">
+                  <h1 className="landing-heading">Welcome to Expert Sessions</h1>
+                  <p className="landing-text">
+                    Connect with expert teachers for personalized 1:1 learning experiences.
+                    Our platform helps students find teachers based on their learning needs,
+                    schedule sessions, and attend virtual meetings - all in one place.
+                  </p>
+                  <div className="landing-features">
+                    <div className="feature">
+                      <FaSearch className="feature-icon" />
+                      <h3>Find Teachers</h3>
+                      <p>Search for teachers by subject or topic</p>
+                    </div>
+                    <div className="feature">
+                      <FaCalendarAlt className="feature-icon" />
+                      <h3>Schedule Sessions</h3>
+                      <p>Book convenient time slots with your chosen teacher</p>
+                    </div>
+                    <div className="feature">
+                      <FaVideo className="feature-icon" />
+                      <h3>Virtual Learning</h3>
+                      <p>Join video sessions, share notes, and learn interactively</p>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <button className="btn btn-primary btn-lg" onClick={() => auth.signinRedirect()}>
+                      Sign In to Get Started
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            <button className="button" onClick={() => auth.signinRedirect()}>
-              Sign In to Get Started
-            </button>
           </div>
         </div>
       </div>
@@ -318,9 +334,21 @@ function App() {
 
   if (auth.isLoading || loadingProfile) {
     return (
-      <div className="container">
-        <div className="card">
-          <h2 className="heading">Loading...</h2>
+      <div className="app-layout">
+        {renderHeader()}
+        <div className="main-content">
+          <div className="content-area">
+            <div className="container">
+              <div className="card">
+                <div className="card-body text-center">
+                  <div className="loading">
+                    <div className="loading-spinner"></div>
+                    <h2>Loading...</h2>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -328,13 +356,22 @@ function App() {
 
   if (auth.error) {
     return (
-      <div className="container">
-        <div className="card">
-          <h2 className="heading">Something went wrong!</h2>
-          <p className="sub-heading">{auth.error.message}</p>
-          <button className="button" onClick={() => auth.signinRedirect()}>
-            Try Signing In Again
-          </button>
+      <div className="app-layout">
+        {renderHeader()}
+        <div className="main-content">
+          <div className="content-area">
+            <div className="container">
+              <div className="card">
+                <div className="card-body text-center">
+                  <h2 className="text-danger mb-4">Something went wrong!</h2>
+                  <div className="error-message mb-4">{auth.error.message}</div>
+                  <button className="btn btn-primary" onClick={() => auth.signinRedirect()}>
+                    Try Signing In Again
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
