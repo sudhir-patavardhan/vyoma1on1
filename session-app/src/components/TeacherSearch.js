@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "react-oidc-context";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 import "../styles.css";
 
 const TeacherSearch = () => {
@@ -26,7 +27,7 @@ const TeacherSearch = () => {
       
       // Search for teachers based on topic
       const response = await axios.get(
-        `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/search/teachers?topic=${encodeURIComponent(searchTerm)}`,
+        `${API_BASE_URL}/search/teachers?topic=${encodeURIComponent(searchTerm)}`,
         {
           headers: {
             Authorization: `Bearer ${auth.user.access_token}`,
@@ -58,7 +59,7 @@ const TeacherSearch = () => {
       
       // Get teacher's availability
       const response = await axios.get(
-        `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/availability?teacher_id=${teacherId}`,
+        `${API_BASE_URL}/availability?teacher_id=${teacherId}`,
         {
           headers: {
             Authorization: `Bearer ${auth.user.access_token}`,
@@ -88,7 +89,7 @@ const TeacherSearch = () => {
       
       // Create a booking
       await axios.post(
-        "https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/bookings",
+        `${API_BASE_URL}/bookings`,
         {
           student_id: auth.user.profile.sub,
           availability_id: availabilityId,

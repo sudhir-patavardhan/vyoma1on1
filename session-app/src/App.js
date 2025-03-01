@@ -5,6 +5,7 @@ import TeacherSearch from "./components/TeacherSearch";
 import TeacherSchedule from "./components/TeacherSchedule";
 import VirtualSession from "./components/VirtualSession";
 import Bookings from "./components/Bookings";
+import { API_BASE_URL } from "./config";
 import "./styles.css";
 import {
   FaSearch,
@@ -175,7 +176,7 @@ function App() {
         try {
           const userId = auth.user.profile.sub; // Ensure this exists
           const response = await fetch(
-            `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/profiles?user_id=${userId}`,
+            `${API_BASE_URL}/profiles?user_id=${userId}`,
             {
               method: "GET",
               headers: {
@@ -209,7 +210,7 @@ function App() {
       // Fetch bookings for the user
       const userType = role === 'student' ? 'student_id' : 'teacher_id';
       const response = await fetch(
-        `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/bookings?${userType}=${userId}`,
+        `${API_BASE_URL}/bookings?${userType}=${userId}`,
         {
           method: "GET",
           headers: {
@@ -243,7 +244,7 @@ function App() {
   const saveUserProfile = async (profileData) => {
     try {
       const response = await fetch(
-        "https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/profiles",
+        `${API_BASE_URL}/profiles`,
         {
           method: "POST",
           headers: {

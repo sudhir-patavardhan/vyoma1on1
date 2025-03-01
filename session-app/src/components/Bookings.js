@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "react-oidc-context";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 import "../styles.css";
 
 const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
@@ -20,7 +21,7 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
       const userParam = userRole === "student" ? "student_id" : "teacher_id";
       
       const response = await axios.get(
-        `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/bookings?${userParam}=${userId}`,
+        `${API_BASE_URL}/bookings?${userParam}=${userId}`,
         {
           headers: {
             Authorization: `Bearer ${auth.user.access_token}`,
@@ -64,7 +65,7 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
     try {
       // First check if a session already exists for this booking
       const response = await axios.get(
-        `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/bookings/${bookingId}/session`,
+        `${API_BASE_URL}/bookings/${bookingId}/session`,
         {
           headers: {
             Authorization: `Bearer ${auth.user.access_token}`,
@@ -82,7 +83,7 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
         const booking = bookings.find(b => b.booking_id === bookingId);
         
         const createResponse = await axios.post(
-          "https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/sessions",
+          `${API_BASE_URL}/sessions`,
           {
             booking_id: bookingId,
             teacher_id: booking.teacher_id,
@@ -142,7 +143,7 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
         
         // Fetch teacher profile
         const profileResponse = await axios.get(
-          `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/profiles?user_id=${booking.teacher_id}`,
+          `${API_BASE_URL}/profiles?user_id=${booking.teacher_id}`,
           {
             headers: {
               Authorization: `Bearer ${auth.user.access_token}`,

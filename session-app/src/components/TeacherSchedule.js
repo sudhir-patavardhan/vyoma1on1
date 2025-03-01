@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "react-oidc-context";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 import "../styles.css";
 
 const TeacherSchedule = () => {
@@ -26,7 +27,7 @@ const TeacherSchedule = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/availability?teacher_id=${auth.user.profile.sub}`,
+        `${API_BASE_URL}/availability?teacher_id=${auth.user.profile.sub}`,
         {
           headers: {
             Authorization: `Bearer ${auth.user.access_token}`,
@@ -88,7 +89,7 @@ const TeacherSchedule = () => {
       };
       
       await axios.post(
-        "https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/availability",
+        `${API_BASE_URL}/availability`,
         slotData,
         {
           headers: {
@@ -117,7 +118,7 @@ const TeacherSchedule = () => {
   const deleteAvailability = async (availabilityId) => {
     try {
       await axios.delete(
-        `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/availability/${availabilityId}`,
+        `${API_BASE_URL}/availability/${availabilityId}`,
         {
           headers: {
             Authorization: `Bearer ${auth.user.access_token}`,

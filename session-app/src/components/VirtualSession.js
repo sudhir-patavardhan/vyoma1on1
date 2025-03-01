@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "react-oidc-context";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 import "../styles.css";
 
 const VirtualSession = ({ sessionId, onEndSession }) => {
@@ -41,7 +42,7 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/sessions/${sessionId}`,
+          `${API_BASE_URL}/sessions/${sessionId}`,
           {
             headers: {
               Authorization: `Bearer ${auth.user.access_token}`,
@@ -262,7 +263,7 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
     
     try {
       await axios.put(
-        `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/sessions/${sessionId}`,
+        `${API_BASE_URL}/sessions/${sessionId}`,
         {
           note: newNote,
           author_id: auth.user.profile.sub,
@@ -299,7 +300,7 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
       const fileUrl = "https://example.com/sample-file.pdf"; // placeholder
       
       await axios.put(
-        `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/sessions/${sessionId}`,
+        `${API_BASE_URL}/sessions/${sessionId}`,
         {
           document: fileUrl,
           document_name: fileUpload.name,
@@ -333,7 +334,7 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
     try {
       // Update session status to ended
       await axios.put(
-        `https://15fvg1d1mg.execute-api.us-east-1.amazonaws.com/prod/sessions/${sessionId}`,
+        `${API_BASE_URL}/sessions/${sessionId}`,
         {
           status: "ended",
         },
