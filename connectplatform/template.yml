@@ -2,6 +2,16 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: 'Sessions Red API - Connecting students with teachers'
 
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    Description: Deployment environment (dev, test, prod)
+    AllowedValues:
+      - dev
+      - test
+      - prod
+
 Globals:
   Function:
     Timeout: 30  # 30 seconds timeout
@@ -17,7 +27,7 @@ Resources:
       CodeUri: ./
       Environment:
         Variables:
-          STAGE: prod
+          STAGE: !Ref Stage
       Policies:
         - DynamoDBCrudPolicy:
             TableName: '*'

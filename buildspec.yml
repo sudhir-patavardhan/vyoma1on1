@@ -39,8 +39,24 @@ phases:
       - cd ..
       - echo "Packaging the Lambda function"
       - cd connectplatform
+      - echo "Creating SAM build directory"
+      - mkdir -p .aws-sam
+      - echo "Creating SAM configuration file for packaging"
+      - echo -e "
+        \nversion = 0.1
+        \n[default]
+        \n[default.global.parameters]
+        \nstack_name = \"sessions-red-api\"
+        \n[default.build.parameters]
+        \ncached = true
+        \nparallel = true
+        \n[default.package.parameters]
+        \ns3_bucket = \"sessions-red-lambda-deployments\"
+        \ns3_prefix = \"lambda-deployments\"
+        \nregion = \"us-east-1\"
+        \n" > samconfig.toml
       - echo "Packaging with SAM"
-      - sam package --template-file template.yml --s3-bucket sessions-red-lambda-deployments --output-template-file packaged-template.yml
+      - sam package --template-file template.yml --s3-bucket sessions-red-lambda-deployments --output-template-file packaged-template.yml --region us-east-1
       - cd ..
 
   post_build:
@@ -49,7 +65,18 @@ phases:
       - aws s3 sync session-app/build/ s3://sessions-red-react-app-deployments/ --delete --exact-timestamps
       - echo "Deploying backend Lambda functions"
       - cd connectplatform
-      - sam deploy --template-file packaged-template.yml --stack-name sessions-red-api --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset
+      - echo "Updating SAM deployment configuration"
+      - echo -e "
+        \n[default.deploy.parameters]
+        \nconfirm_changeset = false
+        \ncapabilities = \"CAPABILITY_IAM CAPABILITY_AUTO_EXPAND\"
+        \ndisable_rollback = true
+        \nparameter_overrides = \"Stage=prod\"
+        \nregion = \"us-east-1\"
+        \n" >> samconfig.toml
+      - cat samconfig.toml
+      - echo "Running SAM deployment with custom config"
+      - sam deploy --template-file packaged-template.yml --no-fail-on-empty-changeset --region us-east-1
       - cd ..
 
 artifacts:
