@@ -1,0 +1,32 @@
+version: 0.2
+
+cache:
+  paths:
+    - node_modules/**/*
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 14
+    commands:
+      - echo "Using Node.js runtime version 14"
+      - echo "Cleaning up node_modules if needed"
+      - rm -rf node_modules || true
+      - echo "Installing dependencies with cache support"
+      - npm install
+
+  build:
+    commands:
+      - echo "Building the React app"
+      - npm run build
+
+  post_build:
+    commands:
+      - echo "Syncing build artifacts to S3"
+      # Use --exact-timestamps to avoid uploading unchanged files
+      - aws s3 sync build/ s3://sessions-red-react-app-deployments/ --delete --exact-timestamps
+
+artifacts:
+  files:
+    - "build/**/*"
+  discard-paths: yes

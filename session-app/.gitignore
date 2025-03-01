@@ -1,0 +1,52 @@
+# Node modules
+node_modules/
+
+# Build directories
+build/
+dist/
+
+# Dependency directories
+jspm_packages/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Package-lock and Yarn integrity (optional, if managed by CI)
+package-lock.json
+yarn.lock
+
+# Test coverage output
+coverage/
+
+# Miscellaneous
+*.bak
+*.old
+*.tmp
+*.log

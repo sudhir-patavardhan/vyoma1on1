@@ -1,0 +1,13 @@
+Resources:
+  MyLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: app.lambda_handler          # Specifies the file and function name
+      Runtime: python3.9                   # Python runtime
+      Code:
+        S3Bucket: vnurlshortner       # Replace with your S3 bucket name
+        S3Key: lambda_function.zip         # The key (path) to the zip file in the bucket
+      Role: arn:aws:iam::390844768511:role/lambdadeployerrole
+      MemorySize: 128                      # (optional) Memory size in MB
+      Timeout: 5                           # (optional) Timeout in seconds
+      Description: "Updated Lambda function for new deployment"

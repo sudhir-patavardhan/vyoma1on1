@@ -1,0 +1,299 @@
+/* Global Styles */
+body {
+  background-image: url('https://d2gc27jy00o0yk.cloudfront.net/default-assets/image/cognito-image-background-page-dark.svg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: #fff; /* Ensure text is visible on the dark background */
+}
+
+/* General Container */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: rgba(26, 32, 44, 0.95); /* Dark overlay for better text contrast */
+  text-align: center;
+}
+
+/* Card Styles */
+.card {
+  
+  background-color: #2d3748; /* Dark card background */
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width:100%;
+}
+
+/* Logo */
+.logo {
+  width: 100px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+/* Typography */
+.heading {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #fff;
+}
+
+.sub-heading {
+  font-size: 16px;
+  margin-bottom: 20px;
+  color: #cbd5e0;
+}
+
+/* Forms */
+.form {
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.label {
+  font-size: 14px;
+  color: #e2e8f0;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.input {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: 1px solid #4a5568;
+  background-color: #2d3748;
+  color: #fff;
+}
+
+/* Buttons */
+.button {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  color: #fff;
+  background-color: #4a90e2;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: #3b82f6;
+}
+
+.button-secondary {
+  background-color: #718096;
+}
+
+.button-secondary:hover {
+  background-color: #4a5568;
+}
+
+/* Error Message */
+.error-message {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #e53e3e;
+  color: #fff;
+  border-radius: 5px;
+  text-align: left;
+  font-size: 14px;
+}
+
+/* Radio Buttons */
+.radio-label {
+  display: block;
+  margin: 10px 0;
+  color: #cbd5e0;
+}
+
+.radio {
+  margin-right: 10px;
+}
+
+/* Footer */
+.footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #cbd5e0;
+}
+
+/* Header Styles */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #1a202c;
+  color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #fff;
+}
+
+.header-logo-image {
+  width: 50px;
+  height: 50px;
+  margin-right: 10px;
+}
+
+.header-title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.header-nav {
+  display: flex;
+  gap: 15px;
+}
+
+.header-link {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  font-size: 14px;
+  color: #fff;
+  background-color: transparent;
+  border: none;
+  border-radius: 5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.header-link:hover {
+  background-color: #2d3748;
+}
+
+.header-icon {
+  margin-right: 5px;
+  font-size: 16px;
+}
+
+/* Media Queries for Responsive Design */
+@media (max-width: 768px) {
+  .card {
+    padding: 20px;
+  }
+
+  .heading {
+    font-size: 20px;
+  }
+
+  .sub-heading {
+    font-size: 14px;
+  }
+
+  .button {
+    font-size: 14px;
+    padding: 8px;
+  }
+}
+
+
+/* Profile Form Styles */
+.profile-form {
+  background-color: #2d3748; /* Dark background for the form container */
+  color: #ffffff; /* Light text color for readability */
+  padding: 30px;
+  margin: 20px auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+  max-width: 500px;
+}
+
+.profile-form h2 {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #ffffff; /* White for the heading */
+}
+
+.profile-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Space between fields */
+}
+
+.profile-form label {
+  font-size: 16px;
+  color: #e2e8f0;
+  margin-bottom: 5px;
+}
+
+.profile-form input,
+.profile-form select {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: 1px solid #4a5568; /* Subtle border */
+  background-color: #1a202c; /* Darker input background */
+  color: #ffffff;
+  transition: border-color 0.3s ease;
+}
+
+.profile-form input:focus,
+.profile-form select:focus {
+  border-color: #3b82f6; /* Blue border on focus */
+  outline: none;
+}
+
+.profile-form button {
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #ffffff;
+  background-color: #4a90e2; /* Blue button background */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.profile-form button:hover {
+  background-color: #3b82f6; /* Lighter blue on hover */
+}
+
+.profile-form div {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-form div:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-form {
+    padding: 20px;
+  }
+
+  .profile-form h2 {
+    font-size: 20px;
+  }
+
+  .profile-form button {
+    font-size: 14px;
+    padding: 10px;
+  }
+}
