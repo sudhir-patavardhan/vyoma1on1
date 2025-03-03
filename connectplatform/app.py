@@ -171,32 +171,32 @@ def create_booking(event):
     """Creates a booking in the Bookings table."""
     try:
         body = json.loads(event['body'])
-        
+
         # Validate required fields
         required_fields = ['student_id', 'availability_id']
         for field in required_fields:
             if field not in body:
                 return response_with_cors(400, {"message": f"Missing required field: {field}"})
-        
+
         # Generate a unique booking ID
         booking_id = f"booking-{uuid.uuid4()}"
         timestamp = datetime.utcnow().isoformat()
-        
+
         # Get the availability record
         availability_table = dynamodb.Table(AVAILABILITY_TABLE)
         availability_response = availability_table.get_item(
             Key={'availability_id': body['availability_id']}
         )
-        
+
         if 'Item' not in availability_response:
             return response_with_cors(404, {"message": "Availability slot not found"})
-            
+
         availability = availability_response['Item']
-        
+
         # Check if the slot is available
         if availability['status'] != 'available':
             return response_with_cors(400, {"message": "This time slot is no longer available"})
-        
+
         # Create the booking
         new_booking = {
             'booking_id': booking_id,
@@ -208,16 +208,16 @@ def create_booking(event):
             'status': 'booked',
             'created_at': timestamp,
         }
-        
+
         # Add any additional booking data
         for key, value in body.items():
             if key not in new_booking and key != 'availability_id':
                 new_booking[key] = value
-        
+
         # Create the booking
         bookings_table = dynamodb.Table(BOOKINGS_TABLE)
         bookings_table.put_item(Item=new_booking)
-        
+
         # Update the availability status to 'booked'
         availability_table.update_item(
             Key={'availability_id': body['availability_id']},
@@ -229,9 +229,9 @@ def create_booking(event):
                 ':status': 'booked'
             }
         )
-        
+
         return response_with_cors(201, {
-            "message": "Booking created successfully", 
+            "message": "Booking created successfully",
             "booking_id": booking_id,
             "booking": new_booking
         })
@@ -243,7 +243,7 @@ def get_bookings(event):
     try:
         query_params = event.get('queryStringParameters', {})
         table = dynamodb.Table(BOOKINGS_TABLE)
-        
+
         # Check if filtering by student_id or teacher_id
         if 'student_id' in query_params:
             # Get bookings for a specific student
@@ -261,7 +261,7 @@ def get_bookings(event):
             # Get all bookings
             response = table.scan()
             bookings = response['Items']
-        
+
         return response_with_cors(200, convert_decimal(bookings))
     except ClientError as e:
         return response_with_cors(500, {"message": "Error fetching bookings.", "error": str(e)})
@@ -271,17 +271,17 @@ def create_availability(event):
     """Creates a new availability slot for a teacher."""
     try:
         body = json.loads(event['body'])
-        
+
         # Validate required fields
         required_fields = ['teacher_id', 'start_time', 'end_time', 'topic']
         for field in required_fields:
             if field not in body:
                 return response_with_cors(400, {"message": f"Missing required field: {field}"})
-        
+
         # Generate a unique availability ID
         availability_id = f"avail-{uuid.uuid4()}"
         timestamp = datetime.utcnow().isoformat()
-        
+
         # Create the availability record
         new_availability = {
             'availability_id': availability_id,
@@ -293,18 +293,18 @@ def create_availability(event):
             'status': 'available',
             'created_at': timestamp,
         }
-        
+
         # Add any additional availability data
         for key, value in body.items():
             if key not in new_availability:
                 new_availability[key] = value
-        
+
         # Store in DynamoDB
         availability_table = dynamodb.Table(AVAILABILITY_TABLE)
         availability_table.put_item(Item=new_availability)
-        
+
         return response_with_cors(201, {
-            "message": "Availability slot created successfully", 
+            "message": "Availability slot created successfully",
             "availability_id": availability_id,
             "availability": new_availability
         })
@@ -316,7 +316,7 @@ def get_availabilities(event):
     try:
         query_params = event.get('queryStringParameters', {})
         table = dynamodb.Table(AVAILABILITY_TABLE)
-        
+
         # Check if filtering by teacher_id
         if 'teacher_id' in query_params:
             # Get availability for a specific teacher
@@ -330,7 +330,7 @@ def get_availabilities(event):
                 FilterExpression=Attr('status').eq('available')
             )
             availabilities = response['Items']
-        
+
         return response_with_cors(200, convert_decimal(availabilities))
     except ClientError as e:
         return response_with_cors(500, {"message": "Error fetching availability slots.", "error": str(e)})
@@ -339,26 +339,26 @@ def delete_availability(event):
     """Deletes an availability slot."""
     try:
         availability_id = event.get('pathParameters', {}).get('id')
-        
+
         if not availability_id:
             return response_with_cors(400, {"message": "Missing availability ID"})
-        
+
         # Check if the availability exists
         table = dynamodb.Table(AVAILABILITY_TABLE)
         response = table.get_item(Key={'availability_id': availability_id})
-        
+
         if 'Item' not in response:
             return response_with_cors(404, {"message": "Availability slot not found"})
-            
+
         availability = response['Item']
-        
+
         # Only delete if status is 'available'
         if availability['status'] != 'available':
             return response_with_cors(400, {"message": "Cannot delete a booked availability slot"})
-        
+
         # Delete the availability
         table.delete_item(Key={'availability_id': availability_id})
-        
+
         return response_with_cors(200, {"message": "Availability slot deleted successfully"})
     except ClientError as e:
         return response_with_cors(500, {"message": "Error deleting availability slot.", "error": str(e)})
@@ -368,17 +368,17 @@ def create_session(event):
     """Creates a new virtual session."""
     try:
         body = json.loads(event['body'])
-        
+
         # Validate required fields
         required_fields = ['booking_id', 'teacher_id', 'student_id']
         for field in required_fields:
             if field not in body:
                 return response_with_cors(400, {"message": f"Missing required field: {field}"})
-        
+
         # Generate a unique session ID
         session_id = f"session-{uuid.uuid4()}"
         timestamp = datetime.utcnow().isoformat()
-        
+
         # Create the session record
         new_session = {
             'session_id': session_id,
@@ -392,18 +392,18 @@ def create_session(event):
             'shared_documents': [],
             'created_at': timestamp,
         }
-        
+
         # Add any additional session data
         for key, value in body.items():
             if key not in new_session:
                 new_session[key] = value
-        
+
         # Store in DynamoDB
         session_table = dynamodb.Table(SESSION_TABLE)
         session_table.put_item(Item=new_session)
-        
+
         return response_with_cors(201, {
-            "message": "Session created successfully", 
+            "message": "Session created successfully",
             "session_id": session_id,
             "session": new_session
         })
@@ -414,19 +414,19 @@ def get_session(event):
     """Retrieves a specific session."""
     try:
         session_id = event.get('pathParameters', {}).get('id')
-        
+
         if not session_id:
             return response_with_cors(400, {"message": "Missing session ID"})
-        
+
         # Get the session
         table = dynamodb.Table(SESSION_TABLE)
         response = table.get_item(Key={'session_id': session_id})
-        
+
         if 'Item' not in response:
             return response_with_cors(404, {"message": "Session not found"})
-            
+
         session = convert_decimal(response['Item'])
-        
+
         return response_with_cors(200, session)
     except ClientError as e:
         return response_with_cors(500, {"message": "Error fetching session.", "error": str(e)})
@@ -435,24 +435,24 @@ def update_session(event):
     """Updates a session with notes, documents, or recording URL."""
     try:
         session_id = event.get('pathParameters', {}).get('id')
-        
+
         if not session_id:
             return response_with_cors(400, {"message": "Missing session ID"})
-            
+
         body = json.loads(event['body'])
-        
+
         # Get the current session
         table = dynamodb.Table(SESSION_TABLE)
         response = table.get_item(Key={'session_id': session_id})
-        
+
         if 'Item' not in response:
             return response_with_cors(404, {"message": "Session not found"})
-        
+
         # Prepare update expressions based on what's provided
         update_expression = "SET "
         expression_names = {}
         expression_values = {}
-        
+
         # Handle notes (append to existing)
         if 'note' in body:
             new_note = {
@@ -464,7 +464,7 @@ def update_session(event):
             expression_names["#notes"] = "notes"
             expression_values[":empty_list"] = []
             expression_values[":new_note"] = [new_note]
-        
+
         # Handle shared documents (append to existing)
         if 'document' in body:
             new_document = {
@@ -477,26 +477,26 @@ def update_session(event):
             expression_names["#docs"] = "shared_documents"
             expression_values[":empty_list"] = []
             expression_values[":new_doc"] = [new_document]
-        
+
         # Handle recording URL (replace)
         if 'recording_url' in body:
             update_expression += "#rec = :rec, "
             expression_names["#rec"] = "recording_url"
             expression_values[":rec"] = body['recording_url']
-        
+
         # Handle status change
         if 'status' in body:
             update_expression += "#status = :status, "
             expression_names["#status"] = "status"
             expression_values[":status"] = body['status']
-        
+
         # Check if any updates were provided
         if update_expression == "SET ":
             return response_with_cors(400, {"message": "No updates provided"})
-        
+
         # Remove trailing comma and space
         update_expression = update_expression[:-2]
-        
+
         # Update the session
         table.update_item(
             Key={'session_id': session_id},
@@ -505,13 +505,13 @@ def update_session(event):
             ExpressionAttributeValues=expression_values,
             ReturnValues="ALL_NEW"
         )
-        
+
         # Get the updated session
         updated_response = table.get_item(Key={'session_id': session_id})
         updated_session = convert_decimal(updated_response['Item'])
-        
+
         return response_with_cors(200, {
-            "message": "Session updated successfully", 
+            "message": "Session updated successfully",
             "session": updated_session
         })
     except (ClientError, json.JSONDecodeError) as e:
@@ -524,14 +524,14 @@ def generate_presigned_url(event):
         body = json.loads(event.get('body', '{}'))
         file_type = body.get('file_type', 'image/jpeg')
         file_name = body.get('file_name', f"image-{uuid.uuid4()}.jpg")
-        
+
         # Initialize S3 client
         s3_client = boto3.client('s3')
-        
+
         # Define the bucket and key
         bucket_name = 'sessionsred-uploads'  # Update this to your actual S3 bucket name
         key = f"profile-photos/{file_name}"
-        
+
         # Generate pre-signed URL for PUT operation
         presigned_url = s3_client.generate_presigned_url(
             'put_object',
@@ -543,10 +543,10 @@ def generate_presigned_url(event):
             },
             ExpiresIn=300  # URL expires in 5 minutes
         )
-        
+
         # Construct the public URL that will be accessible after upload
         public_url = f"https://{bucket_name}.s3.amazonaws.com/{key}"
-        
+
         return response_with_cors(200, {
             'upload_url': presigned_url,
             'public_url': public_url
@@ -561,16 +561,16 @@ def search_teachers(event):
     try:
         query_params = event.get('queryStringParameters', {})
         topic = query_params.get('topic', '').lower()
-        
+
         if not topic:
             return response_with_cors(400, {"message": "Missing search topic"})
-        
+
         # Search for teachers who offer this topic
         profile_table = dynamodb.Table(PROFILE_TABLE)
         response = profile_table.scan(
             FilterExpression=Attr('role').eq('teacher')
         )
-        
+
         teachers = []
         for teacher in response['Items']:
             # Check if any of the teacher's topics match the search
@@ -578,7 +578,7 @@ def search_teachers(event):
                 teacher_topics = [t.lower() for t in teacher['topics']]
                 if any(topic in t for t in teacher_topics):
                     teachers.append(teacher)
-        
+
         return response_with_cors(200, convert_decimal(teachers))
     except ClientError as e:
         return response_with_cors(500, {"message": "Error searching for teachers.", "error": str(e)})
@@ -628,4 +628,5 @@ def lambda_handler(event, context):
     elif resource == "/presigned-url" and method == "POST":
         return generate_presigned_url(event)
     else:
+        print(resource + ':' + method)
         return response_with_cors(405, {"message": "Method Not Allowed"})
