@@ -517,6 +517,44 @@ def update_session(event):
     except (ClientError, json.JSONDecodeError) as e:
         return response_with_cors(500, {"message": "Error updating session.", "error": str(e)})
 
+# ========== S3 Presigned URLs ==========
+def generate_presigned_url(event):
+    """Generates a pre-signed URL for S3 uploads."""
+    try:
+        body = json.loads(event.get('body', '{}'))
+        file_type = body.get('file_type', 'image/jpeg')
+        file_name = body.get('file_name', f"image-{uuid.uuid4()}.jpg")
+        
+        # Initialize S3 client
+        s3_client = boto3.client('s3')
+        
+        # Define the bucket and key
+        bucket_name = 'sessionsred-uploads'  # Update this to your actual S3 bucket name
+        key = f"profile-photos/{file_name}"
+        
+        # Generate pre-signed URL for PUT operation
+        presigned_url = s3_client.generate_presigned_url(
+            'put_object',
+            Params={
+                'Bucket': bucket_name,
+                'Key': key,
+                'ContentType': file_type,
+                'ACL': 'public-read'
+            },
+            ExpiresIn=300  # URL expires in 5 minutes
+        )
+        
+        # Construct the public URL that will be accessible after upload
+        public_url = f"https://{bucket_name}.s3.amazonaws.com/{key}"
+        
+        return response_with_cors(200, {
+            'upload_url': presigned_url,
+            'public_url': public_url
+        })
+    except Exception as e:
+        print(f"Error generating presigned URL: {str(e)}")
+        return response_with_cors(500, {"message": "Error generating upload URL", "error": str(e)})
+
 # ========== Search ==========
 def search_teachers(event):
     """Searches for teachers based on topic/subject."""
@@ -587,5 +625,7 @@ def lambda_handler(event, context):
         return update_session(event)
     elif resource == "/search/teachers" and method == "GET":
         return search_teachers(event)
+    elif resource == "/presigned-url" and method == "POST":
+        return generate_presigned_url(event)
     else:
         return response_with_cors(405, {"message": "Method Not Allowed"})

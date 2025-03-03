@@ -1,20 +1,8 @@
 import React, { useState, useEffect } from "react";
-import AWS from "aws-sdk";
+import { useAuth } from "react-oidc-context";
 import { FaUpload, FaUser, FaGraduationCap, FaCalendarAlt, FaMapMarkerAlt, FaBook, FaPlus, FaTimes } from "react-icons/fa";
+import { API_BASE_URL } from "../config";
 import "../styles.css";
-
-// Configure AWS S3
-const S3_BUCKET = "your-s3-bucket-name";
-const REGION = "us-east-1";
-
-// Initialize S3 client with IAM credentials (ensure IAM policy allows PutObject)
-AWS.config.update({
-  accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID, // Use environment variables for security
-  secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
-  region: REGION,
-});
-
-const s3 = new AWS.S3();
 
 const ProfileForm = ({ saveUserProfile, profile }) => {
   const [role, setRole] = useState(profile?.role || "");
@@ -122,6 +110,8 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
     }
   };
 
+  const auth = useAuth();
+  
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -140,20 +130,51 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
         throw new Error("Photo must be JPEG, PNG or GIF format");
       }
 
-      const fileName = `${formData.name.replace(/ /g, "_")}_${Date.now()}.${file.name.split('.').pop()}`; // Unique filename for S3
-      const params = {
-        Bucket: S3_BUCKET,
-        Key: `profile-photos/${fileName}`,
-        Body: file,
-        ACL: "public-read", // Set public access to image
-        ContentType: file.type,
-      };
-
-      const uploadResponse = await s3.upload(params).promise();
-      const imageUrl = uploadResponse.Location;
-      setFormData({ ...formData, photo_url: imageUrl });
-      setPhotoPreview(imageUrl);
-      console.log("Photo uploaded successfully:", imageUrl);
+      const fileName = `${formData.name.replace(/ /g, "_") || "user"}_${Date.now()}.${file.name.split('.').pop()}`; // Unique filename for S3
+      
+      // Step 1: Request a pre-signed URL from our backend
+      console.log("Requesting pre-signed URL...");
+      const presignedUrlResponse = await fetch(`${API_BASE_URL}/presigned-url`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.user.access_token}`
+        },
+        body: JSON.stringify({
+          file_type: file.type,
+          file_name: fileName
+        })
+      });
+      
+      if (!presignedUrlResponse.ok) {
+        const errorText = await presignedUrlResponse.text();
+        console.error("Error response from presigned URL endpoint:", errorText);
+        throw new Error("Failed to get upload URL. Please try again.");
+      }
+      
+      const { upload_url, public_url } = await presignedUrlResponse.json();
+      console.log("Received pre-signed URL:", upload_url);
+      
+      // Step 2: Upload the file directly to S3 using the pre-signed URL
+      console.log("Uploading file to S3...");
+      const uploadResponse = await fetch(upload_url, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type
+        }
+      });
+      
+      if (!uploadResponse.ok) {
+        throw new Error(`Failed to upload file: ${uploadResponse.status} ${uploadResponse.statusText}`);
+      }
+      
+      console.log("Upload successful");
+      
+      // Step 3: Update the form with the public URL
+      setFormData({ ...formData, photo_url: public_url });
+      setPhotoPreview(public_url);
+      console.log("Photo uploaded successfully:", public_url);
     } catch (error) {
       console.error("Error uploading photo:", error);
       setSaveError(error.message || "Failed to upload photo. Please try again.");
