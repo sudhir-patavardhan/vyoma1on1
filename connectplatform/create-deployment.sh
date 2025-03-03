@@ -20,7 +20,10 @@ cd ..
 echo "Lambda deployment package created: lambda-deployment.zip"
 
 # Create the S3 bucket if it doesn't exist
-if aws s3api head-bucket --bucket sessions-red-lambda-deployments 2>/dev/null; then
+aws s3api head-bucket --bucket sessions-red-lambda-deployments 2>/dev/null
+BUCKET_EXISTS=$?
+
+if [ $BUCKET_EXISTS -eq 0 ]; then
   echo "S3 bucket already exists"
 else
   echo "Creating S3 bucket..."
@@ -30,6 +33,20 @@ fi
 # Upload deployment package to S3
 echo "Uploading deployment package to S3..."
 aws s3 cp lambda-deployment.zip s3://sessions-red-lambda-deployments/
+
+# Set public read on the bucket for API Gateway to access it
+echo "Setting bucket policy..."
+aws s3api put-bucket-policy --bucket sessions-red-lambda-deployments --policy '{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::sessions-red-lambda-deployments/*"
+    }
+  ]
+}'
 
 # Clean up
 rm -rf deployment

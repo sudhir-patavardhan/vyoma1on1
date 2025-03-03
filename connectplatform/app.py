@@ -529,7 +529,7 @@ def generate_presigned_url(event):
         s3_client = boto3.client('s3')
 
         # Define the bucket and key
-        bucket_name = 'sessionsred-uploads'  # Update this to your actual S3 bucket name
+        bucket_name = 'sessionsred-uploads-prod'  # Production bucket name
         key = f"profile-photos/{file_name}"
 
         # Generate pre-signed URL for PUT operation

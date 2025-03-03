@@ -243,7 +243,7 @@ Resources:
   UploadsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: sessionsred-uploads
+      BucketName: sessionsred-uploads-prod
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders:
