@@ -178,11 +178,25 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SessionsRedApi}/*/*/*"
 
-  # DynamoDB Tables
+  # DynamoDB Tables - Conditional creation based on parameters
+  ServiceCatalogTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Sub "ServiceCatalog-${Stage}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: service_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: service_id
+          KeyType: HASH
+
   UserProfilesTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
     Properties:
-      TableName: UserProfiles
+      TableName: !Sub "UserProfiles-${Stage}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: user_id
@@ -193,8 +207,9 @@ Resources:
 
   TeacherAvailabilityTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
     Properties:
-      TableName: TeacherAvailability
+      TableName: !Sub "TeacherAvailability-${Stage}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: availability_id
@@ -205,8 +220,9 @@ Resources:
 
   BookingsTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
     Properties:
-      TableName: Bookings
+      TableName: !Sub "Bookings-${Stage}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: booking_id
@@ -217,26 +233,15 @@ Resources:
 
   SessionsTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
     Properties:
-      TableName: Sessions
+      TableName: !Sub "Sessions-${Stage}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: session_id
           AttributeType: S
       KeySchema:
         - AttributeName: session_id
-          KeyType: HASH
-
-  ServiceCatalogTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: ServiceCatalog
-      BillingMode: PAY_PER_REQUEST
-      AttributeDefinitions:
-        - AttributeName: service_id
-          AttributeType: S
-      KeySchema:
-        - AttributeName: service_id
           KeyType: HASH
 
   # S3 bucket for user uploads

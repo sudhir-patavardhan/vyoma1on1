@@ -1,6 +1,7 @@
 import json
 import boto3
 import uuid
+import os
 from datetime import datetime
 from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
@@ -10,11 +11,15 @@ from decimal import Decimal
 dynamodb = boto3.resource('dynamodb')
 dynamodb_client = boto3.client('dynamodb')
 
-SERVICE_TABLE = 'ServiceCatalog'
-BOOKINGS_TABLE = 'Bookings'
-PROFILE_TABLE = 'UserProfiles'
-AVAILABILITY_TABLE = 'TeacherAvailability'
-SESSION_TABLE = 'Sessions'
+# Get environment stage, default to prod
+stage = os.environ.get('STAGE', 'prod')
+
+# Create stage-specific table names
+SERVICE_TABLE = f'ServiceCatalog-{stage}'
+BOOKINGS_TABLE = f'Bookings-{stage}'
+PROFILE_TABLE = f'UserProfiles-{stage}'
+AVAILABILITY_TABLE = f'TeacherAvailability-{stage}'
+SESSION_TABLE = f'Sessions-{stage}'
 
 # ========== Utility Functions ==========
 def convert_decimal(obj):
