@@ -1,0 +1,41 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - echo Installing dependencies...
+      - pip install -r connectplatform/requirements.txt
+  
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+  
+  build:
+    commands:
+      - echo "Deploying backend Lambda functions"
+      - cd connectplatform
+      - echo "Creating Lambda deployment package..."
+      - ./create-deployment.sh
+      - echo "Creating/updating CloudFormation stack"
+      - aws cloudformation deploy \
+          --template-file deployment-template.yml \
+          --stack-name sessions-red-api \
+          --parameter-overrides Stage=prod \
+          --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --no-fail-on-empty-changeset \
+          --region us-east-1 || true
+      - cd ..
+  
+  post_build:
+    commands:
+      - echo "Backend deployment completed on `date`"
+
+artifacts:
+  files:
+    - connectplatform/lambda-deployment.zip
+    - connectplatform/deployment-template.yml
+    - appspec.yml
+  discard-paths: no
