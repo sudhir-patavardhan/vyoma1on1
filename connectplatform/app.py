@@ -587,12 +587,15 @@ def search_teachers(event):
 def lambda_handler(event, context):
     """Main Lambda entry point to handle incoming requests."""
     print(f"Received event: {event}")
-
+    
     # Ensure tables exist before processing any request
     ensure_tables_exist()
-
+    
     method = event['httpMethod']
     resource = event.get('resource')
+    
+    # Log the resource and method being handled
+    print(f"Handling request: {resource} [{method}]")
 
     # CORS Preflight Handling
     if method == "OPTIONS":
