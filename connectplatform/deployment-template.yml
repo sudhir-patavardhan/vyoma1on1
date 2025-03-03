@@ -1,5 +1,4 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
 Description: 'Sessions Red API - Connecting students with teachers'
 
 Parameters:
@@ -11,11 +10,6 @@ Parameters:
       - dev
       - test
       - prod
-      
-Globals:
-  Function:
-    Timeout: 30
-    MemorySize: 256
 
 Resources:
   # Lambda function for handling API requests
