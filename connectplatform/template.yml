@@ -11,11 +11,6 @@ Parameters:
       - test
       - prod
 
-Globals:
-  Function:
-    Timeout: 30  # 30 seconds timeout
-    MemorySize: 256  # 256MB of memory
-
 Resources:
   # Lambda function for handling API requests
   SessionsRedFunction:
@@ -244,6 +239,25 @@ Resources:
         - AttributeName: service_id
           KeyType: HASH
 
+  # S3 bucket for user uploads
+  UploadsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: sessionsred-uploads
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - DELETE
+              - HEAD
+            AllowedOrigins:
+              - '*'
+            MaxAge: 3000
+
 Outputs:
   SessionsRedApi:
     Description: "API Gateway endpoint URL for Sessions Red API"
@@ -251,3 +265,6 @@ Outputs:
   SessionsRedFunction:
     Description: "Lambda Function ARN"
     Value: !GetAtt SessionsRedFunction.Arn
+  UploadsBucketName:
+    Description: "S3 bucket for user uploads"
+    Value: !Ref UploadsBucket

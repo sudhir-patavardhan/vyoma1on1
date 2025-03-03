@@ -19,8 +19,10 @@ phases:
       - cd connectplatform
       - echo "Creating Lambda deployment package..."
       - ./create-deployment.sh
+      - echo "Creating updated CloudFormation template"
+      - grep -v "Globals:" deployment-template.yml > fixed-template.yml
       - echo "Creating/updating CloudFormation stack"
-      - aws cloudformation deploy --template-file deployment-template.yml --stack-name sessions-red-api --parameter-overrides Stage=prod --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1 || true
+      - aws cloudformation deploy --template-file fixed-template.yml --stack-name sessions-red-api --parameter-overrides Stage=prod --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1 || true
       - cd ..
   
   post_build:
