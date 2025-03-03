@@ -7,6 +7,7 @@ phases:
     commands:
       - echo Installing dependencies...
       - pip install -r connectplatform/requirements.txt
+      - pip install aws-sam-cli
   
   pre_build:
     commands:
@@ -20,13 +21,7 @@ phases:
       - echo "Creating Lambda deployment package..."
       - ./create-deployment.sh
       - echo "Creating/updating CloudFormation stack"
-      - aws cloudformation deploy \
-          --template-file deployment-template.yml \
-          --stack-name sessions-red-api \
-          --parameter-overrides Stage=prod \
-          --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-          --no-fail-on-empty-changeset \
-          --region us-east-1 || true
+      - sam deploy --template-file deployment-template.yml --stack-name sessions-red-api --parameter-overrides Stage=prod --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1 || true
       - cd ..
   
   post_build:
