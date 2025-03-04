@@ -1,5 +1,5 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Sessions Red API - Connecting students with teachers'
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Sessions Red API - Connecting students with teachers"
 
 Parameters:
   Stage:
@@ -16,9 +16,10 @@ Resources:
   SessionsRedFunction:
     Type: AWS::Lambda::Function
     Properties:
+      FunctionName: ConnectPlatformFunctions
       Handler: app.lambda_handler
       Runtime: python3.11
-      Code: 
+      Code:
         S3Bucket: sessions-red-lambda-deployments
         S3Key: lambda-deployment.zip
       Environment:
@@ -27,7 +28,7 @@ Resources:
       MemorySize: 256
       Timeout: 30
       Role: !GetAtt LambdaExecutionRole.Arn
-  
+
   # API Gateway for the Lambda function
   SessionsRedApi:
     Type: AWS::ApiGateway::RestApi
@@ -37,40 +38,40 @@ Resources:
       EndpointConfiguration:
         Types:
           - REGIONAL
-  
+
   # Lambda execution role
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
               Service: lambda.amazonaws.com
-            Action: 'sts:AssumeRole'
+            Action: "sts:AssumeRole"
       ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
       Policies:
         - PolicyName: DynamoDBAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
-                  - 'dynamodb:*'
-                Resource: '*'
+                  - "dynamodb:*"
+                Resource: "*"
         - PolicyName: S3Access
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
-                  - 's3:GetObject'
-                  - 's3:PutObject'
-                  - 's3:ListBucket'
-                Resource: '*'
-  
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                  - "s3:ListBucket"
+                Resource: "*"
+
   # API Gateway deployment
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
@@ -82,7 +83,7 @@ Resources:
     Properties:
       RestApiId: !Ref SessionsRedApi
       StageName: !Ref Stage
-  
+
   # API Gateway root resource
   ApiRootMethod:
     Type: AWS::ApiGateway::Method
@@ -95,7 +96,7 @@ Resources:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
         Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SessionsRedFunction.Arn}/invocations"
-        
+
   # API Gateway root OPTIONS method for CORS
   ApiRootOptionsMethod:
     Type: AWS::ApiGateway::Method
@@ -121,15 +122,15 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
             method.response.header.Access-Control-Allow-Origin: true
-  
+
   # API Gateway proxy resource
   ApiProxyResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       RestApiId: !Ref SessionsRedApi
       ParentId: !GetAtt SessionsRedApi.RootResourceId
-      PathPart: '{proxy+}'
-  
+      PathPart: "{proxy+}"
+
   # API Gateway proxy method
   ApiProxyMethod:
     Type: AWS::ApiGateway::Method
@@ -142,7 +143,7 @@ Resources:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
         Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SessionsRedFunction.Arn}/invocations"
-  
+
   # API Gateway proxy OPTIONS method for CORS
   ApiProxyOptionsMethod:
     Type: AWS::ApiGateway::Method
@@ -168,12 +169,12 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
             method.response.header.Access-Control-Allow-Origin: true
-  
+
   # Lambda permission for API Gateway
   LambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      Action: 'lambda:InvokeFunction'
+      Action: "lambda:InvokeFunction"
       FunctionName: !Ref SessionsRedFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SessionsRedApi}/*/*/*"
@@ -252,7 +253,7 @@ Resources:
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders:
-              - '*'
+              - "*"
             AllowedMethods:
               - GET
               - PUT
@@ -260,7 +261,7 @@ Resources:
               - DELETE
               - HEAD
             AllowedOrigins:
-              - '*'
+              - "*"
             MaxAge: 3000
 
 Outputs:
