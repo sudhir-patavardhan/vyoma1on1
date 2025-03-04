@@ -84,8 +84,7 @@ def ensure_tables_exist():
         AVAILABILITY_TABLE,
         [{'AttributeName': 'availability_id', 'KeyType': 'HASH'}],
         [
-            {'AttributeName': 'availability_id', 'AttributeType': 'S'},
-            {'AttributeName': 'teacher_id', 'AttributeType': 'S'}
+            {'AttributeName': 'availability_id', 'AttributeType': 'S'}
         ]
     )
     create_table_if_not_exists(
