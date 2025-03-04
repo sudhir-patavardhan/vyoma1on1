@@ -98,12 +98,51 @@ def ensure_tables_exist():
 def get_user_profile(event):
     """Fetches a user profile from the UserProfiles table."""
     try:
-        user_id = event.get('queryStringParameters', {}).get('user_id')
+        # Log the full event for debugging
+        print(f"GET profile event: {json.dumps(event)}")
+        
+        # Get query parameters - handle both regular and path-based API Gateway configs
+        query_params = event.get('queryStringParameters', {}) or {}
+        
+        # Check if query parameters is None (can happen with API Gateway)
+        if query_params is None:
+            query_params = {}
+            
+        user_id = query_params.get('user_id')
+        
+        # If user_id is not in query parameters, check if it's in pathParameters
+        if not user_id and event.get('pathParameters'):
+            user_id = event.get('pathParameters', {}).get('user_id')
+            
+        # As a last resort, try to extract from the path directly
+        if not user_id and 'path' in event:
+            path_parts = event['path'].split('/')
+            if len(path_parts) > 2 and path_parts[1] == 'profiles':
+                user_id = path_parts[2]  # Assuming path format like /profiles/{user_id}
+                
+        print(f"Looking up profile for user_id: {user_id}")
+                
         if not user_id:
             return response_with_cors(400, {"message": "user_id is required to fetch the profile."})
 
-        table = dynamodb.Table(PROFILE_TABLE)
-        response = table.get_item(Key={'user_id': user_id})
+        try:
+            # Try with the new table name format first
+            table = dynamodb.Table(PROFILE_TABLE)
+            response = table.get_item(Key={'user_id': user_id})
+            
+            # If no item found and we're using the new table naming convention, try the old table
+            if 'Item' not in response and '-' in PROFILE_TABLE:
+                old_table_name = 'UserProfiles'  # Try the original table name
+                print(f"Item not found in {PROFILE_TABLE}, trying {old_table_name}")
+                old_table = dynamodb.Table(old_table_name)
+                response = old_table.get_item(Key={'user_id': user_id})
+        except Exception as table_error:
+            print(f"Error accessing table {PROFILE_TABLE}: {str(table_error)}")
+            # If new table doesn't exist, fall back to old table
+            old_table_name = 'UserProfiles'
+            print(f"Trying fallback table: {old_table_name}")
+            old_table = dynamodb.Table(old_table_name)
+            response = old_table.get_item(Key={'user_id': user_id})
 
         if 'Item' not in response:
             return response_with_cors(404, {"message": "User profile not found."})
@@ -111,8 +150,10 @@ def get_user_profile(event):
         profile_data = convert_decimal(response['Item'])
         return response_with_cors(200, {"profile": profile_data})
 
-    except ClientError as e:
-        return response_with_cors(500, {"message": "Error fetching profile.", "error": str(e)})
+    except Exception as e:
+        error_msg = str(e)
+        print(f"Error in get_user_profile: {error_msg}")
+        return response_with_cors(500, {"message": "Error fetching profile.", "error": error_msg})
 
 def create_user_profile(event):
     """Creates or updates a user profile in the UserProfiles table."""
@@ -596,8 +637,38 @@ def lambda_handler(event, context):
     # Ensure tables exist before processing any request
     ensure_tables_exist()
     
+    # Handle direct invocations or API Gateway proxied requests
+    if 'httpMethod' not in event:
+        # This is likely a direct Lambda invocation, handle accordingly
+        print("Direct Lambda invocation detected")
+        return response_with_cors(400, {"message": "API Gateway proxy request expected."})
+    
     method = event['httpMethod']
     resource = event.get('resource')
+    
+    # Handle case when resource is not present but path is (older API Gateway config)
+    if not resource and 'path' in event:
+        path = event['path']
+        print(f"Resource not found, using path: {path}")
+        # Map path to resource pattern
+        if path.startswith('/profiles'):
+            resource = "/profiles"
+        elif path.startswith('/services'):
+            resource = "/services"
+        elif path.startswith('/bookings'):
+            resource = "/bookings"
+        elif path.startswith('/availability') and len(path.split('/')) > 2:
+            resource = "/availability/{id}"
+        elif path.startswith('/availability'):
+            resource = "/availability"
+        elif path.startswith('/sessions') and len(path.split('/')) > 2:
+            resource = "/sessions/{id}"
+        elif path.startswith('/sessions'):
+            resource = "/sessions"
+        elif path.startswith('/search/teachers'):
+            resource = "/search/teachers"
+        elif path.startswith('/presigned-url'):
+            resource = "/presigned-url"
     
     # Log the resource and method being handled
     print(f"Handling request: {resource} [{method}]")
