@@ -53,15 +53,21 @@ def create_table_if_not_exists(table_name, key_schema, attribute_definitions):
         print(f"Table {table_name} already exists.")
     except ClientError as e:
         if e.response['Error']['Code'] == 'ResourceNotFoundException':
-            print(f"Creating table: {table_name}")
-            table = dynamodb.create_table(
-                TableName=table_name,
-                KeySchema=key_schema,
-                AttributeDefinitions=attribute_definitions,
-                ProvisionedThroughput={'ReadCapacityUnits': 5, 'WriteCapacityUnits': 5}
-            )
-            table.wait_until_exists()
-            print(f"Table {table_name} created successfully.")
+            try:
+                print(f"Creating table: {table_name}")
+                table = dynamodb.create_table(
+                    TableName=table_name,
+                    KeySchema=key_schema,
+                    AttributeDefinitions=attribute_definitions,
+                    BillingMode='PAY_PER_REQUEST'
+                )
+                table.wait_until_exists()
+                print(f"Table {table_name} created successfully.")
+            except Exception as create_error:
+                print(f"Error creating table {table_name}: {str(create_error)}")
+                # Don't re-raise to allow other tables to be created
+        else:
+            print(f"Error checking table {table_name}: {str(e)}")
 
 def ensure_tables_exist():
     """Ensures all required DynamoDB tables exist."""
@@ -633,78 +639,83 @@ def lambda_handler(event, context):
     """Main Lambda entry point to handle incoming requests."""
     print(f"Received event: {event}")
     
-    # Ensure tables exist before processing any request
-    ensure_tables_exist()
+    try:
+        # Ensure tables exist before processing any request
+        ensure_tables_exist()
+        
+        # Handle direct invocations or API Gateway proxied requests
+        if 'httpMethod' not in event:
+            # This is likely a direct Lambda invocation, handle accordingly
+            print("Direct Lambda invocation detected")
+            return response_with_cors(400, {"message": "API Gateway proxy request expected."})
     
-    # Handle direct invocations or API Gateway proxied requests
-    if 'httpMethod' not in event:
-        # This is likely a direct Lambda invocation, handle accordingly
-        print("Direct Lambda invocation detected")
-        return response_with_cors(400, {"message": "API Gateway proxy request expected."})
-    
-    method = event['httpMethod']
-    resource = event.get('resource')
-    
-    # Handle case when resource is not present but path is (older API Gateway config)
-    if not resource and 'path' in event:
-        path = event['path']
-        print(f"Resource not found, using path: {path}")
-        # Map path to resource pattern
-        if path.startswith('/profiles'):
-            resource = "/profiles"
-        elif path.startswith('/services'):
-            resource = "/services"
-        elif path.startswith('/bookings'):
-            resource = "/bookings"
-        elif path.startswith('/availability') and len(path.split('/')) > 2:
-            resource = "/availability/{id}"
-        elif path.startswith('/availability'):
-            resource = "/availability"
-        elif path.startswith('/sessions') and len(path.split('/')) > 2:
-            resource = "/sessions/{id}"
-        elif path.startswith('/sessions'):
-            resource = "/sessions"
-        elif path.startswith('/search/teachers'):
-            resource = "/search/teachers"
-        elif path.startswith('/presigned-url'):
-            resource = "/presigned-url"
-    
-    # Log the resource and method being handled
-    print(f"Handling request: {resource} [{method}]")
+        method = event['httpMethod']
+        resource = event.get('resource')
+        
+        # Handle case when resource is not present but path is (older API Gateway config)
+        if not resource and 'path' in event:
+            path = event['path']
+            print(f"Resource not found, using path: {path}")
+            # Map path to resource pattern
+            if path.startswith('/profiles'):
+                resource = "/profiles"
+            elif path.startswith('/services'):
+                resource = "/services"
+            elif path.startswith('/bookings'):
+                resource = "/bookings"
+            elif path.startswith('/availability') and len(path.split('/')) > 2:
+                resource = "/availability/{id}"
+            elif path.startswith('/availability'):
+                resource = "/availability"
+            elif path.startswith('/sessions') and len(path.split('/')) > 2:
+                resource = "/sessions/{id}"
+            elif path.startswith('/sessions'):
+                resource = "/sessions"
+            elif path.startswith('/search/teachers'):
+                resource = "/search/teachers"
+            elif path.startswith('/presigned-url'):
+                resource = "/presigned-url"
+        
+        # Log the resource and method being handled
+        print(f"Handling request: {resource} [{method}]")
 
-    # CORS Preflight Handling
-    if method == "OPTIONS":
-        return response_with_cors(200, {"message": "CORS preflight successful"})
+        # CORS Preflight Handling
+        if method == "OPTIONS":
+            return response_with_cors(200, {"message": "CORS preflight successful"})
 
-    # Routing based on resource and method
-    if resource == "/profiles" and method == "GET":
-        return get_user_profile(event)
-    elif resource == "/profiles" and method == "POST":
-        return create_user_profile(event)
-    elif resource == "/services" and method == "POST":
-        return create_service(event)
-    elif resource == "/services" and method == "GET":
-        return get_services(event)
-    elif resource == "/bookings" and method == "POST":
-        return create_booking(event)
-    elif resource == "/bookings" and method == "GET":
-        return get_bookings(event)
-    elif resource == "/availability" and method == "POST":
-        return create_availability(event)
-    elif resource == "/availability" and method == "GET":
-        return get_availabilities(event)
-    elif resource == "/availability/{id}" and method == "DELETE":
-        return delete_availability(event)
-    elif resource == "/sessions" and method == "POST":
-        return create_session(event)
-    elif resource == "/sessions/{id}" and method == "GET":
-        return get_session(event)
-    elif resource == "/sessions/{id}" and method == "PUT":
-        return update_session(event)
-    elif resource == "/search/teachers" and method == "GET":
-        return search_teachers(event)
-    elif resource == "/presigned-url" and method == "POST":
-        return generate_presigned_url(event)
-    else:
-        print(resource + ':' + method)
-        return response_with_cors(405, {"message": "Method Not Allowed"})
+        # Routing based on resource and method
+        if resource == "/profiles" and method == "GET":
+            return get_user_profile(event)
+        elif resource == "/profiles" and method == "POST":
+            return create_user_profile(event)
+        elif resource == "/services" and method == "POST":
+            return create_service(event)
+        elif resource == "/services" and method == "GET":
+            return get_services(event)
+        elif resource == "/bookings" and method == "POST":
+            return create_booking(event)
+        elif resource == "/bookings" and method == "GET":
+            return get_bookings(event)
+        elif resource == "/availability" and method == "POST":
+            return create_availability(event)
+        elif resource == "/availability" and method == "GET":
+            return get_availabilities(event)
+        elif resource == "/availability/{id}" and method == "DELETE":
+            return delete_availability(event)
+        elif resource == "/sessions" and method == "POST":
+            return create_session(event)
+        elif resource == "/sessions/{id}" and method == "GET":
+            return get_session(event)
+        elif resource == "/sessions/{id}" and method == "PUT":
+            return update_session(event)
+        elif resource == "/search/teachers" and method == "GET":
+            return search_teachers(event)
+        elif resource == "/presigned-url" and method == "POST":
+            return generate_presigned_url(event)
+        else:
+            print(resource + ':' + method)
+            return response_with_cors(405, {"message": "Method Not Allowed"})
+    
+    except Exception as e:
+        print(f"Unhandled exception in lambda_handler: {str(e)}")
+        return response_with_cors(500, {"message": "Internal server error", "error": str(e)})
