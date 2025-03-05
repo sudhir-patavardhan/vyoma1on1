@@ -77,19 +77,20 @@ else
 fi
 echo "Template updated with version identifier v${TIMESTAMP_VERSION}"
 
-# Set public read on the bucket for API Gateway to access it
-echo "Setting bucket policy..."
-aws s3api put-bucket-policy --bucket sessions-red-lambda-deployments --policy '{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::sessions-red-lambda-deployments/*"
-    }
-  ]
-}'
+# No need to set public read on the bucket - Lambda can access it with IAM role
+echo "Skipping bucket policy - Lambda has IAM access to S3"
+# The following policy is removed because it conflicts with S3 Block Public Access settings
+# aws s3api put-bucket-policy --bucket sessions-red-lambda-deployments --policy '{
+#   "Version": "2012-10-17",
+#   "Statement": [
+#     {
+#       "Effect": "Allow", 
+#       "Principal": "*",
+#       "Action": "s3:GetObject",
+#       "Resource": "arn:aws:s3:::sessions-red-lambda-deployments/*"
+#     }
+#   ]
+# }'
 
 # Clean up
 rm -rf deployment
