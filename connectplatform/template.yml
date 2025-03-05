@@ -25,6 +25,7 @@ Resources:
       Environment:
         Variables:
           STAGE: !Ref Stage
+          DEPLOY_TIMESTAMP: !Ref AWS::StackName # This forces redeployment on every CloudFormation deployment
       MemorySize: 256
       Timeout: 30
       Role: !GetAtt LambdaExecutionRole.Arn

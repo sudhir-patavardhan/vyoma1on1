@@ -30,22 +30,52 @@ else
   aws s3api create-bucket --bucket sessions-red-lambda-deployments --region us-east-1
 fi
 
+# Add metadata to CloudFormation template to force Lambda update
+echo "Adding CodeVersion metadata to Lambda function..."
+FUNCTION_VERSION=$(date +%s)
+echo "Function version: $FUNCTION_VERSION"
+
 # Upload deployment package to S3 with timestamp
 TIMESTAMP=$(date +%Y%m%d%H%M%S)
 S3_KEY="lambda-deployment-${TIMESTAMP}.zip"
 echo "Uploading deployment package to S3 with key: ${S3_KEY}..."
 aws s3 cp lambda-deployment.zip "s3://sessions-red-lambda-deployments/${S3_KEY}"
 
-# Update template to use the new S3 key
-echo "Updating deployment template with new S3 key..."
+# Update template to use the new S3 key and force Lambda update
+echo "Updating deployment template with new S3 key and adding version identifier..."
+TIMESTAMP_VERSION=$(date +%Y%m%d%H%M%S)
+
 # Use sed differently depending on OS (macOS or Linux)
 if [[ "$OSTYPE" == "darwin"* ]]; then
   # macOS requires an empty string after -i for in-place editing
   sed -i '' "s|S3Key: lambda-deployment.zip|S3Key: ${S3_KEY}|g" deployment-template.yml
+  # Add/update a version identifier to Lambda resource to force update
+  if grep -q "Description:" deployment-template.yml; then
+    # Update existing description
+    sed -i '' "s|Description:.*|Description: 'Sessions Red API - Connecting students with teachers - v${TIMESTAMP_VERSION}'|g" deployment-template.yml
+  else
+    # Add description after AWSTemplateFormatVersion
+    sed -i '' "s|AWSTemplateFormatVersion:.*|AWSTemplateFormatVersion: '2010-09-09'\nDescription: 'Sessions Red API - Connecting students with teachers - v${TIMESTAMP_VERSION}'|g" deployment-template.yml
+  fi
+  
+  # Also update the deployment timestamp in environment variables to force Lambda update
+  sed -i '' "s|DEPLOY_TIMESTAMP: !Ref AWS::StackName|DEPLOY_TIMESTAMP: '${TIMESTAMP_VERSION}'|g" deployment-template.yml
 else
   # Linux version
   sed -i "s|S3Key: lambda-deployment.zip|S3Key: ${S3_KEY}|g" deployment-template.yml
+  # Add/update a version identifier to Lambda resource to force update
+  if grep -q "Description:" deployment-template.yml; then
+    # Update existing description
+    sed -i "s|Description:.*|Description: 'Sessions Red API - Connecting students with teachers - v${TIMESTAMP_VERSION}'|g" deployment-template.yml
+  else
+    # Add description after AWSTemplateFormatVersion
+    sed -i "s|AWSTemplateFormatVersion:.*|AWSTemplateFormatVersion: '2010-09-09'\nDescription: 'Sessions Red API - Connecting students with teachers - v${TIMESTAMP_VERSION}'|g" deployment-template.yml
+  fi
+  
+  # Also update the deployment timestamp in environment variables to force Lambda update
+  sed -i "s|DEPLOY_TIMESTAMP: !Ref AWS::StackName|DEPLOY_TIMESTAMP: '${TIMESTAMP_VERSION}'|g" deployment-template.yml
 fi
+echo "Template updated with version identifier v${TIMESTAMP_VERSION}"
 
 # Set public read on the bucket for API Gateway to access it
 echo "Setting bucket policy..."
