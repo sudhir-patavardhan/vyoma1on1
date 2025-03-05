@@ -34,17 +34,22 @@ def convert_decimal(obj):
 
 def response_with_cors(status_code, body):
     """Utility to return responses with CORS headers."""
-    return {
+    response = {
         "statusCode": status_code,
         "headers": {
             "Access-Control-Allow-Origin": "*",  # Allow any origin for development, restrict to domain in production
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token",
-            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Credentials": "true", 
             "Content-Type": "application/json"
         },
         "body": json.dumps(body)
     }
+    
+    # Log the response for debugging
+    print(f"Response: {json.dumps(response)}")
+    
+    return response
 
 def create_table_if_not_exists(table_name, key_schema, attribute_definitions):
     """Creates a DynamoDB table if it doesn't already exist."""
@@ -157,7 +162,9 @@ def get_user_profile(event):
         try:
             # Try with the new table name format first
             table = dynamodb.Table(PROFILE_TABLE)
+            print(f"Trying to get user profile from table: {PROFILE_TABLE}")
             response = table.get_item(Key={'user_id': user_id})
+            print(f"Get user response from {PROFILE_TABLE}: {json.dumps(response, default=str)}")
             
             # If no item found and we're using the new table naming convention, try the old table
             if 'Item' not in response and '-' in PROFILE_TABLE:
@@ -165,6 +172,7 @@ def get_user_profile(event):
                 print(f"Item not found in {PROFILE_TABLE}, trying {old_table_name}")
                 old_table = dynamodb.Table(old_table_name)
                 response = old_table.get_item(Key={'user_id': user_id})
+                print(f"Get user response from {old_table_name}: {json.dumps(response, default=str)}")
         except Exception as table_error:
             print(f"Error accessing table {PROFILE_TABLE}: {str(table_error)}")
             # If new table doesn't exist, fall back to old table
@@ -172,6 +180,7 @@ def get_user_profile(event):
             print(f"Trying fallback table: {old_table_name}")
             old_table = dynamodb.Table(old_table_name)
             response = old_table.get_item(Key={'user_id': user_id})
+            print(f"Get user response from fallback {old_table_name}: {json.dumps(response, default=str)}")
 
         if 'Item' not in response:
             return response_with_cors(404, {"message": "User profile not found."})
@@ -661,7 +670,8 @@ def search_teachers(event):
 # ========== Lambda Handler ==========
 def lambda_handler(event, context):
     """Main Lambda entry point to handle incoming requests."""
-    print(f"Received event: {event}")
+    print(f"Received event: {json.dumps(event, default=str)}")
+    print(f"Available tables in DynamoDB: {[table.name for table in dynamodb.tables.all()]}")
     
     try:
         # Ensure tables exist before processing any request
