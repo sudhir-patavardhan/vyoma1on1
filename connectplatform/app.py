@@ -46,87 +46,18 @@ def response_with_cors(status_code, body):
         "body": json.dumps(body)
     }
     
-    # Log the response for debugging
-    print(f"Response: {json.dumps(response)}")
+    # Log only status code and basic info for production
+    if status_code >= 400:
+        # Log errors in more detail
+        print(f"Error response {status_code}: {json.dumps(body)}")
+    else:
+        # Just log success status
+        print(f"Success response {status_code}")
     
     return response
 
-def create_table_if_not_exists(table_name, key_schema, attribute_definitions):
-    """Creates a DynamoDB table if it doesn't already exist."""
-    try:
-        dynamodb_client.describe_table(TableName=table_name)
-        print(f"Table {table_name} already exists.")
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'ResourceNotFoundException':
-            try:
-                print(f"Creating table: {table_name}")
-                table = dynamodb.create_table(
-                    TableName=table_name,
-                    KeySchema=key_schema,
-                    AttributeDefinitions=attribute_definitions,
-                    BillingMode='PAY_PER_REQUEST'
-                )
-                table.wait_until_exists()
-                print(f"Table {table_name} created successfully.")
-            except Exception as create_error:
-                print(f"Error creating table {table_name}: {str(create_error)}")
-                # Don't re-raise to allow other tables to be created
-        else:
-            print(f"Error checking table {table_name}: {str(e)}")
-
-# DISABLE TABLE CREATION - Tables should be created by CloudFormation, not runtime code
-def ensure_tables_exist():
-    """This function is disabled - tables should be created by CloudFormation."""
-    # Skip table creation entirely - it's causing runtime errors and should be handled by CloudFormation
-    print("Table creation is disabled - tables should be created by CloudFormation")
-    return
-    
-    # The following code is disabled to prevent validation errors
-    """
-    try:
-        # Detect if tables already exist, don't create them
-        # This is a temporary solution to avoid the validation errors
-        table_names = [table.name for table in dynamodb.tables.all()]
-        print(f"Existing tables: {table_names}")
-        
-        # If we have access to existing tables, assume they're set up correctly
-        # and skip creation for now until a proper fix can be deployed
-        if table_names:
-            print("Tables already exist, skipping table creation")
-            return
-            
-        # Only proceed if we don't see any tables
-        create_table_if_not_exists(
-            SERVICE_TABLE,
-            [{'AttributeName': 'service_id', 'KeyType': 'HASH'}],
-            [{'AttributeName': 'service_id', 'AttributeType': 'S'}]
-        )
-        create_table_if_not_exists(
-            BOOKINGS_TABLE,
-            [{'AttributeName': 'booking_id', 'KeyType': 'HASH'}],
-            [{'AttributeName': 'booking_id', 'AttributeType': 'S'}]
-        )
-        create_table_if_not_exists(
-            PROFILE_TABLE,
-            [{'AttributeName': 'user_id', 'KeyType': 'HASH'}],
-            [{'AttributeName': 'user_id', 'AttributeType': 'S'}]
-        )
-        create_table_if_not_exists(
-            AVAILABILITY_TABLE,
-            [{'AttributeName': 'availability_id', 'KeyType': 'HASH'}],
-            [
-                {'AttributeName': 'availability_id', 'AttributeType': 'S'}
-            ]
-        )
-        create_table_if_not_exists(
-            SESSION_TABLE,
-            [{'AttributeName': 'session_id', 'KeyType': 'HASH'}],
-            [{'AttributeName': 'session_id', 'AttributeType': 'S'}]
-        )
-    except Exception as e:
-        print(f"Error in ensure_tables_exist: {str(e)}")
-        # Continue execution even if table creation fails
-    """
+# Tables are created by CloudFormation, not by Lambda code
+# This improves Lambda cold-start performance and separates concerns
 
 # ========== Profile Management ==========
 def get_user_profile(event):
@@ -160,27 +91,13 @@ def get_user_profile(event):
             return response_with_cors(400, {"message": "user_id is required to fetch the profile."})
 
         try:
-            # Try with the new table name format first
+            # Get user profile from the stage-specific table
             table = dynamodb.Table(PROFILE_TABLE)
-            print(f"Trying to get user profile from table: {PROFILE_TABLE}")
+            print(f"Looking up user profile in table: {PROFILE_TABLE}")
             response = table.get_item(Key={'user_id': user_id})
-            print(f"Get user response from {PROFILE_TABLE}: {json.dumps(response, default=str)}")
-            
-            # If no item found and we're using the new table naming convention, try the old table
-            if 'Item' not in response and '-' in PROFILE_TABLE:
-                old_table_name = 'UserProfiles'  # Try the original table name
-                print(f"Item not found in {PROFILE_TABLE}, trying {old_table_name}")
-                old_table = dynamodb.Table(old_table_name)
-                response = old_table.get_item(Key={'user_id': user_id})
-                print(f"Get user response from {old_table_name}: {json.dumps(response, default=str)}")
         except Exception as table_error:
             print(f"Error accessing table {PROFILE_TABLE}: {str(table_error)}")
-            # If new table doesn't exist, fall back to old table
-            old_table_name = 'UserProfiles'
-            print(f"Trying fallback table: {old_table_name}")
-            old_table = dynamodb.Table(old_table_name)
-            response = old_table.get_item(Key={'user_id': user_id})
-            print(f"Get user response from fallback {old_table_name}: {json.dumps(response, default=str)}")
+            return response_with_cors(500, {"message": "Error accessing user profiles database.", "error": str(table_error)})
 
         if 'Item' not in response:
             return response_with_cors(404, {"message": "User profile not found."})
@@ -670,13 +587,10 @@ def search_teachers(event):
 # ========== Lambda Handler ==========
 def lambda_handler(event, context):
     """Main Lambda entry point to handle incoming requests."""
-    print(f"Received event: {json.dumps(event, default=str)}")
-    print(f"Available tables in DynamoDB: {[table.name for table in dynamodb.tables.all()]}")
+    # Log only essential information to reduce CloudWatch verbosity
+    print(f"Received request: {event.get('path', '')} [{event.get('httpMethod', 'DIRECT')}]")
     
     try:
-        # Ensure tables exist before processing any request
-        ensure_tables_exist()
-        
         # Handle direct invocations or API Gateway proxied requests
         if 'httpMethod' not in event:
             # This is likely a direct Lambda invocation, handle accordingly
