@@ -122,31 +122,83 @@ def get_user_profile(event):
 def create_user_profile(event):
     """Creates or updates a user profile in the UserProfiles table."""
     try:
-        body = json.loads(event['body'])
+        print(f"Processing profile creation request: {json.dumps(event, default=str)}")
+        
+        # Check if the body exists and is not empty
+        if not event.get('body'):
+            print("Error: Empty request body")
+            return response_with_cors(400, {"message": "Request body is required."})
+            
+        # Parse the body with error handling
+        try:
+            body = json.loads(event['body'])
+            print(f"Parsed request body: {json.dumps(body, default=str)}")
+        except json.JSONDecodeError as json_error:
+            print(f"Error decoding JSON body: {str(json_error)}, Body: {event.get('body', 'None')}")
+            return response_with_cors(400, {"message": "Invalid JSON in request body."})
+        
+        # Get user_id and role from body
         user_id = body.get('user_id')
-        profile_data = body.get('profile_data', {})
+        role = body.get('role')
+        
+        # Get profile data, which could be direct or nested
+        if 'profile_data' in body:
+            # Frontend sends nested profile_data
+            profile_data = body.get('profile_data', {})
+        else:
+            # Direct profile data without nesting
+            profile_data = body
+            
+        print(f"Profile creation for user_id: {user_id}, role: {role}, data: {json.dumps(profile_data, default=str)}")
 
         if not user_id:
+            print("Error: Missing user_id in request")
             return response_with_cors(400, {"message": "user_id is required to create or update profile."})
 
+        # Create profile item with timestamps
         timestamp = datetime.utcnow().isoformat()
         profile_item = {
             'user_id': user_id,
             'created_at': timestamp,
             'updated_at': timestamp,
-            **profile_data
         }
+        
+        # Add role if provided
+        if role:
+            profile_item['role'] = role
+        
+        # Add all other profile data
+        for key, value in profile_data.items():
+            if key not in ['user_id', 'created_at', 'updated_at'] and key != 'profile_data':
+                profile_item[key] = value
 
+        # Check if profile already exists
         table = dynamodb.Table(PROFILE_TABLE)
-        existing_profile = table.get_item(Key={'user_id': user_id}).get('Item')
-
-        # If profile exists, retain the original creation timestamp
-        if existing_profile:
-            profile_item['created_at'] = existing_profile['created_at']
-
-        table.put_item(Item=profile_item)
-        return response_with_cors(201, {"message": "User profile created/updated successfully.", "profile": profile_item})
-    except (ClientError, json.JSONDecodeError) as e:
+        print(f"Checking if user already exists in table: {PROFILE_TABLE}")
+        try:
+            get_response = table.get_item(Key={'user_id': user_id})
+            existing_profile = get_response.get('Item')
+            if existing_profile:
+                print(f"Existing profile found for {user_id}, updating")
+                profile_item['created_at'] = existing_profile['created_at']
+            else:
+                print(f"No existing profile for {user_id}, creating new")
+        except Exception as get_error:
+            print(f"Error checking for existing profile: {str(get_error)}")
+            # Continue with creation even if check fails
+        
+        # Save the profile
+        print(f"Saving profile to table {PROFILE_TABLE}: {json.dumps(profile_item, default=str)}")
+        try:
+            put_response = table.put_item(Item=profile_item)
+            print(f"Profile saved successfully: {json.dumps(put_response, default=str)}")
+            return response_with_cors(201, {"message": "User profile created/updated successfully.", "profile": profile_item})
+        except Exception as put_error:
+            print(f"Error saving profile: {str(put_error)}")
+            return response_with_cors(500, {"message": "Error saving profile to database.", "error": str(put_error)})
+            
+    except Exception as e:
+        print(f"Unexpected error in create_user_profile: {str(e)}")
         return response_with_cors(500, {"message": "Error processing profile data.", "error": str(e)})
 
 # ========== Service Management ==========
@@ -651,39 +703,47 @@ def lambda_handler(event, context):
         # CORS Preflight Handling
         if method == "OPTIONS":
             return response_with_cors(200, {"message": "CORS preflight successful"})
-
-        # Routing based on resource and method
-        if resource == "/profiles" and method == "GET":
-            return get_user_profile(event)
-        elif resource == "/profiles" and method == "POST":
-            return create_user_profile(event)
-        elif resource == "/services" and method == "POST":
-            return create_service(event)
-        elif resource == "/services" and method == "GET":
-            return get_services(event)
-        elif resource == "/bookings" and method == "POST":
-            return create_booking(event)
-        elif resource == "/bookings" and method == "GET":
-            return get_bookings(event)
-        elif resource == "/availability" and method == "POST":
-            return create_availability(event)
-        elif resource == "/availability" and method == "GET":
-            return get_availabilities(event)
-        elif resource == "/availability/{id}" and method == "DELETE":
-            return delete_availability(event)
-        elif resource == "/sessions" and method == "POST":
-            return create_session(event)
-        elif resource == "/sessions/{id}" and method == "GET":
-            return get_session(event)
-        elif resource == "/sessions/{id}" and method == "PUT":
-            return update_session(event)
-        elif resource == "/search/teachers" and method == "GET":
-            return search_teachers(event)
-        elif resource == "/presigned-url" and method == "POST":
-            return generate_presigned_url(event)
-        else:
-            print(resource + ':' + method)
-            return response_with_cors(405, {"message": "Method Not Allowed"})
+            
+        # Log request details for debugging
+        print(f"Headers: {json.dumps(event.get('headers', {}), default=str)}")
+        print(f"Query parameters: {json.dumps(event.get('queryStringParameters', {}), default=str)}")
+            
+        try:
+            # Routing based on resource and method
+            if resource == "/profiles" and method == "GET":
+                return get_user_profile(event)
+            elif resource == "/profiles" and method == "POST":
+                return create_user_profile(event)
+            elif resource == "/services" and method == "POST":
+                return create_service(event)
+            elif resource == "/services" and method == "GET":
+                return get_services(event)
+            elif resource == "/bookings" and method == "POST":
+                return create_booking(event)
+            elif resource == "/bookings" and method == "GET":
+                return get_bookings(event)
+            elif resource == "/availability" and method == "POST":
+                return create_availability(event)
+            elif resource == "/availability" and method == "GET":
+                return get_availabilities(event)
+            elif resource == "/availability/{id}" and method == "DELETE":
+                return delete_availability(event)
+            elif resource == "/sessions" and method == "POST":
+                return create_session(event)
+            elif resource == "/sessions/{id}" and method == "GET":
+                return get_session(event)
+            elif resource == "/sessions/{id}" and method == "PUT":
+                return update_session(event)
+            elif resource == "/search/teachers" and method == "GET":
+                return search_teachers(event)
+            elif resource == "/presigned-url" and method == "POST":
+                return generate_presigned_url(event)
+            else:
+                print(f"Unknown route: {resource}:{method}")
+                return response_with_cors(404, {"message": "Endpoint not found", "resource": resource, "method": method})
+        except Exception as route_error:
+            print(f"Error in route handling: {str(route_error)}")
+            return response_with_cors(500, {"message": "Error processing request", "error": str(route_error)})
     
     except Exception as e:
         print(f"Unhandled exception in lambda_handler: {str(e)}")
