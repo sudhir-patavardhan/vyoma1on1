@@ -91,12 +91,30 @@ def get_user_profile(event):
             return response_with_cors(400, {"message": "user_id is required to fetch the profile."})
 
         try:
-            # Get user profile from the stage-specific table
-            table = dynamodb.Table(PROFILE_TABLE)
-            print(f"Looking up user profile in table: {PROFILE_TABLE}")
-            response = table.get_item(Key={'user_id': user_id})
+            # Check both table formats: with and without stage
+            table_names = [PROFILE_TABLE, 'UserProfiles']
+            print(f"Will try these tables in order: {table_names}")
+            
+            response = {'Item': None}  # Default empty response
+            
+            for table_name in table_names:
+                try:
+                    print(f"Attempting lookup in table: {table_name}")
+                    table = dynamodb.Table(table_name)
+                    # Use ConsistentRead for the most up-to-date data
+                    table_response = table.get_item(Key={'user_id': user_id}, ConsistentRead=True)
+                    print(f"Response from {table_name}: {json.dumps(table_response, default=str)}")
+                    
+                    # If we found the item, use this response and stop looking
+                    if 'Item' in table_response:
+                        print(f"Found user profile in table: {table_name}")
+                        response = table_response
+                        break
+                except Exception as inner_error:
+                    print(f"Error or table not found: {table_name} - {str(inner_error)}")
+                    continue  # Try the next table
         except Exception as table_error:
-            print(f"Error accessing table {PROFILE_TABLE}: {str(table_error)}")
+            print(f"Error in profile lookup process: {str(table_error)}")
             return response_with_cors(500, {"message": "Error accessing user profiles database.", "error": str(table_error)})
 
         if 'Item' not in response:
@@ -587,8 +605,10 @@ def search_teachers(event):
 # ========== Lambda Handler ==========
 def lambda_handler(event, context):
     """Main Lambda entry point to handle incoming requests."""
-    # Log only essential information to reduce CloudWatch verbosity
+    # Log request info and environment details for debugging
     print(f"Received request: {event.get('path', '')} [{event.get('httpMethod', 'DIRECT')}]")
+    print(f"Lambda environment: STAGE={os.environ.get('STAGE', 'undefined')}, AWS_REGION={os.environ.get('AWS_REGION', 'undefined')}")
+    print(f"Available DynamoDB tables: {[t.name for t in dynamodb.tables.all()]}")
     
     try:
         # Handle direct invocations or API Gateway proxied requests
