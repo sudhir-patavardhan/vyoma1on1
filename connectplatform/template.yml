@@ -16,6 +16,7 @@ Resources:
   SessionsRedFunction:
     Type: AWS::Lambda::Function
     Properties:
+      FunctionName: !Sub "sessions-red-api-function-${Stage}"
       Handler: app.lambda_handler
       Runtime: python3.11
       Code: 
