@@ -69,8 +69,15 @@ def create_table_if_not_exists(table_name, key_schema, attribute_definitions):
         else:
             print(f"Error checking table {table_name}: {str(e)}")
 
+# DISABLE TABLE CREATION - Tables should be created by CloudFormation, not runtime code
 def ensure_tables_exist():
-    """Ensures all required DynamoDB tables exist."""
+    """This function is disabled - tables should be created by CloudFormation."""
+    # Skip table creation entirely - it's causing runtime errors and should be handled by CloudFormation
+    print("Table creation is disabled - tables should be created by CloudFormation")
+    return
+    
+    # The following code is disabled to prevent validation errors
+    """
     try:
         # Detect if tables already exist, don't create them
         # This is a temporary solution to avoid the validation errors
@@ -114,6 +121,7 @@ def ensure_tables_exist():
     except Exception as e:
         print(f"Error in ensure_tables_exist: {str(e)}")
         # Continue execution even if table creation fails
+    """
 
 # ========== Profile Management ==========
 def get_user_profile(event):
