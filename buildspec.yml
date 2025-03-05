@@ -1,16 +1,59 @@
 version: 0.2
 
-batch:
-  fast-fail: false
-  build-graph:
-    - identifier: frontend_build
-      buildspec: session-app/buildspec-frontend.yml
-        
-    - identifier: backend_build
-      buildspec: connectplatform/buildspec-backend.yml
+cache:
+  paths:
+    - session-app/node_modules/**/*
 
-# This buildspec file serves as an orchestrator that parallelizes the builds
-# Individual build configs are in their respective component directories
-#
-# No phases are defined here as all work is done in the component buildspecs
-# No artifacts are defined here as all artifacts are defined in the component buildspecs
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+      python: 3.11
+    commands:
+      - echo "Setting up AWS CLI configuration"
+      - aws --version
+      - echo "Creating S3 buckets if they don't exist"
+      - aws s3 mb s3://sessions-red-lambda-deployments --region us-east-1 || true
+      - aws s3 mb s3://sessions-red-react-app-deployments --region us-east-1 || true
+      
+      # Install dependencies for both frontend and backend
+      - echo "Installing frontend dependencies"
+      - cd session-app
+      - npm install
+      - cd ..
+      - echo "Installing backend dependencies"
+      - cd connectplatform
+      - pip install -r requirements.txt boto3
+      - cd ..
+
+  build:
+    commands:
+      # Build both frontend and backend
+      - echo "Building the React frontend"
+      - cd session-app
+      - npm run build
+      - cd ..
+      - echo "Packaging the Lambda function"
+      - cd connectplatform
+      - chmod +x ./create-deployment.sh
+      - ./create-deployment.sh
+      - cd ..
+
+  post_build:
+    commands:
+      # Deploy both frontend and backend
+      - echo "Syncing frontend build artifacts to S3"
+      - aws s3 sync session-app/build/ s3://sessions-red-react-app-deployments/ --delete --exact-timestamps
+      - echo "Deploying backend Lambda functions"
+      - cd connectplatform
+      - echo "Creating/updating CloudFormation stack"
+      - aws cloudformation deploy --template-file deployment-template.yml --stack-name sessions-red-api --parameter-overrides Stage=prod --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1
+      - cd ..
+
+artifacts:
+  files:
+    - "session-app/build/**/*"
+    - "connectplatform/deployment-template.yml"
+    - "connectplatform/lambda-deployment.zip"
+  base-directory: '.'
+  discard-paths: no

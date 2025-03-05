@@ -58,8 +58,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     sed -i '' "s|AWSTemplateFormatVersion:.*|AWSTemplateFormatVersion: '2010-09-09'\nDescription: 'Sessions Red API - Connecting students with teachers - v${TIMESTAMP_VERSION}'|g" deployment-template.yml
   fi
   
-  # Also update the deployment timestamp in environment variables to force Lambda update
+  # Also update the deployment timestamp and version in environment variables to force Lambda update
   sed -i '' "s|DEPLOY_TIMESTAMP: !Ref AWS::StackName|DEPLOY_TIMESTAMP: '${TIMESTAMP_VERSION}'|g" deployment-template.yml
+  sed -i '' "s|BUILD_VERSION: 'will-be-replaced-during-deployment'|BUILD_VERSION: '${TIMESTAMP_VERSION}'|g" deployment-template.yml
 else
   # Linux version
   sed -i "s|S3Key: lambda-deployment.zip|S3Key: ${S3_KEY}|g" deployment-template.yml
@@ -72,8 +73,9 @@ else
     sed -i "s|AWSTemplateFormatVersion:.*|AWSTemplateFormatVersion: '2010-09-09'\nDescription: 'Sessions Red API - Connecting students with teachers - v${TIMESTAMP_VERSION}'|g" deployment-template.yml
   fi
   
-  # Also update the deployment timestamp in environment variables to force Lambda update
+  # Also update the deployment timestamp and version in environment variables to force Lambda update
   sed -i "s|DEPLOY_TIMESTAMP: !Ref AWS::StackName|DEPLOY_TIMESTAMP: '${TIMESTAMP_VERSION}'|g" deployment-template.yml
+  sed -i "s|BUILD_VERSION: 'will-be-replaced-during-deployment'|BUILD_VERSION: '${TIMESTAMP_VERSION}'|g" deployment-template.yml
 fi
 echo "Template updated with version identifier v${TIMESTAMP_VERSION}"
 

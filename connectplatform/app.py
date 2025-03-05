@@ -607,7 +607,8 @@ def lambda_handler(event, context):
     """Main Lambda entry point to handle incoming requests."""
     # Log request info and environment details for debugging
     print(f"Received request: {event.get('path', '')} [{event.get('httpMethod', 'DIRECT')}]")
-    print(f"Lambda environment: STAGE={os.environ.get('STAGE', 'undefined')}, AWS_REGION={os.environ.get('AWS_REGION', 'undefined')}")
+    print(f"Lambda version: {os.environ.get('BUILD_VERSION', 'undefined')}, STAGE={os.environ.get('STAGE', 'undefined')}")
+    print(f"Lambda function: {context.function_name}, version: {context.function_version}")
     print(f"Available DynamoDB tables: {[t.name for t in dynamodb.tables.all()]}")
     
     try:

@@ -26,9 +26,14 @@ Resources:
         Variables:
           STAGE: !Ref Stage
           DEPLOY_TIMESTAMP: !Ref AWS::StackName # This forces redeployment on every CloudFormation deployment
+          BUILD_VERSION: 'will-be-replaced-during-deployment'
       MemorySize: 256
       Timeout: 30
       Role: !GetAtt LambdaExecutionRole.Arn
+      # Always publish a new version when deployed
+      AutoPublishAlias: 'live'
+      # Force update on each deployment
+      AutoPublishCodeSha256: !Ref AWS::StackName
   
   # API Gateway for the Lambda function
   SessionsRedApi:
