@@ -12,35 +12,43 @@ phases:
     commands:
       - echo "Setting up AWS CLI configuration"
       - aws --version
-      - echo "Detecting changes to determine what to deploy"
-      - git clone https://github.com/VimalNagata/sessionsred.git /tmp/repo
-      - cd /tmp/repo
-      - git fetch
-      - CHANGED_FILES=$(git diff --name-only HEAD HEAD~1)
-      - echo "Changed files $CHANGED_FILES"
-      - FRONTEND_CHANGED=$(echo "$CHANGED_FILES" | grep -q "session-app/" && echo "true" || echo "false")
-      - echo "Frontend changed $FRONTEND_CHANGED"
-      - BACKEND_CHANGED=$(echo "$CHANGED_FILES" | grep -q "connectplatform/" && echo "true" || echo "false")
-      - echo "Backend changed $BACKEND_CHANGED"
-      - export FRONTEND_CHANGED
-      - export BACKEND_CHANGED
-      - cd $CODEBUILD_SRC_DIR
       - echo "Creating S3 buckets if they don't exist"
       - aws s3 mb s3://sessions-red-lambda-deployments --region us-east-1 || true
       - aws s3 mb s3://sessions-red-react-app-deployments --region us-east-1 || true
       
-      - if [ "$FRONTEND_CHANGED" = "true" ]; then echo "Installing frontend dependencies"; cd session-app; npm install; cd ..; fi
-      - if [ "$BACKEND_CHANGED" = "true" ]; then echo "Installing backend dependencies"; cd connectplatform; pip install -r requirements.txt boto3; cd ..; fi
+      # Always install dependencies for both frontend and backend
+      - echo "Installing frontend dependencies"
+      - cd session-app
+      - npm install
+      - cd ..
+      - echo "Installing backend dependencies"
+      - cd connectplatform
+      - pip install -r requirements.txt boto3
+      - cd ..
 
   build:
     commands:
-      - if [ "$FRONTEND_CHANGED" = "true" ]; then echo "Building the React frontend"; cd session-app; npm run build; cd ..; else echo "Skipping frontend build - no changes detected"; fi
-      - if [ "$BACKEND_CHANGED" = "true" ]; then echo "Packaging the Lambda function"; cd connectplatform; chmod +x ./create-deployment.sh; ./create-deployment.sh; cd ..; else echo "Skipping backend build - no changes detected"; fi
+      # Always build both frontend and backend
+      - echo "Building the React frontend"
+      - cd session-app
+      - npm run build
+      - cd ..
+      - echo "Packaging the Lambda function"
+      - cd connectplatform
+      - chmod +x ./create-deployment.sh
+      - ./create-deployment.sh
+      - cd ..
 
   post_build:
     commands:
-      - if [ "$FRONTEND_CHANGED" = "true" ]; then echo "Syncing frontend build artifacts to S3"; aws s3 sync session-app/build/ s3://sessions-red-react-app-deployments/ --delete --exact-timestamps; else echo "Skipping frontend deployment - no changes detected"; fi
-      - if [ "$BACKEND_CHANGED" = "true" ]; then echo "Deploying backend Lambda functions"; cd connectplatform; echo "Creating/updating CloudFormation stack"; aws cloudformation deploy --template-file deployment-template.yml --stack-name sessions-red-api --parameter-overrides Stage=prod --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1; cd ..; else echo "Skipping backend deployment - no changes detected"; fi
+      # Always deploy both frontend and backend
+      - echo "Syncing frontend build artifacts to S3"
+      - aws s3 sync session-app/build/ s3://sessions-red-react-app-deployments/ --delete --exact-timestamps
+      - echo "Deploying backend Lambda functions"
+      - cd connectplatform
+      - echo "Creating/updating CloudFormation stack"
+      - aws cloudformation deploy --template-file deployment-template.yml --stack-name sessions-red-api --parameter-overrides Stage=prod --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1
+      - cd ..
 
 artifacts:
   files:
