@@ -91,30 +91,21 @@ def get_user_profile(event):
             return response_with_cors(400, {"message": "user_id is required to fetch the profile."})
 
         try:
-            # Check both table formats: with and without stage
-            table_names = [PROFILE_TABLE, 'UserProfiles']
-            print(f"Will try these tables in order: {table_names}")
+            # Use only the stage-specific table name (e.g. UserProfiles-prod)
+            print(f"Looking up profile in table: {PROFILE_TABLE}")
+            table = dynamodb.Table(PROFILE_TABLE)
             
-            response = {'Item': None}  # Default empty response
+            # Use ConsistentRead for the most up-to-date data
+            response = table.get_item(Key={'user_id': user_id}, ConsistentRead=True)
             
-            for table_name in table_names:
-                try:
-                    print(f"Attempting lookup in table: {table_name}")
-                    table = dynamodb.Table(table_name)
-                    # Use ConsistentRead for the most up-to-date data
-                    table_response = table.get_item(Key={'user_id': user_id}, ConsistentRead=True)
-                    print(f"Response from {table_name}: {json.dumps(table_response, default=str)}")
-                    
-                    # If we found the item, use this response and stop looking
-                    if 'Item' in table_response:
-                        print(f"Found user profile in table: {table_name}")
-                        response = table_response
-                        break
-                except Exception as inner_error:
-                    print(f"Error or table not found: {table_name} - {str(inner_error)}")
-                    continue  # Try the next table
+            # Log response for debugging
+            if 'Item' in response:
+                print(f"Found user profile for {user_id}")
+            else:
+                print(f"No profile found for user {user_id}")
+                
         except Exception as table_error:
-            print(f"Error in profile lookup process: {str(table_error)}")
+            print(f"Error accessing table {PROFILE_TABLE}: {str(table_error)}")
             return response_with_cors(500, {"message": "Error accessing user profiles database.", "error": str(table_error)})
 
         if 'Item' not in response:
@@ -609,13 +600,16 @@ def lambda_handler(event, context):
     print(f"Sessions API request: {event.get('path', '')} [{event.get('httpMethod', 'DIRECT')}]")
     print(f"Lambda v{context.function_version} [{os.environ.get('BUILD_VERSION', 'undefined')}], alias: {os.environ.get('AWS_LAMBDA_FUNCTION_ALIAS', 'undefined')}")
     
-    # Only list tables occasionally to reduce log noise but still provide data for debugging
-    if int(datetime.utcnow().timestamp()) % 10 == 0:  # Log tables roughly every 10 seconds
+    # Only log table names during cold start to reduce noise
+    # Check if this is likely a cold start by using environment variable timestamp
+    if not hasattr(lambda_handler, 'initialized'):
         try:
-            tables = [t.name for t in dynamodb.tables.all()]
-            print(f"DynamoDB tables: {tables}")
+            # List only the tables we expect to use, no need to list all tables
+            expected_tables = [PROFILE_TABLE, BOOKINGS_TABLE, SERVICE_TABLE, AVAILABILITY_TABLE, SESSION_TABLE]
+            print(f"Using tables: {expected_tables}")
+            lambda_handler.initialized = True
         except Exception as e:
-            print(f"Error listing tables: {str(e)}")
+            print(f"Error during initialization: {str(e)}")
     
     try:
         # Handle direct invocations or API Gateway proxied requests
