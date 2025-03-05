@@ -1,0 +1,42 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - echo "Using Python 3.11"
+      - echo "Setting up AWS CLI configuration"
+      - aws --version
+      - echo "Creating S3 bucket for Lambda deployments if it doesn't exist"
+      - aws s3 mb s3://sessions-red-lambda-deployments --region us-east-1 || true
+      - echo "Installing backend dependencies"
+      - pip install -r requirements.txt boto3
+
+  build:
+    commands:
+      - echo "Processing CloudFormation template"
+      - cp template.yml deployment-template.yml || true
+      - echo "Using create-deployment.sh to package and deploy"
+      - chmod +x ./create-deployment.sh
+      - ./create-deployment.sh
+
+  post_build:
+    commands:
+      - echo "Deploying backend Lambda functions"
+      - echo "Creating/updating CloudFormation stack"
+      - >
+        aws cloudformation deploy 
+        --template-file deployment-template.yml 
+        --stack-name sessions-red-api 
+        --parameter-overrides Stage=prod 
+        --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND 
+        --no-fail-on-empty-changeset 
+        --region us-east-1
+
+artifacts:
+  files:
+    - "deployment-template.yml"
+    - "lambda-deployment.zip"
+  base-directory: '.'
+  discard-paths: no
