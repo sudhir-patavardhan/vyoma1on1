@@ -606,10 +606,16 @@ def search_teachers(event):
 def lambda_handler(event, context):
     """Main Lambda entry point to handle incoming requests."""
     # Log request info and environment details for debugging
-    print(f"Received request: {event.get('path', '')} [{event.get('httpMethod', 'DIRECT')}]")
-    print(f"Lambda version: {os.environ.get('BUILD_VERSION', 'undefined')}, STAGE={os.environ.get('STAGE', 'undefined')}")
-    print(f"Lambda function: {context.function_name}, version: {context.function_version}")
-    print(f"Available DynamoDB tables: {[t.name for t in dynamodb.tables.all()]}")
+    print(f"Sessions API request: {event.get('path', '')} [{event.get('httpMethod', 'DIRECT')}]")
+    print(f"Lambda v{context.function_version} [{os.environ.get('BUILD_VERSION', 'undefined')}], alias: {os.environ.get('AWS_LAMBDA_FUNCTION_ALIAS', 'undefined')}")
+    
+    # Only list tables occasionally to reduce log noise but still provide data for debugging
+    if int(datetime.utcnow().timestamp()) % 10 == 0:  # Log tables roughly every 10 seconds
+        try:
+            tables = [t.name for t in dynamodb.tables.all()]
+            print(f"DynamoDB tables: {tables}")
+        except Exception as e:
+            print(f"Error listing tables: {str(e)}")
     
     try:
         # Handle direct invocations or API Gateway proxied requests

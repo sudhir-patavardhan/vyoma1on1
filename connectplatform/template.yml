@@ -32,8 +32,11 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       # Always publish a new version when deployed
       AutoPublishAlias: 'live'
-      # Force update on each deployment
-      AutoPublishCodeSha256: !Ref AWS::StackName
+      # No need for AutoPublishCodeSha256 as it's calculated automatically
+      # We're using other mechanisms to force deployment:
+      # 1. Unique S3Key for each deployment
+      # 2. Updated environment variables each time
+      # 3. Description changes with each deployment
   
   # API Gateway for the Lambda function
   SessionsRedApi:

@@ -36,8 +36,11 @@ FUNCTION_VERSION=$(date +%s)
 echo "Function version: $FUNCTION_VERSION"
 
 # Upload deployment package to S3 with timestamp
+# Include build timestamp in version number for unique S3 key
 TIMESTAMP=$(date +%Y%m%d%H%M%S)
-S3_KEY="lambda-deployment-${TIMESTAMP}.zip"
+# Add a random component to ensure unique S3 keys even for rapid deployments
+RANDOM_SUFFIX=$(head /dev/urandom | tr -dc 'a-z0-9' | head -c 6)
+S3_KEY="lambda-deployment-${TIMESTAMP}-${RANDOM_SUFFIX}.zip"
 echo "Uploading deployment package to S3 with key: ${S3_KEY}..."
 aws s3 cp lambda-deployment.zip "s3://sessions-red-lambda-deployments/${S3_KEY}"
 
