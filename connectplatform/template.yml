@@ -182,7 +182,7 @@ Resources:
   UserProfilesTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: UserProfiles
+      TableName: !Sub "UserProfiles-${Stage}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: user_id
@@ -194,7 +194,7 @@ Resources:
   TeacherAvailabilityTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: TeacherAvailability
+      TableName: !Sub "TeacherAvailability-${Stage}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: availability_id
@@ -206,7 +206,7 @@ Resources:
   BookingsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: Bookings
+      TableName: !Sub "Bookings-${Stage}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: booking_id
@@ -218,7 +218,7 @@ Resources:
   SessionsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: Sessions
+      TableName: !Sub "Sessions-${Stage}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: session_id
@@ -230,7 +230,7 @@ Resources:
   ServiceCatalogTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: ServiceCatalog
+      TableName: !Sub "ServiceCatalog-${Stage}"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: service_id
@@ -243,7 +243,7 @@ Resources:
   UploadsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: sessionsred-uploads
+      BucketName: !Sub "sessionsred-uploads-${Stage}"
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders:
