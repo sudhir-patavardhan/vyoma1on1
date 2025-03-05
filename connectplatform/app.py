@@ -646,6 +646,57 @@ def search_teachers(event):
         return response_with_cors(500, {"message": "Error searching for teachers.", "error": str(e)})
 
 # ========== Lambda Handler ==========
+def get_booking_session(event):
+    """Retrieves the session associated with a booking."""
+    try:
+        booking_id = event.get('pathParameters', {}).get('booking_id')
+        
+        if not booking_id:
+            # Try to extract from the path as a fallback
+            path_parts = event['path'].split('/')
+            for i, part in enumerate(path_parts):
+                if part == 'bookings' and i + 1 < len(path_parts):
+                    booking_id = path_parts[i + 1]
+                    break
+        
+        if not booking_id:
+            return response_with_cors(400, {"message": "Missing booking ID"})
+        
+        # Remove any additional path parts after booking_id
+        if booking_id.startswith('booking-'):
+            booking_id_parts = booking_id.split('/')
+            booking_id = booking_id_parts[0]
+        
+        # First verify the booking exists
+        bookings_table = dynamodb.Table(BOOKINGS_TABLE)
+        booking_response = bookings_table.get_item(Key={'booking_id': booking_id})
+        
+        if 'Item' not in booking_response:
+            return response_with_cors(404, {"message": "Booking not found"})
+        
+        booking = booking_response['Item']
+        
+        # Then look for sessions associated with this booking
+        sessions_table = dynamodb.Table(SESSION_TABLE)
+        session_response = sessions_table.scan(
+            FilterExpression=Attr('booking_id').eq(booking_id)
+        )
+        
+        if not session_response['Items']:
+            # No session exists yet
+            return response_with_cors(404, {"message": "No session exists for this booking"})
+        
+        # Return the first (and hopefully only) session
+        session = convert_decimal(session_response['Items'][0])
+        
+        return response_with_cors(200, session)
+    except ClientError as e:
+        print(f"Database error in get_booking_session: {str(e)}")
+        return response_with_cors(500, {"message": "Error fetching booking session.", "error": str(e)})
+    except Exception as e:
+        print(f"Unexpected error in get_booking_session: {str(e)}")
+        return response_with_cors(500, {"message": "Error processing request", "error": str(e)})
+
 def lambda_handler(event, context):
     """Main Lambda entry point to handle incoming requests."""
     # Log request info and environment details for debugging
@@ -672,16 +723,23 @@ def lambda_handler(event, context):
     
         method = event['httpMethod']
         resource = event.get('resource')
+        path = event.get('path', '')
         
         # Handle case when resource is not present but path is (older API Gateway config)
-        if not resource and 'path' in event:
-            path = event['path']
+        if not resource and path:
             print(f"Resource not found, using path: {path}")
             # Map path to resource pattern
             if path.startswith('/profiles'):
                 resource = "/profiles"
             elif path.startswith('/services'):
                 resource = "/services"
+            elif '/bookings/' in path and '/session' in path:
+                resource = "/bookings/{booking_id}/session"
+                # Extract booking_id from path and add to pathParameters
+                booking_id = path.split('/bookings/')[1].split('/session')[0]
+                if 'pathParameters' not in event:
+                    event['pathParameters'] = {}
+                event['pathParameters']['booking_id'] = booking_id
             elif path.startswith('/bookings'):
                 resource = "/bookings"
             elif path.startswith('/availability') and len(path.split('/')) > 2:
@@ -722,6 +780,8 @@ def lambda_handler(event, context):
                 return create_booking(event)
             elif resource == "/bookings" and method == "GET":
                 return get_bookings(event)
+            elif resource == "/bookings/{booking_id}/session" and method == "GET":
+                return get_booking_session(event)
             elif resource == "/availability" and method == "POST":
                 return create_availability(event)
             elif resource == "/availability" and method == "GET":
@@ -739,8 +799,8 @@ def lambda_handler(event, context):
             elif resource == "/presigned-url" and method == "POST":
                 return generate_presigned_url(event)
             else:
-                print(f"Unknown route: {resource}:{method}")
-                return response_with_cors(404, {"message": "Endpoint not found", "resource": resource, "method": method})
+                print(f"Unknown route: {resource}:{method}, path: {path}")
+                return response_with_cors(404, {"message": "Endpoint not found", "resource": resource, "method": method, "path": path})
         except Exception as route_error:
             print(f"Error in route handling: {str(route_error)}")
             return response_with_cors(500, {"message": "Error processing request", "error": str(route_error)})

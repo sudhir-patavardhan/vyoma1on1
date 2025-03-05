@@ -360,6 +360,290 @@ body {
   line-height: 1.6;
 }
 
+/* Dashboard */
+.dashboard {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.dashboard-header h1 {
+  color: var(--primary);
+  font-size: 28px;
+  margin-bottom: 8px;
+  font-family: 'Playfair Display', serif;
+}
+
+.user-role {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.dashboard-stats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 180px;
+  background-color: white;
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  transition: var(--transition-normal);
+  border-bottom: 3px solid transparent;
+}
+
+.stat-card:nth-child(1) {
+  border-bottom-color: var(--primary);
+}
+
+.stat-card:nth-child(2) {
+  border-bottom-color: var(--accent);
+}
+
+.stat-card:nth-child(3) {
+  border-bottom-color: var(--success);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-icon {
+  font-size: 32px;
+  color: var(--primary);
+  margin-right: 16px;
+  background-color: var(--secondary);
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.stat-card:nth-child(2) .stat-icon {
+  color: var(--accent);
+}
+
+.stat-card:nth-child(3) .stat-icon {
+  color: var(--success);
+}
+
+.stat-details h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+}
+
+.dashboard-actions {
+  margin-bottom: 40px;
+}
+
+.dashboard-actions h2,
+.dashboard-recent .section-header h2,
+.dashboard-availability .section-header h2 {
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: var(--primary-dark);
+  font-family: 'Playfair Display', serif;
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.action-button {
+  flex: 1;
+  min-width: 140px;
+  max-width: 200px;
+  background-color: white;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.action-button:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-light);
+}
+
+.action-button.primary {
+  background-color: var(--primary);
+  border-color: var(--primary-dark);
+  color: var(--text-light);
+}
+
+.action-button.primary:hover {
+  background-color: var(--primary-light);
+}
+
+.action-icon {
+  font-size: 24px;
+  margin-bottom: 12px;
+  color: var(--primary);
+}
+
+.action-button.primary .action-icon {
+  color: white;
+}
+
+.action-button span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.dashboard-recent,
+.dashboard-availability {
+  margin-bottom: 40px;
+}
+
+.recent-bookings {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.no-bookings,
+.no-slots {
+  background-color: white;
+  border-radius: var(--radius-md);
+  padding: 24px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.no-bookings p,
+.no-slots p {
+  margin-bottom: 16px;
+  color: var(--text-muted);
+}
+
+.slots-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.slot-card {
+  background-color: white;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--gray-300);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-normal);
+}
+
+.slot-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.slot-card.available {
+  border-left: 4px solid var(--success);
+}
+
+.slot-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.slot-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.slot-details {
+  padding: 16px;
+}
+
+.slot-details p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.slot-details p:first-child {
+  margin-top: 0;
+}
+
+.slot-details p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .dashboard-stats {
+    flex-direction: column;
+  }
+  
+  .stat-card {
+    width: 100%;
+  }
+  
+  .recent-bookings,
+  .slots-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-button {
+    min-width: 120px;
+  }
+}
+
 /* Forms */
 .form-group {
   margin-bottom: 20px;

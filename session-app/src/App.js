@@ -5,6 +5,7 @@ import TeacherSearch from "./components/TeacherSearch";
 import TeacherSchedule from "./components/TeacherSchedule";
 import VirtualSession from "./components/VirtualSession";
 import Bookings from "./components/Bookings";
+import Dashboard from "./components/Dashboard";
 import { API_BASE_URL } from "./config";
 import "./styles.css";
 import {
@@ -16,6 +17,7 @@ import {
   FaCalendarAlt,
   FaVideo,
   FaChalkboardTeacher,
+  FaHome,
 } from "react-icons/fa"; // Import icons
 
 function App() {
@@ -25,7 +27,7 @@ function App() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [profileError, setProfileError] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [activeSession, setActiveSession] = useState(null);
   const [upcomingSession, setUpcomingSession] = useState(null);
 
@@ -73,7 +75,15 @@ function App() {
           </button>
         ) : (
           <>
-            {/* Always show the profile button */}
+            {/* Dashboard button */}
+            <button
+              className={`header-link ${activeTab === 'dashboard' ? 'active' : ''}`}
+              onClick={() => setActiveTab('dashboard')}
+            >
+              <FaHome className="header-icon" /> Dashboard
+            </button>
+            
+            {/* Profile button */}
             <button
               className={`header-link ${activeTab === 'profile' ? 'active' : ''}`}
               onClick={() => setActiveTab('profile')}
@@ -158,6 +168,15 @@ function App() {
                     <ProfileForm
                       saveUserProfile={saveUserProfile}
                       profile={profile}
+                    />
+                  )}
+                  
+                  {profile && activeTab === 'dashboard' && (
+                    <Dashboard
+                      profile={profile}
+                      onTabChange={setActiveTab}
+                      onJoinSession={setActiveSession}
+                      upcomingSession={upcomingSession}
                     />
                   )}
                   
@@ -396,12 +415,8 @@ function App() {
       // Update the profile state
       setProfile(profileData); 
       
-      // Set appropriate initial tab based on role
-      if (profileData.role === "student") {
-        setActiveTab('search');
-      } else if (profileData.role === "teacher") {
-        setActiveTab('schedule');
-      }
+      // Set to dashboard after creating profile
+      setActiveTab('dashboard');
       
       return result;
     } catch (error) {
