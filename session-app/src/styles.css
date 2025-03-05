@@ -1,36 +1,47 @@
-/* Global Styles */
+/* Global Styles - Vyoma Theme */
 :root {
-  --primary: #4a6bff;
-  --primary-light: #7189ff;
-  --primary-dark: #3351d8;
-  --secondary: #2c3e50;
-  --bg-light: #f8f9fa;
-  --bg-dark: #1a202c;
-  --text-dark: #2d3748;
-  --text-light: #f7fafc;
-  --text-muted: #718096;
-  --success: #48bb78;
-  --warning: #f6ad55;
-  --danger: #f56565;
-  --gray-100: #f7fafc;
-  --gray-200: #edf2f7;
-  --gray-300: #e2e8f0;
-  --gray-400: #cbd5e0;
-  --gray-500: #a0aec0;
-  --gray-600: #718096;
-  --gray-700: #4a5568;
-  --gray-800: #2d3748;
-  --gray-900: #1a202c;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+  /* Vyoma brand colors based on vyoma.org */
+  --primary: #770000; /* Vyoma dark red */
+  --primary-light: #a30000; /* Lighter red */
+  --primary-dark: #5d0000; /* Darker red */
+  --secondary: #F3E5D8; /* Vyoma light cream */
+  --accent: #C5922E; /* Vyoma gold accent */
+  --accent-light: #D6AB59; /* Lighter gold */
+  
+  /* UI colors */
+  --bg-light: #FAF7F2; /* Cream background */
+  --bg-dark: #2D231D; /* Dark brown */
+  --text-dark: #2D231D; /* Dark brown text */
+  --text-light: #FBF8F5; /* Off-white text */
+  --text-muted: #7F7267; /* Muted brown text */
+  
+  /* Functional colors */
+  --success: #557A4F; /* Earthy green */
+  --warning: #C5922E; /* Gold */
+  --danger: #B92D00; /* Red-brown */
+  
+  /* Gray scale - warmer tones */
+  --gray-100: #F9F6F3;
+  --gray-200: #F3EDE7;
+  --gray-300: #E4D9CF;
+  --gray-400: #D1C3B6;
+  --gray-500: #B9A79A;
+  --gray-600: #9D8A7B;
+  --gray-700: #7F7267;
+  --gray-800: #5A4E44;
+  --gray-900: #2D231D;
+  
+  /* UI properties */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --shadow-sm: 0 1px 3px rgba(45,35,29,0.08), 0 1px 2px rgba(45,35,29,0.16);
+  --shadow-md: 0 4px 6px rgba(45,35,29,0.08), 0 1px 3px rgba(45,35,29,0.12);
+  --shadow-lg: 0 10px 15px rgba(45,35,29,0.08), 0 4px 6px rgba(45,35,29,0.12);
   --transition-normal: all 0.3s ease;
   --container-max-width: 1200px;
   --sidebar-width: 250px;
-  --header-height: 64px;
+  --header-height: 70px;
 }
 
 * {
@@ -85,11 +96,12 @@
 body {
   background-color: var(--bg-light);
   color: var(--text-dark);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   line-height: 1.5;
   margin: 0;
   padding: 0;
 }
+
 
 /* Layout */
 .app-layout {
@@ -121,10 +133,10 @@ body {
   width: 100%;
 }
 
-/* Header */
+/* Header - Vyoma Style */
 .header {
-  background-color: white;
-  border-bottom: 1px solid var(--gray-200);
+  background-color: var(--bg-light);
+  border-bottom: 2px solid var(--primary);
   height: var(--header-height);
   position: sticky;
   top: 0;
@@ -132,7 +144,7 @@ body {
   width: 100%;
   display: flex;
   align-items: center;
-  padding: 0 24px;
+  padding: 0 32px;
   justify-content: space-between;
   box-shadow: var(--shadow-sm);
 }
@@ -146,15 +158,16 @@ body {
 }
 
 .header-logo-image {
-  height: 32px;
-  margin-right: 12px;
-  border-radius: var(--radius-sm);
+  height: 45px;
+  margin-right: 16px;
 }
 
 .header-title {
-  font-size: 18px;
+  font-size: 22px;
   color: var(--primary);
   font-weight: 700;
+  font-family: 'Playfair Display', serif;
+  letter-spacing: 0.5px;
 }
 
 .header-nav {
@@ -164,9 +177,9 @@ body {
 }
 
 .header-link {
-  padding: 8px 12px;
+  padding: 8px 16px;
   border-radius: var(--radius-md);
-  color: var(--gray-700);
+  color: var(--text-dark);
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
@@ -176,20 +189,35 @@ body {
   border: none;
   background: none;
   transition: var(--transition-normal);
+  position: relative;
 }
 
 .header-link:hover, .header-link.active {
-  background-color: var(--gray-100);
   color: var(--primary);
 }
 
+.header-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: var(--primary);
+  border-radius: 50%;
+}
+
 .header-link.join-session {
-  background-color: var(--success);
+  background-color: var(--primary);
   color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
 }
 
 .header-link.join-session:hover {
-  background-color: #3da066;
+  background-color: var(--primary-light);
+  transform: translateY(-1px);
 }
 
 .header-icon {
@@ -226,19 +254,36 @@ body {
 
 /* Landing Page */
 .landing-heading {
-  font-size: 36px;
-  font-weight: 800;
+  font-size: 40px;
+  font-weight: 700;
   margin-bottom: 24px;
   color: var(--primary);
+  font-family: 'Playfair Display', serif;
+  position: relative;
+  padding-bottom: 16px;
+  text-align: center;
+}
+
+.landing-heading::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background-color: var(--accent);
 }
 
 .landing-text {
   font-size: 18px;
   color: var(--gray-700);
-  margin-bottom: 32px;
+  margin-bottom: 42px;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
+  text-align: center;
+  line-height: 1.7;
 }
 
 .landing-features {
@@ -253,12 +298,25 @@ body {
   flex: 1;
   min-width: 250px;
   max-width: 350px;
-  padding: 24px;
+  padding: 32px 24px;
   background-color: white;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   text-align: center;
   transition: var(--transition-normal);
+  border-top: 3px solid transparent;
+}
+
+.feature:nth-child(1) {
+  border-top-color: var(--primary);
+}
+
+.feature:nth-child(2) {
+  border-top-color: var(--accent);
+}
+
+.feature:nth-child(3) {
+  border-top-color: var(--success);
 }
 
 .feature:hover {
@@ -267,20 +325,39 @@ body {
 }
 
 .feature-icon {
-  font-size: 32px;
+  font-size: 36px;
   color: var(--primary);
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  background-color: var(--secondary);
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.feature:nth-child(2) .feature-icon {
+  color: var(--accent);
+}
+
+.feature:nth-child(3) .feature-icon {
+  color: var(--success);
 }
 
 .feature h3 {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   margin-bottom: 12px;
   color: var(--text-dark);
+  font-family: 'Playfair Display', serif;
 }
 
 .feature p {
   color: var(--gray-600);
+  line-height: 1.6;
 }
 
 /* Forms */

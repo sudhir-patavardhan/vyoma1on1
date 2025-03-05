@@ -56,15 +56,15 @@ function App() {
     <header className="header">
       <div className="header-logo">
         <img
-          src="/logo.svg"
-          alt="Sessions Red Logo"
+          src="/vyoma/vyoma-logo.png"
+          alt="Vyoma Learning Logo"
           className="header-logo-image"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = "/logo.jpeg"; // Fallback to jpeg if svg doesn't exist
+            e.target.src = "/logo.jpeg"; // Fallback if main logo doesn't exist
           }}
         />
-        <span className="header-title">Sessions Red</span>
+        <span className="header-title">Vyoma Learning</span>
       </div>
       <nav className="header-nav">
         {!auth.isAuthenticated ? (
@@ -419,9 +419,9 @@ function App() {
             <div className="container">
               <div className="card">
                 <div className="card-body">
-                  <h1 className="landing-heading">Welcome to Sessions Red</h1>
+                  <h1 className="landing-heading">Welcome to Vyoma Learning</h1>
                   <p className="landing-text">
-                    Connect with expert teachers for personalized 1:1 learning experiences.
+                    Connect with expert Sanskrit teachers for personalized 1:1 learning experiences.
                     Our platform helps students find teachers based on their learning needs,
                     schedule sessions, and attend virtual meetings - all in one place.
                   </p>

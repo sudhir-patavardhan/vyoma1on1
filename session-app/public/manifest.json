@@ -1,20 +1,20 @@
 {
-  "short_name": "Sessions Red",
-  "name": "Sessions Red - Connect with Teachers",
+  "short_name": "Vyoma Learning",
+  "name": "Vyoma Learning - Connect with Sanskrit Teachers",
   "icons": [
     {
-      "src": "favicon.svg",
+      "src": "vyoma/vyoma-favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/svg+xml"
+      "type": "image/x-icon"
     },
     {
-      "src": "logo.svg",
-      "type": "image/svg+xml",
+      "src": "vyoma/vyoma-logo.png",
+      "type": "image/png",
       "sizes": "512x512"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#F05252",
-  "background_color": "#ffffff"
+  "theme_color": "#770000",
+  "background_color": "#FAF7F2"
 }
