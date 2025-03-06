@@ -68,10 +68,10 @@ function App() {
           className="header-logo-full"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = "/logo.jpeg"; // Fallback if PNG doesn't exist
+            e.target.src = "/vyoma/vyoma-logo.svg"; // Fallback to SVG if PNG doesn't exist
           }}
         />
-        <span className="app-name">1:1</span>
+        <span className="app-name">Vyoma 1:1</span>
       </div>
       <nav className="header-nav">
         {!auth.isAuthenticated ? (
@@ -650,6 +650,10 @@ function App() {
               src="/vyoma/Vyoma_Logo_Blue_500x243.png"
               alt="Vyoma 1:1"
               height="30"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "/vyoma/vyoma-logo.svg";
+              }}
             />
             <span>Vyoma 1:1</span>
           </div>
