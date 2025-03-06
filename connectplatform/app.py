@@ -683,11 +683,17 @@ def get_booking_session(event):
         )
         
         if not session_response['Items']:
-            # No session exists yet
-            return response_with_cors(404, {"message": "No session exists for this booking"})
+            # No session exists yet, but return a structured response instead of 404
+            # This way frontend knows it's a valid booking but without a session
+            return response_with_cors(200, {
+                "booking_id": booking_id,
+                "session_exists": False,
+                "message": "No session exists for this booking yet"
+            })
         
         # Return the first (and hopefully only) session
         session = convert_decimal(session_response['Items'][0])
+        session["session_exists"] = True
         
         return response_with_cors(200, session)
     except ClientError as e:

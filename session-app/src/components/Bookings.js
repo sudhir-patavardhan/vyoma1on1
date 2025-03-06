@@ -78,8 +78,31 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
       // If session exists, use it
       if (response.data && response.data.session_id) {
         sessionId = response.data.session_id;
+      } else if (response.data && response.data.booking_id && response.data.session_exists === false) {
+        // Valid booking but no session - create one
+        const booking = bookings.find(b => b.booking_id === bookingId);
+        
+        console.log("Creating new session for booking:", bookingId);
+        const createResponse = await axios.post(
+          `${API_BASE_URL}/sessions`,
+          {
+            booking_id: bookingId,
+            teacher_id: booking.teacher_id,
+            student_id: booking.student_id,
+            topic: booking.topic,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${auth.user.access_token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        
+        sessionId = createResponse.data.session_id;
       } else {
-        // Create a new session for this booking
+        // Unexpected response - create a session to be safe
+        console.warn("Unexpected response when checking for session, creating new one", response.data);
         const booking = bookings.find(b => b.booking_id === bookingId);
         
         const createResponse = await axios.post(
