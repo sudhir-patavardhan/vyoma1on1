@@ -923,23 +923,44 @@ def search_teachers(event):
 def get_booking_session(event):
     """Retrieves the session associated with a booking."""
     try:
-        booking_id = event.get('pathParameters', {}).get('booking_id')
+        # Log the full event for debugging
+        print(f"get_booking_session called with event: {json.dumps(event, default=str)}")
+        
+        # First try to get booking_id from path parameters (check both formats)
+        path_params = event.get('pathParameters', {}) or {}
+        booking_id = path_params.get('booking_id')
+        if not booking_id:
+            booking_id = path_params.get('booking-id')
+        print(f"Initial booking_id from pathParameters: {booking_id}")
         
         if not booking_id:
             # Try to extract from the path as a fallback
-            path_parts = event['path'].split('/')
+            path = event.get('path', '')
+            print(f"Extracting booking_id from path: {path}")
+            
+            path_parts = path.split('/')
             for i, part in enumerate(path_parts):
                 if part == 'bookings' and i + 1 < len(path_parts):
                     booking_id = path_parts[i + 1]
+                    print(f"Extracted booking_id from path: {booking_id}")
                     break
         
         if not booking_id:
+            print("Failed to extract booking_id from request")
             return response_with_cors(400, {"message": "Missing booking ID"})
         
-        # Remove any additional path parts after booking_id
-        if booking_id.startswith('booking-'):
+        # Remove any additional path parts or query parameters from booking_id
+        if '/' in booking_id:
             booking_id_parts = booking_id.split('/')
             booking_id = booking_id_parts[0]
+            print(f"Stripped path from booking_id: {booking_id}")
+        
+        if '?' in booking_id:
+            booking_id_parts = booking_id.split('?')
+            booking_id = booking_id_parts[0]
+            print(f"Stripped query from booking_id: {booking_id}")
+            
+        print(f"Final booking_id for lookup: {booking_id}")
         
         # First verify the booking exists
         bookings_table = dynamodb.Table(BOOKINGS_TABLE)
@@ -1016,10 +1037,22 @@ def lambda_handler(event, context):
             elif '/bookings/' in path and '/session' in path:
                 resource = "/bookings/{booking_id}/session"
                 # Extract booking_id from path and add to pathParameters
-                booking_id = path.split('/bookings/')[1].split('/session')[0]
-                if 'pathParameters' not in event:
-                    event['pathParameters'] = {}
-                event['pathParameters']['booking_id'] = booking_id
+                path_parts = path.split('/')
+                booking_index = -1
+                
+                # Find the index of 'bookings' in the path
+                for i, part in enumerate(path_parts):
+                    if part == 'bookings':
+                        booking_index = i
+                        break
+                
+                if booking_index >= 0 and booking_index + 1 < len(path_parts):
+                    booking_id = path_parts[booking_index + 1]
+                    print(f"Extracted booking_id: {booking_id} for session lookup")
+                    
+                    if 'pathParameters' not in event:
+                        event['pathParameters'] = {}
+                    event['pathParameters']['booking_id'] = booking_id
             elif path.startswith('/bookings'):
                 resource = "/bookings"
             elif path.startswith('/availability') and len(path.split('/')) > 2:
@@ -1056,6 +1089,18 @@ def lambda_handler(event, context):
         print(f"Headers: {json.dumps(event.get('headers', {}), default=str)}")
         print(f"Query parameters: {json.dumps(event.get('queryStringParameters', {}), default=str)}")
             
+        # Log additional debug information for bookings/session path
+        if '/bookings/' in path and '/session' in path:
+            print(f"Debug - Path contains booking/session pattern")
+            print(f"Debug - Resource resolved to: {resource}")
+            print(f"Debug - pathParameters: {event.get('pathParameters')}")
+            
+            # Ensure we have consistent parameter naming
+            if 'pathParameters' in event and event['pathParameters'] is not None:
+                if 'booking-id' in event['pathParameters'] and 'booking_id' not in event['pathParameters']:
+                    event['pathParameters']['booking_id'] = event['pathParameters']['booking-id']
+                    print(f"Debug - Copied booking-id to booking_id: {event['pathParameters']['booking_id']}")
+            
         try:
             # Routing based on resource and method
             if resource == "/profiles" and method == "GET":
@@ -1070,7 +1115,8 @@ def lambda_handler(event, context):
                 return create_booking(event)
             elif resource == "/bookings" and method == "GET":
                 return get_bookings(event)
-            elif resource == "/bookings/{booking_id}/session" and method == "GET":
+            elif (resource == "/bookings/{booking_id}/session" or resource == "/bookings/{booking-id}/session") and method == "GET":
+                print(f"Debug - Calling get_booking_session with booking_id: {event.get('pathParameters', {}).get('booking_id')}")
                 return get_booking_session(event)
             elif resource == "/availability" and method == "POST":
                 return create_availability(event)
