@@ -235,6 +235,8 @@ const TeacherCalendarSchedule = () => {
       const endDateTime = new Date(startDateTime);
       endDateTime.setMinutes(startDateTime.getMinutes() + 30);
       
+      // Note: The API no longer requires topic or description
+      // since availabilities are general and not topic-specific
       const slotData = {
         teacher_id: auth.user.profile.sub,
         start_time: startDateTime.toISOString(),
@@ -439,7 +441,8 @@ const TeacherCalendarSchedule = () => {
           <li>Click multiple slots to select them, then save them all at once</li>
           <li>Click on an available slot to remove it</li>
           <li>Each slot is 30 minutes long</li>
-          <li>Students will be able to book any available slot</li>
+          <li>Students can book your available slots for any topics you teach</li>
+          <li>Time slots are general availability and not tied to specific topics</li>
         </ul>
       </div>
     </div>

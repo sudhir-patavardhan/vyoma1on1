@@ -87,12 +87,20 @@ const TeacherSearch = () => {
       setLoading(true);
       setError("");
       
-      // Create a booking
+      // Find the selected slot
+      const selectedSlot = availabilities.find(slot => slot.availability_id === availabilityId);
+      if (!selectedSlot) {
+        throw new Error("Selected time slot not found");
+      }
+      
+      // Create a booking with the topic from search
       await axios.post(
         `${API_BASE_URL}/bookings`,
         {
           student_id: auth.user.profile.sub,
           availability_id: availabilityId,
+          topic: searchTerm, // Using the searched topic for this booking
+          teacher_id: selectedTeacher.user_id
         },
         {
           headers: {
@@ -204,19 +212,20 @@ const TeacherSearch = () => {
           </button>
           
           <h3>Schedule a Session with {selectedTeacher.name}</h3>
+          <p className="search-subtitle">Choose from available time slots for a session on {searchTerm}.</p>
           
           {availabilities.length > 0 ? (
             <div className="availability-list">
               {availabilities.map((slot) => (
                 <div key={slot.availability_id} className="slot-card">
                   <div className="slot-header">
-                    <h4>{slot.topic}</h4>
+                    <h4>Available Session with {selectedTeacher.name}</h4>
                   </div>
                   
                   <div className="slot-details">
                     <p><strong>Date:</strong> {formatDate(slot.start_time)}</p>
                     <p><strong>Time:</strong> {formatTime(slot.start_time)} - {formatTime(slot.end_time)}</p>
-                    {slot.description && <p><strong>Description:</strong> {slot.description}</p>}
+                    <p><strong>Topics:</strong> {selectedTeacher.topics.join(", ")}</p>
                   </div>
                   
                   <button

@@ -12,8 +12,6 @@ const TeacherSchedule = () => {
     date: "",
     startTime: "",
     endTime: "",
-    topic: "",
-    description: "",
   });
   const [error, setError] = useState("");
 
@@ -58,7 +56,7 @@ const TeacherSchedule = () => {
     e.preventDefault();
     
     // Basic validation
-    if (!newSlot.date || !newSlot.startTime || !newSlot.endTime || !newSlot.topic) {
+    if (!newSlot.date || !newSlot.startTime || !newSlot.endTime) {
       setError("Please fill in all required fields");
       return;
     }
@@ -83,8 +81,6 @@ const TeacherSchedule = () => {
         teacher_id: auth.user.profile.sub,
         start_time: startDateTime.toISOString(),
         end_time: endDateTime.toISOString(),
-        topic: newSlot.topic,
-        description: newSlot.description,
         status: "available"
       };
       
@@ -104,8 +100,6 @@ const TeacherSchedule = () => {
         date: "",
         startTime: "",
         endTime: "",
-        topic: "",
-        description: "",
       });
       setError("");
       fetchAvailabilities();
@@ -157,7 +151,8 @@ const TeacherSchedule = () => {
       {error && <div className="error-message">{error}</div>}
       
       <form className="availability-form" onSubmit={addAvailability}>
-        <h3>Add New Availability</h3>
+        <h3>Add New Availability Slot</h3>
+        <p className="form-subtitle">For a more visual way to manage your availability, try the calendar view</p>
         
         <div className="form-group">
           <label htmlFor="date">Date:</label>
@@ -197,30 +192,6 @@ const TeacherSchedule = () => {
           </div>
         </div>
         
-        <div className="form-group">
-          <label htmlFor="topic">Topic:</label>
-          <input
-            type="text"
-            id="topic"
-            name="topic"
-            value={newSlot.topic}
-            onChange={handleInputChange}
-            placeholder="What will you teach in this session?"
-            required
-          />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="description">Description:</label>
-          <textarea
-            id="description"
-            name="description"
-            value={newSlot.description}
-            onChange={handleInputChange}
-            placeholder="Add details about this session"
-            rows="3"
-          />
-        </div>
         
         <button type="submit" className="btn btn-primary">Add Slot</button>
       </form>
@@ -235,14 +206,13 @@ const TeacherSchedule = () => {
             {availabilities.map((slot) => (
               <div key={slot.availability_id} className={`slot-card ${slot.status}`}>
                 <div className="slot-header">
-                  <h4>{slot.topic}</h4>
+                  <h4>Available Slot</h4>
                   <span className={`status-badge ${slot.status}`}>{slot.status}</span>
                 </div>
                 
                 <div className="slot-details">
                   <p><strong>Date:</strong> {formatDate(slot.start_time)}</p>
                   <p><strong>Time:</strong> {formatTime(slot.start_time)} - {formatTime(slot.end_time)}</p>
-                  {slot.description && <p><strong>Description:</strong> {slot.description}</p>}
                 </div>
                 
                 {slot.status === "available" && (

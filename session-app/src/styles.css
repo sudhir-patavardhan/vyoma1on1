@@ -1468,6 +1468,12 @@ textarea {
   box-shadow: var(--shadow-sm);
 }
 
+.search-subtitle {
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
 .search-results {
   margin-top: 40px;
 }
