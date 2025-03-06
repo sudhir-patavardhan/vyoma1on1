@@ -3,13 +3,13 @@
   "name": "Vyoma Learning - Connect with Sanskrit Teachers",
   "icons": [
     {
-      "src": "vyoma/vyoma-favicon.ico",
+      "src": "vyoma/vyoma-favicon.svg",
       "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "type": "image/svg+xml"
     },
     {
-      "src": "vyoma/vyoma-logo.png",
-      "type": "image/png",
+      "src": "vyoma/vyoma-logo.svg",
+      "type": "image/svg+xml",
       "sizes": "512x512"
     }
   ],

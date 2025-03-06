@@ -58,12 +58,12 @@ function App() {
     <header className="header">
       <div className="header-logo">
         <img
-          src="/vyoma/vyoma-logo.png"
+          src="/vyoma/vyoma-logo.svg"
           alt="Vyoma Learning Logo"
           className="header-logo-image"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = "/logo.jpeg"; // Fallback if main logo doesn't exist
+            e.target.src = "/logo.jpeg"; // Fallback if SVG doesn't exist
           }}
         />
         <span className="header-title">Vyoma Learning</span>
