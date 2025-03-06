@@ -71,6 +71,20 @@ Resources:
                   - "s3:PutObject"
                   - "s3:ListBucket"
                 Resource: "*"
+        - PolicyName: ChimeSDKAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "chime:CreateMeeting"
+                  - "chime:GetMeeting"
+                  - "chime:ListMeetings"
+                  - "chime:DeleteMeeting"
+                  - "chime:CreateAttendee" 
+                  - "chime:GetAttendee"
+                  - "chime:DeleteAttendee"
+                Resource: "*"
 
   # API Gateway deployment
   ApiGatewayDeployment:

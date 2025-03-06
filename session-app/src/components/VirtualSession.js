@@ -4,6 +4,17 @@ import axios from "axios";
 import { API_BASE_URL } from "../config";
 import "../styles.css";
 
+// Amazon Chime SDK imports
+import {
+  MeetingSessionStatusCode,
+  ConsoleLogger,
+  DefaultDeviceController,
+  DefaultMeetingSession,
+  LogLevel,
+  MeetingSessionConfiguration,
+  VideoTileState,
+} from 'amazon-chime-sdk-js';
+
 const VirtualSession = ({ sessionId, onEndSession }) => {
   const auth = useAuth();
   const [loading, setLoading] = useState(true);
@@ -15,21 +26,21 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
   const [newNote, setNewNote] = useState("");
   const [fileUpload, setFileUpload] = useState(null);
   
-  // WebRTC related state
-  const [localStream, setLocalStream] = useState(null);
-  const [remoteStream, setRemoteStream] = useState(null);
-  const [peerConnection, setPeerConnection] = useState(null);
+  // Amazon Chime SDK related state
+  const [meetingSession, setMeetingSession] = useState(null);
+  const [meetingId, setMeetingId] = useState(null);
+  const [attendeeId, setAttendeeId] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [activeSpeakerId, setActiveSpeakerId] = useState(null);
+  const [meetingStatus, setMeetingStatus] = useState('initializing');
+  const [localTileId, setLocalTileId] = useState(null);
+  const [remoteTileId, setRemoteTileId] = useState(null);
   
-  // WebRTC configuration
-  const configuration = {
-    iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" },
-    ],
-  };
+  // Amazon Chime SDK configuration
+  const logger = useRef(new ConsoleLogger('ChimeMeetingLogs', LogLevel.INFO));
+  const deviceController = useRef(null);
   
   // Refs for video elements
   const localVideoRef = useRef(null);
@@ -37,11 +48,13 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
   const screenShareStreamRef = useRef(null);
   
   useEffect(() => {
-    // Fetch session details
-    const fetchSession = async () => {
+    // Fetch session details and set up the meeting
+    const initializeSession = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(
+        
+        // 1. Fetch the session details
+        const sessionResponse = await axios.get(
           `${API_BASE_URL}/sessions/${sessionId}`,
           {
             headers: {
@@ -50,198 +63,283 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
           }
         );
         
-        setSession(response.data);
+        setSession(sessionResponse.data);
         
         // Extract notes and shared files from session data
-        if (response.data.notes && Array.isArray(response.data.notes)) {
-          setNotes(response.data.notes);
+        if (sessionResponse.data.notes && Array.isArray(sessionResponse.data.notes)) {
+          setNotes(sessionResponse.data.notes);
         }
         
-        if (response.data.shared_documents && Array.isArray(response.data.shared_documents)) {
-          setSharedFiles(response.data.shared_documents);
+        if (sessionResponse.data.shared_documents && Array.isArray(sessionResponse.data.shared_documents)) {
+          setSharedFiles(sessionResponse.data.shared_documents);
         }
+        
+        // 2. Create or get a Chime meeting for this session
+        const meetingResponse = await axios.post(
+          `${API_BASE_URL}/meetings`,
+          { session_id: sessionId },
+          {
+            headers: {
+              Authorization: `Bearer ${auth.user.access_token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        
+        // Store the meeting details
+        const meetingData = meetingResponse.data.meeting;
+        setMeetingId(meetingData.MeetingId);
+        
+        // 3. Join the meeting as an attendee
+        const attendeeResponse = await axios.post(
+          `${API_BASE_URL}/attendees`,
+          { 
+            session_id: sessionId,
+            user_id: auth.user.profile.sub 
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${auth.user.access_token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        
+        const attendeeData = attendeeResponse.data.attendee;
+        setAttendeeId(attendeeData.AttendeeId);
+        
+        // 4. Set up the Chime meeting session
+        await setupChimeMeeting(meetingData, attendeeData);
+        
       } catch (err) {
-        console.error("Error fetching session details:", err);
-        setError("Failed to load session details. Please refresh the page.");
+        console.error("Error initializing session:", err);
+        setError("Failed to initialize virtual session. Please try again.");
       } finally {
         setLoading(false);
       }
     };
     
-    fetchSession();
-    
-    // Initialize WebRTC
-    setupWebRTC();
+    initializeSession();
     
     // Cleanup on component unmount
     return () => {
-      // Close peer connection and release media streams
-      if (peerConnection) {
-        peerConnection.close();
-      }
-      
-      if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop());
-      }
-      
-      if (screenShareStreamRef.current) {
-        screenShareStreamRef.current.getTracks().forEach((track) => track.stop());
+      // Leave the meeting if it exists
+      if (meetingSession) {
+        try {
+          meetingSession.audioVideo.stop();
+          console.log("Successfully left the meeting");
+        } catch (err) {
+          console.error("Error leaving meeting:", err);
+        }
       }
     };
-  }, [sessionId, auth.user.access_token]);
+  }, [sessionId, auth.user.access_token, auth.user.profile.sub]);
   
-  const setupWebRTC = async () => {
+  const setupChimeMeeting = async (meetingData, attendeeData) => {
     try {
-      // Create a new RTCPeerConnection
-      const pc = new RTCPeerConnection(configuration);
-      setPeerConnection(pc);
+      // Create configuration objects
+      const configuration = new MeetingSessionConfiguration(
+        meetingData,
+        attendeeData
+      );
       
-      // Request media stream from user's camera and microphone
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-      
-      setLocalStream(stream);
-      
-      // Display local stream in video element
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
+      // Create device controller if not already created
+      if (!deviceController.current) {
+        deviceController.current = new DefaultDeviceController(logger.current);
       }
       
-      // Add local stream tracks to peer connection
-      stream.getTracks().forEach((track) => {
-        pc.addTrack(track, stream);
-      });
+      // Create meeting session
+      const session = new DefaultMeetingSession(
+        configuration,
+        logger.current,
+        deviceController.current
+      );
+      setMeetingSession(session);
       
-      // Create a new MediaStream for remote tracks
-      const newRemoteStream = new MediaStream();
-      setRemoteStream(newRemoteStream);
+      // Setup audio/video observers
+      setupAudioVideoObservers(session);
       
-      // Display remote stream in video element
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = newRemoteStream;
-      }
+      // Select audio/video devices
+      await selectMediaDevices(session);
       
-      // Handle incoming tracks from remote peer
-      pc.ontrack = (event) => {
-        event.streams[0].getTracks().forEach((track) => {
-          newRemoteStream.addTrack(track);
-        });
-      };
+      // Start the meeting session
+      session.audioVideo.start();
+      setMeetingStatus('started');
       
-      // Handle ICE candidates
-      pc.onicecandidate = async (event) => {
-        if (event.candidate) {
-          // In a real implementation, you would send this candidate to the signaling server
-          // which would relay it to the other peer
-          console.log("New ICE candidate:", event.candidate);
-        }
-      };
+      // Join with audio/video
+      await joinWithAudioVideo(session);
       
-      // Log state changes
-      pc.oniceconnectionstatechange = () => {
-        console.log("ICE connection state:", pc.iceConnectionState);
-      };
-      
-      pc.onsignalingstatechange = () => {
-        console.log("Signaling state:", pc.signalingState);
-      };
-      
-      // In a real implementation, you would establish the connection with the remote peer
-      // by exchanging SDP offers and answers through a signaling server
     } catch (err) {
-      console.error("Error setting up WebRTC:", err);
-      setError("Failed to access camera or microphone. Please check your device permissions.");
+      console.error("Error setting up Chime meeting:", err);
+      setError("Failed to setup video meeting. Please check your device permissions.");
+    }
+  };
+  
+  const setupAudioVideoObservers = (session) => {
+    // Handle video tiles
+    session.audioVideo.addObserver({
+      // Video tile events
+      videoTileDidUpdate: (tileState) => {
+        if (!tileState.boundAttendeeId) {
+          return;
+        }
+        
+        const isLocalTile = tileState.localTile;
+        
+        if (isLocalTile) {
+          // Local video tile
+          setLocalTileId(tileState.tileId);
+          session.audioVideo.bindVideoElement(
+            tileState.tileId,
+            localVideoRef.current
+          );
+        } else if (!tileState.isContent) {
+          // Remote participant camera
+          setRemoteTileId(tileState.tileId);
+          session.audioVideo.bindVideoElement(
+            tileState.tileId,
+            remoteVideoRef.current
+          );
+        } else {
+          // This is a screen share tile
+          console.log('Screen share tile added:', tileState.tileId);
+          // Handle screen share if needed
+        }
+      },
+      
+      videoTileWasRemoved: (tileId) => {
+        if (tileId === localTileId) {
+          setLocalTileId(null);
+        } else if (tileId === remoteTileId) {
+          setRemoteTileId(null);
+        }
+        console.log(`Video tile removed: ${tileId}`);
+      },
+      
+      // Meeting status events
+      audioVideoDidStop: (sessionStatus) => {
+        const sessionStatusCode = sessionStatus.statusCode();
+        setMeetingStatus('stopped');
+        
+        if (sessionStatusCode === MeetingSessionStatusCode.MeetingEnded) {
+          console.log('Meeting ended');
+          if (onEndSession) onEndSession();
+        } else {
+          console.log(`Meeting stopped with code: ${sessionStatusCode}`);
+        }
+      },
+      
+      // Active speaker events
+      activeSpeakerDidDetect: (activeSpeakers) => {
+        if (activeSpeakers.length) {
+          setActiveSpeakerId(activeSpeakers[0]);
+        }
+      }
+    });
+  };
+  
+  const selectMediaDevices = async (session) => {
+    try {
+      const audioInputDevices = await session.audioVideo.listAudioInputDevices();
+      const videoInputDevices = await session.audioVideo.listVideoInputDevices();
+      
+      if (audioInputDevices.length > 0) {
+        await session.audioVideo.chooseAudioInputDevice(audioInputDevices[0].deviceId);
+      }
+      
+      if (videoInputDevices.length > 0) {
+        await session.audioVideo.chooseVideoInputDevice(videoInputDevices[0].deviceId);
+      }
+    } catch (err) {
+      console.error('Error selecting media devices:', err);
+      throw err;
+    }
+  };
+  
+  const joinWithAudioVideo = async (session) => {
+    try {
+      // Start local video
+      await session.audioVideo.startLocalVideoTile();
+      
+      // Start audio
+      session.audioVideo.realtimeSubscribeToAttendeeIdPresence((attendeeId, present) => {
+        console.log(`Attendee ${attendeeId} presence: ${present}`);
+      });
+    } catch (err) {
+      console.error('Error joining with audio/video:', err);
+      setError('Failed to start audio/video. Please check your device permissions.');
     }
   };
   
   const toggleMute = () => {
-    if (localStream) {
-      localStream.getAudioTracks().forEach((track) => {
-        track.enabled = !track.enabled;
-      });
-      setIsMuted(!isMuted);
+    if (!meetingSession) return;
+    
+    try {
+      if (isMuted) {
+        // Unmute
+        meetingSession.audioVideo.realtimeUnmuteLocalAudio();
+      } else {
+        // Mute
+        meetingSession.audioVideo.realtimeMuteLocalAudio();
+      }
+      
+      // Update state based on actual mute state
+      const muted = meetingSession.audioVideo.realtimeIsLocalAudioMuted();
+      setIsMuted(muted);
+    } catch (err) {
+      console.error("Error toggling mute:", err);
     }
   };
   
-  const toggleVideo = () => {
-    if (localStream) {
-      localStream.getVideoTracks().forEach((track) => {
-        track.enabled = !track.enabled;
-      });
-      setIsVideoOff(!isVideoOff);
+  const toggleVideo = async () => {
+    if (!meetingSession) return;
+    
+    try {
+      if (isVideoOff) {
+        // Turn video on
+        await meetingSession.audioVideo.startLocalVideoTile();
+        setIsVideoOff(false);
+      } else {
+        // Turn video off
+        meetingSession.audioVideo.stopLocalVideoTile();
+        setIsVideoOff(true);
+      }
+    } catch (err) {
+      console.error("Error toggling video:", err);
     }
   };
   
   const startScreenShare = async () => {
+    if (!meetingSession) return;
+    
     try {
-      // Request screen sharing stream
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-      });
-      
-      screenShareStreamRef.current = screenStream;
-      
-      // Replace video track with screen sharing track
-      if (peerConnection) {
-        const videoTrack = screenStream.getVideoTracks()[0];
-        
-        // Find the sender that's currently sending video
-        const senders = peerConnection.getSenders();
-        const videoSender = senders.find((sender) => 
-          sender.track && sender.track.kind === 'video'
-        );
-        
-        if (videoSender) {
-          videoSender.replaceTrack(videoTrack);
-        }
-        
-        // Show screen share in local video
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = screenStream;
-        }
-        
-        setIsScreenSharing(true);
-        
-        // Listen for end of screen sharing
-        videoTrack.onended = () => {
-          stopScreenShare();
-        };
+      // Stop any existing screen share
+      if (isScreenSharing) {
+        await stopScreenShare();
       }
+      
+      // Start screen sharing
+      await meetingSession.audioVideo.startContentShare();
+      setIsScreenSharing(true);
+      
+      // Handle screen share events
+      meetingSession.audioVideo.addContentShareObserver({
+        contentShareDidStop: () => {
+          console.log('Content share stopped');
+          setIsScreenSharing(false);
+        }
+      });
     } catch (err) {
       console.error("Error starting screen share:", err);
       setError("Failed to start screen sharing. Please try again.");
     }
   };
   
-  const stopScreenShare = () => {
+  const stopScreenShare = async () => {
+    if (!meetingSession) return;
+    
     try {
-      // Stop screen share tracks
-      if (screenShareStreamRef.current) {
-        screenShareStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
-      
-      // Replace with original video track
-      if (peerConnection && localStream) {
-        const videoTrack = localStream.getVideoTracks()[0];
-        
-        // Find the video sender
-        const senders = peerConnection.getSenders();
-        const videoSender = senders.find((sender) => 
-          sender.track && sender.track.kind === 'video'
-        );
-        
-        if (videoSender && videoTrack) {
-          videoSender.replaceTrack(videoTrack);
-        }
-        
-        // Show camera video in local video again
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = localStream;
-        }
-      }
-      
+      await meetingSession.audioVideo.stopContentShare();
       setIsScreenSharing(false);
     } catch (err) {
       console.error("Error stopping screen share:", err);
@@ -332,7 +430,7 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
   
   const endSession = async () => {
     try {
-      // Update session status to ended
+      // 1. Update session status to ended in our backend
       await axios.put(
         `${API_BASE_URL}/sessions/${sessionId}`,
         {
@@ -346,20 +444,24 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
         }
       );
       
-      // Close connections and stop streams
-      if (peerConnection) {
-        peerConnection.close();
+      // 2. End the Chime meeting
+      if (meetingSession) {
+        meetingSession.audioVideo.stop();
       }
       
-      if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop());
-      }
+      // 3. Delete the meeting on the backend
+      await axios.delete(
+        `${API_BASE_URL}/meetings`,
+        {
+          headers: {
+            Authorization: `Bearer ${auth.user.access_token}`,
+            "Content-Type": "application/json",
+          },
+          data: { session_id: sessionId }
+        }
+      );
       
-      if (screenShareStreamRef.current) {
-        screenShareStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
-      
-      // Call the parent component's callback
+      // 4. Call the parent component's callback
       if (onEndSession) {
         onEndSession();
       }

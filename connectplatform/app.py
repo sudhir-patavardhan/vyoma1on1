@@ -7,9 +7,10 @@ from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
 from decimal import Decimal
 
-# Initialize DynamoDB resources and table names
+# Initialize AWS clients
 dynamodb = boto3.resource('dynamodb')
 dynamodb_client = boto3.client('dynamodb')
+chime_client = boto3.client('chime')
 
 # Get environment stage, default to prod
 stage = os.environ.get('STAGE', 'prod')
@@ -617,6 +618,279 @@ def generate_presigned_url(event):
         print(f"Error generating presigned URL: {str(e)}")
         return response_with_cors(500, {"message": "Error generating upload URL", "error": str(e)})
 
+# ========== Video Meeting Management ==========
+def create_chime_meeting(event):
+    """Creates a new Amazon Chime meeting for a session."""
+    try:
+        body = json.loads(event['body'])
+        session_id = body.get('session_id')
+        
+        if not session_id:
+            return response_with_cors(400, {"message": "session_id is required"})
+        
+        # Get the session to verify it exists
+        sessions_table = dynamodb.Table(SESSION_TABLE)
+        session_response = sessions_table.get_item(Key={'session_id': session_id})
+        
+        if 'Item' not in session_response:
+            return response_with_cors(404, {"message": "Session not found"})
+            
+        session = session_response['Item']
+        
+        # Create a unique meeting ID based on the session
+        external_meeting_id = f"session-meeting-{session_id}"
+        
+        # Check if a meeting already exists for this session
+        try:
+            # Try to get an existing meeting
+            existing_meeting = chime_client.get_meeting(
+                MeetingId=session.get('chime_meeting_id', '')
+            )
+            
+            # If we got here, the meeting exists and is active
+            return response_with_cors(200, {
+                "meeting": existing_meeting['Meeting'],
+                "session_id": session_id
+            })
+        except chime_client.exceptions.NotFoundException:
+            # Meeting doesn't exist, create a new one
+            pass
+        except Exception as e:
+            # Some other error occurred, likely the meeting_id is invalid
+            # We'll create a new meeting
+            print(f"Error getting existing meeting: {str(e)}")
+            
+        # Create a new Chime meeting
+        meeting_response = chime_client.create_meeting(
+            ClientRequestToken=str(uuid.uuid4()),
+            ExternalMeetingId=external_meeting_id,
+            MediaRegion='us-east-1',  # Specify your preferred region
+            MeetingFeatures={
+                'Audio': {
+                    'EchoReduction': 'AVAILABLE'
+                },
+                'Video': {
+                    'MaxResolution': 'HD'
+                },
+                'Content': {
+                    'MaxResolution': 'FHD'
+                }
+            }
+        )
+        
+        # Update the session with the Chime meeting ID
+        sessions_table.update_item(
+            Key={'session_id': session_id},
+            UpdateExpression="SET chime_meeting_id = :meeting_id, chime_meeting_data = :meeting_data",
+            ExpressionAttributeValues={
+                ':meeting_id': meeting_response['Meeting']['MeetingId'],
+                ':meeting_data': json.dumps(meeting_response['Meeting'])
+            }
+        )
+        
+        return response_with_cors(201, {
+            "meeting": meeting_response['Meeting'],
+            "session_id": session_id
+        })
+    except (ClientError, json.JSONDecodeError) as e:
+        print(f"Error creating Chime meeting: {str(e)}")
+        return response_with_cors(500, {"message": "Error creating video meeting.", "error": str(e)})
+
+def create_chime_attendee(event):
+    """Creates a new attendee for an existing Chime meeting."""
+    try:
+        body = json.loads(event['body'])
+        session_id = body.get('session_id')
+        user_id = body.get('user_id')
+        
+        if not session_id or not user_id:
+            return response_with_cors(400, {"message": "session_id and user_id are required"})
+        
+        # Get the session to verify it exists and get the meeting ID
+        sessions_table = dynamodb.Table(SESSION_TABLE)
+        session_response = sessions_table.get_item(Key={'session_id': session_id})
+        
+        if 'Item' not in session_response:
+            return response_with_cors(404, {"message": "Session not found"})
+            
+        session = session_response['Item']
+        meeting_id = session.get('chime_meeting_id')
+        
+        if not meeting_id:
+            return response_with_cors(400, {"message": "No active meeting for this session"})
+            
+        # Verify the user is either the teacher or student for this session
+        if user_id != session['teacher_id'] and user_id != session['student_id']:
+            return response_with_cors(403, {"message": "User is not authorized to join this session"})
+        
+        # Get user profile to include name
+        profiles_table = dynamodb.Table(PROFILE_TABLE)
+        profile_response = profiles_table.get_item(Key={'user_id': user_id})
+        
+        if 'Item' in profile_response:
+            user_name = profile_response['Item'].get('name', 'Participant')
+        else:
+            user_name = 'Participant'
+        
+        # Create an attendee
+        attendee_response = chime_client.create_attendee(
+            MeetingId=meeting_id,
+            ExternalUserId=user_id,
+            Capabilities={
+                'Audio': 'SendReceive',
+                'Video': 'SendReceive',
+                'Content': 'SendReceive'
+            }
+        )
+        
+        return response_with_cors(201, {
+            "attendee": attendee_response['Attendee'],
+            "meeting_id": meeting_id,
+            "user_name": user_name
+        })
+    except (ClientError, json.JSONDecodeError) as e:
+        print(f"Error creating Chime attendee: {str(e)}")
+        return response_with_cors(500, {"message": "Error joining video meeting.", "error": str(e)})
+
+def get_chime_meeting(event):
+    """Gets the details of a Chime meeting for a session."""
+    try:
+        session_id = event.get('pathParameters', {}).get('session_id')
+        
+        if not session_id:
+            # Try to extract from query parameters
+            session_id = event.get('queryStringParameters', {}).get('session_id')
+            
+        if not session_id:
+            return response_with_cors(400, {"message": "session_id is required"})
+        
+        # Get the session to verify it exists
+        sessions_table = dynamodb.Table(SESSION_TABLE)
+        session_response = sessions_table.get_item(Key={'session_id': session_id})
+        
+        if 'Item' not in session_response:
+            return response_with_cors(404, {"message": "Session not found"})
+            
+        session = session_response['Item']
+        
+        # If meeting data is stored in the session, return it
+        if 'chime_meeting_data' in session:
+            try:
+                meeting_data = json.loads(session['chime_meeting_data'])
+                return response_with_cors(200, {
+                    "meeting": meeting_data,
+                    "session_id": session_id,
+                    "has_active_meeting": True
+                })
+            except (json.JSONDecodeError, TypeError):
+                # If the stored data is invalid, we'll try to get it from Chime
+                pass
+                
+        # If we have a meeting ID but no data, try to get it from Chime
+        if 'chime_meeting_id' in session:
+            try:
+                meeting_response = chime_client.get_meeting(
+                    MeetingId=session['chime_meeting_id']
+                )
+                
+                # Update the session with the latest meeting data
+                sessions_table.update_item(
+                    Key={'session_id': session_id},
+                    UpdateExpression="SET chime_meeting_data = :meeting_data",
+                    ExpressionAttributeValues={
+                        ':meeting_data': json.dumps(meeting_response['Meeting'])
+                    }
+                )
+                
+                return response_with_cors(200, {
+                    "meeting": meeting_response['Meeting'],
+                    "session_id": session_id,
+                    "has_active_meeting": True
+                })
+            except chime_client.exceptions.NotFoundException:
+                # Meeting doesn't exist anymore
+                return response_with_cors(200, {
+                    "session_id": session_id,
+                    "has_active_meeting": False,
+                    "message": "No active meeting found for this session"
+                })
+            except Exception as e:
+                print(f"Error getting Chime meeting: {str(e)}")
+                # We'll return a response indicating no active meeting
+                return response_with_cors(200, {
+                    "session_id": session_id,
+                    "has_active_meeting": False,
+                    "message": "Error retrieving meeting information"
+                })
+        
+        # No meeting exists for this session
+        return response_with_cors(200, {
+            "session_id": session_id,
+            "has_active_meeting": False,
+            "message": "No meeting has been created for this session yet"
+        })
+    except Exception as e:
+        print(f"Error in get_chime_meeting: {str(e)}")
+        return response_with_cors(500, {"message": "Error getting meeting information.", "error": str(e)})
+
+def end_chime_meeting(event):
+    """Ends an active Chime meeting for a session."""
+    try:
+        body = json.loads(event['body'])
+        session_id = body.get('session_id')
+        
+        if not session_id:
+            return response_with_cors(400, {"message": "session_id is required"})
+        
+        # Get the session to verify it exists
+        sessions_table = dynamodb.Table(SESSION_TABLE)
+        session_response = sessions_table.get_item(Key={'session_id': session_id})
+        
+        if 'Item' not in session_response:
+            return response_with_cors(404, {"message": "Session not found"})
+            
+        session = session_response['Item']
+        
+        # Check if there's an active meeting
+        if 'chime_meeting_id' not in session:
+            return response_with_cors(400, {"message": "No active meeting for this session"})
+            
+        meeting_id = session['chime_meeting_id']
+        
+        # End the meeting
+        try:
+            chime_client.delete_meeting(
+                MeetingId=meeting_id
+            )
+            
+            # Update the session to remove meeting data
+            sessions_table.update_item(
+                Key={'session_id': session_id},
+                UpdateExpression="REMOVE chime_meeting_id, chime_meeting_data"
+            )
+            
+            return response_with_cors(200, {
+                "message": "Meeting ended successfully",
+                "session_id": session_id
+            })
+        except chime_client.exceptions.NotFoundException:
+            # Meeting doesn't exist anymore, just update the session
+            sessions_table.update_item(
+                Key={'session_id': session_id},
+                UpdateExpression="REMOVE chime_meeting_id, chime_meeting_data"
+            )
+            
+            return response_with_cors(200, {
+                "message": "Meeting was already ended",
+                "session_id": session_id
+            })
+        except Exception as e:
+            print(f"Error ending Chime meeting: {str(e)}")
+            return response_with_cors(500, {"message": "Error ending meeting.", "error": str(e)})
+    except (ClientError, json.JSONDecodeError) as e:
+        print(f"Error in end_chime_meeting: {str(e)}")
+        return response_with_cors(500, {"message": "Error processing request.", "error": str(e)})
+
 # ========== Search ==========
 def search_teachers(event):
     """Searches for teachers based on topic/subject."""
@@ -760,6 +1034,16 @@ def lambda_handler(event, context):
                 resource = "/search/teachers"
             elif path.startswith('/presigned-url'):
                 resource = "/presigned-url"
+            elif path.startswith('/meetings/') and len(path.split('/')) > 2:
+                resource = "/meetings/{session_id}"
+                session_id = path.split('/meetings/')[1]
+                if 'pathParameters' not in event:
+                    event['pathParameters'] = {}
+                event['pathParameters']['session_id'] = session_id
+            elif path.startswith('/meetings'):
+                resource = "/meetings"
+            elif path.startswith('/attendees'):
+                resource = "/attendees"
         
         # Log the resource and method being handled
         print(f"Handling request: {resource} [{method}]")
@@ -804,6 +1088,14 @@ def lambda_handler(event, context):
                 return search_teachers(event)
             elif resource == "/presigned-url" and method == "POST":
                 return generate_presigned_url(event)
+            elif resource == "/meetings" and method == "POST":
+                return create_chime_meeting(event)
+            elif resource == "/meetings/{session_id}" and method == "GET":
+                return get_chime_meeting(event)
+            elif resource == "/meetings" and method == "DELETE":
+                return end_chime_meeting(event)
+            elif resource == "/attendees" and method == "POST":
+                return create_chime_attendee(event)
             else:
                 print(f"Unknown route: {resource}:{method}, path: {path}")
                 return response_with_cors(404, {"message": "Endpoint not found", "resource": resource, "method": method, "path": path})

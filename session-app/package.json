@@ -5,9 +5,11 @@
   "dependencies": {
     "@aws-amplify/auth": "^6.7.0",
     "@aws-amplify/ui-react": "^6.5.5",
+    "@aws-sdk/client-chime": "^3.490.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "amazon-chime-sdk-js": "^3.20.0",
     "aws-amplify": "^6.8.2",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.7.7",
