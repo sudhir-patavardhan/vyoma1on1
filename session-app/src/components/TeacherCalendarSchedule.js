@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "react-oidc-context";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
@@ -19,13 +19,14 @@ const TeacherCalendarSchedule = () => {
   useEffect(() => {
     generateWeekDates(activeDate);
     generateTimeSlots();
-    fetchAvailabilities();
-  }, []);
-
-  // Fetch availabilities when activeDate changes
-  useEffect(() => {
-    fetchAvailabilities();
   }, [activeDate]);
+
+  // Fetch availabilities when activeDate or weekDates change
+  useEffect(() => {
+    if (weekDates.length > 0) {
+      fetchAvailabilities();
+    }
+  }, [activeDate, weekDates, fetchAvailabilities]);
 
   // Generate array of dates for the current week view
   const generateWeekDates = (currentDate) => {
@@ -109,11 +110,12 @@ const TeacherCalendarSchedule = () => {
   };
 
   // Fetch teacher's availabilities
-  const fetchAvailabilities = async () => {
-    if (!auth.isAuthenticated) return;
+  const fetchAvailabilities = useCallback(async () => {
+    if (!auth.isAuthenticated || weekDates.length === 0) return;
     
     try {
       setLoading(true);
+      console.log('Fetching availability slots for teacher...');
       
       // Get start and end of week for filtering
       const weekStart = new Date(weekDates[0]);
@@ -121,6 +123,8 @@ const TeacherCalendarSchedule = () => {
       
       const weekEnd = new Date(weekDates[6]);
       weekEnd.setHours(23, 59, 59, 999);
+      
+      console.log(`Filtering slots between ${weekStart.toISOString()} and ${weekEnd.toISOString()}`);
       
       const response = await axios.get(
         `${API_BASE_URL}/availability?teacher_id=${auth.user.profile.sub}`,
@@ -132,13 +136,20 @@ const TeacherCalendarSchedule = () => {
       );
       
       if (response.data && Array.isArray(response.data)) {
+        console.log(`Received ${response.data.length} availability slots from API`);
+        
         // Filter for slots in current week view
         const slotsInWeek = response.data.filter(slot => {
+          if (!slot.start_time) return false;
           const slotStart = new Date(slot.start_time);
           return slotStart >= weekStart && slotStart <= weekEnd;
         });
         
+        console.log(`Filtered to ${slotsInWeek.length} slots in current week view`);
         setAvailabilities(slotsInWeek);
+      } else {
+        console.warn('Unexpected response format:', response.data);
+        setAvailabilities([]);
       }
     } catch (err) {
       console.error("Error fetching availabilities:", err);
@@ -146,7 +157,7 @@ const TeacherCalendarSchedule = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [auth.isAuthenticated, auth.user, weekDates, setAvailabilities, setLoading, setError]);
 
   // Check if a slot is already marked as available
   const isSlotAvailable = (date, timeSlot) => {

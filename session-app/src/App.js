@@ -211,7 +211,7 @@ function App() {
                   )}
 
                   {profile?.role === "teacher" && activeTab === "schedule" && (
-                    <TeacherSchedule />
+                    <TeacherCalendarSchedule />
                   )}
                 </div>
               </div>
