@@ -3,6 +3,7 @@ import { useAuth } from "react-oidc-context";
 import ProfileForm from "./components/ProfileForm";
 import TeacherSearch from "./components/TeacherSearch";
 import TeacherSchedule from "./components/TeacherSchedule";
+import TeacherCalendarSchedule from "./components/TeacherCalendarSchedule";
 import VirtualSession from "./components/VirtualSession";
 import Bookings from "./components/Bookings";
 import Dashboard from "./components/Dashboard";
@@ -733,7 +734,7 @@ function App() {
                 )}
                 
                 {profile?.role === "teacher" && activeTab === 'schedule' && (
-                  <TeacherSchedule />
+                  <TeacherCalendarSchedule />
                 )}
               </div>
             </div>
