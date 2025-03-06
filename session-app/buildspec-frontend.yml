@@ -1,0 +1,35 @@
+version: 0.2
+
+cache:
+  paths:
+    - node_modules/**/*
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo "Using Node.js runtime version 18"
+      - echo "Setting up AWS CLI configuration"
+      - aws --version
+      - echo "Creating S3 bucket for web app deployments if it doesn't exist"
+      - aws s3 mb s3://vyoma-learning-react-app-deployments --region us-east-1 || true
+      - echo "Installing frontend dependencies"
+      - npm install
+
+  build:
+    commands:
+      - echo "Building the React frontend"
+      - npm run build
+
+  post_build:
+    commands:
+      - echo "Syncing frontend build artifacts to S3"
+      - aws s3 sync build/ s3://vyoma-learning-react-app-deployments/ --delete --exact-timestamps
+      - echo "Frontend deployment completed"
+
+artifacts:
+  files:
+    - "build/**/*"
+  base-directory: '.'
+  discard-paths: no
