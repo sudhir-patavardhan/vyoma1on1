@@ -459,6 +459,37 @@ function App() {
     }
   };
 
+  // Define the footer render function early
+  const renderFooter = () => (
+    <footer className="footer">
+      <div className="container">
+        <div className="footer-content">
+          <div className="footer-logo">
+            <img
+              src="/vyoma/Vyoma_Logo_Blue_500x243.png"
+              alt="Vyoma 1:1"
+              height="30"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "/vyoma/vyoma-logo.svg";
+              }}
+            />
+            <span>Vyoma 1:1</span>
+          </div>
+          <div className="footer-links">
+            <a href="#">Terms of Service</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Contact Us</a>
+          </div>
+          <div className="footer-copyright">
+            © {new Date().getFullYear()} Vyoma Learning, Inc. All rights
+            reserved.
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+
   if (!auth.isAuthenticated) {
     return (
       <div className="app-layout">
@@ -508,6 +539,7 @@ function App() {
             </div>
           </div>
         </div>
+        {renderFooter()}
       </div>
     );
   }
@@ -540,6 +572,7 @@ function App() {
             </div>
           </div>
         </div>
+        {renderFooter()}
       </div>
     );
   }
@@ -570,6 +603,7 @@ function App() {
             </div>
           </div>
         </div>
+        {renderFooter()}
       </div>
     );
   }
@@ -637,45 +671,77 @@ function App() {
             </div>
           </div>
         </div>
+        {renderFooter()}
       </div>
     );
   }
 
-  const renderFooter = () => (
-    <footer className="footer">
-      <div className="container">
-        <div className="footer-content">
-          <div className="footer-logo">
-            <img
-              src="/vyoma/Vyoma_Logo_Blue_500x243.png"
-              alt="Vyoma 1:1"
-              height="30"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "/vyoma/vyoma-logo.svg";
-              }}
+  // For virtual session, we don't want to show footer
+  // If active session, return the original rendering (without footer)
+  if (activeSession) {
+    return (
+      <div className="app-layout">
+        {renderHeader()}
+        <div className="main-content">
+          <div className="content-area full-width">
+            <VirtualSession 
+              sessionId={activeSession} 
+              onEndSession={() => setActiveSession(null)} 
             />
-            <span>Vyoma 1:1</span>
-          </div>
-          <div className="footer-links">
-            <a href="#">Terms of Service</a>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Contact Us</a>
-          </div>
-          <div className="footer-copyright">
-            © {new Date().getFullYear()} Vyoma Learning, Inc. All rights
-            reserved.
           </div>
         </div>
       </div>
-    </footer>
-  );
+    );
+  }
 
+  // For regular authenticated state with profile loaded
   return (
-    <>
-      {renderContent()}
+    <div className="app-layout">
+      {renderHeader()}
+      <div className="main-content">
+        <div className="content-area">
+          <div className="container">
+            <div className="card">
+              <div className="card-body">
+                {(!profile || activeTab === 'profile') && (
+                  <ProfileForm
+                    saveUserProfile={saveUserProfile}
+                    profile={profile}
+                  />
+                )}
+                
+                {profile && activeTab === 'dashboard' && (
+                  <Dashboard
+                    profile={profile}
+                    onTabChange={setActiveTab}
+                    onJoinSession={setActiveSession}
+                    upcomingSession={upcomingSession}
+                  />
+                )}
+                
+                {profile?.role === "student" && activeTab === 'search' && (
+                  <TeacherSearch />
+                )}
+                
+                {profile?.role === "student" && activeTab === 'bookings' && (
+                  <Bookings 
+                    userId={auth.user?.profile.sub} 
+                    userRole="student"
+                    onJoinSession={setActiveSession}
+                    onUpcomingSession={setUpcomingSession}
+                  />
+                )}
+                
+                {profile?.role === "teacher" && activeTab === 'schedule' && (
+                  <TeacherSchedule />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       {renderFooter()}
-    </>
+    </div>
   );
 }
 
