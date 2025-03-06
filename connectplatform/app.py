@@ -47,13 +47,29 @@ def response_with_cors(status_code, body):
         "body": json.dumps(body)
     }
 
-    # Log only status code and basic info for production
-    if status_code >= 400:
-        # Log errors in more detail
-        print(f"Error response {status_code}: {json.dumps(body)}")
+    # Log response details based on status code
+    if status_code >= 500:
+        # Server error responses
+        print(f"[ERROR] Server error response {status_code}: {json.dumps(body, default=str)}")
+    elif status_code >= 400:
+        # Client error responses
+        print(f"[WARN] Client error response {status_code}: {json.dumps(body, default=str)}")
+    elif status_code >= 300:
+        # Redirection responses
+        print(f"[INFO] Redirect response {status_code}")
+    elif status_code >= 200:
+        # Success responses - include response body for /availability endpoints to aid debugging
+        if body and isinstance(body, dict):
+            # For availability-related endpoints, log more details even for success
+            if 'availability_id' in body or (isinstance(body, list) and body and 'availability_id' in body[0]):
+                print(f"[INFO] Availability success response {status_code}: {json.dumps(body, default=str)}")
+            else:
+                print(f"[INFO] Success response {status_code}")
+        else:
+            print(f"[INFO] Success response {status_code}")
     else:
-        # Just log success status
-        print(f"Success response {status_code}")
+        # Information responses
+        print(f"[INFO] Informational response {status_code}")
 
     return response
 
@@ -333,17 +349,29 @@ def get_bookings(event):
 def create_availability(event):
     """Creates a new availability slot for a teacher."""
     try:
-        body = json.loads(event['body'])
+        print(f"[TRACE] create_availability called with event: {json.dumps(event, default=str)}")
+        
+        # Parse the body with error handling
+        try:
+            body = json.loads(event['body'])
+            print(f"[TRACE] Parsed request body: {json.dumps(body, default=str)}")
+        except json.JSONDecodeError as json_error:
+            print(f"[ERROR] Error decoding JSON body: {str(json_error)}, Body: {event.get('body', 'None')}")
+            return response_with_cors(400, {"message": "Invalid JSON in request body."})
 
         # Validate required fields
         required_fields = ['teacher_id', 'start_time', 'end_time']
         for field in required_fields:
             if field not in body:
+                print(f"[ERROR] Missing required field in request: {field}")
                 return response_with_cors(400, {"message": f"Missing required field: {field}"})
+        
+        print(f"[TRACE] Required fields validation passed")
 
         # Generate a unique availability ID
         availability_id = f"avail-{uuid.uuid4()}"
         timestamp = datetime.utcnow().isoformat()
+        print(f"[TRACE] Generated availability_id: {availability_id}")
 
         # Create the availability record
         new_availability = {
@@ -351,28 +379,46 @@ def create_availability(event):
             'teacher_id': body['teacher_id'],
             'start_time': body['start_time'],
             'end_time': body['end_time'],
-            'topic': body['topic'],
+            'topic': body.get('topic', ''),  # Topic is now optional
             'description': body.get('description', ''),
             'status': 'available',
             'created_at': timestamp,
         }
+        
+        print(f"[TRACE] Created base availability record: {json.dumps(new_availability, default=str)}")
 
         # Add any additional availability data
+        additional_fields = []
         for key, value in body.items():
             if key not in new_availability:
                 new_availability[key] = value
+                additional_fields.append(key)
+        
+        if additional_fields:
+            print(f"[TRACE] Added additional fields to availability record: {', '.join(additional_fields)}")
 
         # Store in DynamoDB
-        availability_table = dynamodb.Table(AVAILABILITY_TABLE)
-        availability_table.put_item(Item=new_availability)
+        try:
+            print(f"[TRACE] Storing availability in DynamoDB table: {AVAILABILITY_TABLE}")
+            availability_table = dynamodb.Table(AVAILABILITY_TABLE)
+            result = availability_table.put_item(Item=new_availability)
+            print(f"[TRACE] DynamoDB put_item result: {json.dumps(result, default=str)}")
+        except ClientError as db_error:
+            print(f"[ERROR] DynamoDB error creating availability: {str(db_error)}")
+            return response_with_cors(500, {"message": "Database error creating availability slot.", "error": str(db_error)})
 
+        print(f"[TRACE] Successfully created availability slot: {availability_id}")
         return response_with_cors(201, {
             "message": "Availability slot created successfully",
             "availability_id": availability_id,
             "availability": new_availability
         })
     except (ClientError, json.JSONDecodeError) as e:
+        print(f"[ERROR] Exception in create_availability: {str(e)}")
         return response_with_cors(500, {"message": "Error creating availability slot.", "error": str(e)})
+    except Exception as unexpected_error:
+        print(f"[ERROR] Unexpected error in create_availability: {str(unexpected_error)}")
+        return response_with_cors(500, {"message": "Unexpected error creating availability slot.", "error": str(unexpected_error)})
 
 def get_availabilities(event):
     """Retrieves availability slots."""
@@ -1103,6 +1149,7 @@ def lambda_handler(event, context):
 
         try:
             # Routing based on resource and method
+            print(f"[TRACE] Request routing: resource={resource}, method={method}, path={path}")
             if resource == "/profiles" and method == "GET":
                 return get_user_profile(event)
             elif resource == "/profiles" and method == "POST":
@@ -1119,8 +1166,10 @@ def lambda_handler(event, context):
                 print(f"Debug - Calling get_booking_session with booking_id: {event.get('pathParameters', {}).get('booking_id')}")
                 return get_booking_session(event)
             elif resource == "/availability" and method == "POST":
+                print(f"[TRACE] Routing /availability POST request to create_availability")
                 return create_availability(event)
             elif resource == "/availability" and method == "GET":
+                print(f"[TRACE] Routing /availability GET request to get_availabilities")
                 return get_availabilities(event)
             elif resource == "/availability/{id}" and method == "DELETE":
                 return delete_availability(event)
@@ -1143,12 +1192,16 @@ def lambda_handler(event, context):
             elif resource == "/attendees" and method == "POST":
                 return create_chime_attendee(event)
             else:
-                print(f"Unknown route: {resource}:{method}, path: {path}")
+                print(f"[ERROR] Unknown route: {resource}:{method}, path: {path}")
                 return response_with_cors(404, {"message": "Endpoint not found", "resource": resource, "method": method, "path": path})
         except Exception as route_error:
-            print(f"Error in route handling: {str(route_error)}")
+            print(f"[ERROR] Exception in route handling: {str(route_error)}")
+            import traceback
+            print(f"[ERROR] Traceback: {traceback.format_exc()}")
             return response_with_cors(500, {"message": "Error processing request", "error": str(route_error)})
 
     except Exception as e:
-        print(f"Unhandled exception in lambda_handler: {str(e)}")
+        print(f"[ERROR] Unhandled exception in lambda_handler: {str(e)}")
+        import traceback
+        print(f"[ERROR] Traceback: {traceback.format_exc()}")
         return response_with_cors(500, {"message": "Internal server error", "error": str(e)})
