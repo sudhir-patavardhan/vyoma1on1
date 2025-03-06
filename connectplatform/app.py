@@ -41,12 +41,12 @@ def response_with_cors(status_code, body):
             "Access-Control-Allow-Origin": "*",  # Allow any origin for development, restrict to domain in production
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token",
-            "Access-Control-Allow-Credentials": "true", 
+            "Access-Control-Allow-Credentials": "true",
             "Content-Type": "application/json"
         },
         "body": json.dumps(body)
     }
-    
+
     # Log only status code and basic info for production
     if status_code >= 400:
         # Log errors in more detail
@@ -54,7 +54,7 @@ def response_with_cors(status_code, body):
     else:
         # Just log success status
         print(f"Success response {status_code}")
-    
+
     return response
 
 # Tables are created by CloudFormation, not by Lambda code
@@ -66,28 +66,28 @@ def get_user_profile(event):
     try:
         # Log the full event for debugging
         print(f"GET profile event: {json.dumps(event)}")
-        
+
         # Get query parameters - handle both regular and path-based API Gateway configs
         query_params = event.get('queryStringParameters', {}) or {}
-        
+
         # Check if query parameters is None (can happen with API Gateway)
         if query_params is None:
             query_params = {}
-            
+
         user_id = query_params.get('user_id')
-        
+
         # If user_id is not in query parameters, check if it's in pathParameters
         if not user_id and event.get('pathParameters'):
             user_id = event.get('pathParameters', {}).get('user_id')
-            
+
         # As a last resort, try to extract from the path directly
         if not user_id and 'path' in event:
             path_parts = event['path'].split('/')
             if len(path_parts) > 2 and path_parts[1] == 'profiles':
                 user_id = path_parts[2]  # Assuming path format like /profiles/{user_id}
-                
+
         print(f"Looking up profile for user_id: {user_id}")
-                
+
         if not user_id:
             return response_with_cors(400, {"message": "user_id is required to fetch the profile."})
 
@@ -95,16 +95,16 @@ def get_user_profile(event):
             # Use only the stage-specific table name (e.g. UserProfiles-prod)
             print(f"Looking up profile in table: {PROFILE_TABLE}")
             table = dynamodb.Table(PROFILE_TABLE)
-            
+
             # Use ConsistentRead for the most up-to-date data
             response = table.get_item(Key={'user_id': user_id}, ConsistentRead=True)
-            
+
             # Log response for debugging
             if 'Item' in response:
                 print(f"Found user profile for {user_id}")
             else:
                 print(f"No profile found for user {user_id}")
-                
+
         except Exception as table_error:
             print(f"Error accessing table {PROFILE_TABLE}: {str(table_error)}")
             return response_with_cors(500, {"message": "Error accessing user profiles database.", "error": str(table_error)})
@@ -124,12 +124,12 @@ def create_user_profile(event):
     """Creates or updates a user profile in the UserProfiles table."""
     try:
         print(f"Processing profile creation request: {json.dumps(event, default=str)}")
-        
+
         # Check if the body exists and is not empty
         if not event.get('body'):
             print("Error: Empty request body")
             return response_with_cors(400, {"message": "Request body is required."})
-            
+
         # Parse the body with error handling
         try:
             body = json.loads(event['body'])
@@ -137,11 +137,11 @@ def create_user_profile(event):
         except json.JSONDecodeError as json_error:
             print(f"Error decoding JSON body: {str(json_error)}, Body: {event.get('body', 'None')}")
             return response_with_cors(400, {"message": "Invalid JSON in request body."})
-        
+
         # Get user_id and role from body
         user_id = body.get('user_id')
         role = body.get('role')
-        
+
         # Get profile data, which could be direct or nested
         if 'profile_data' in body:
             # Frontend sends nested profile_data
@@ -149,7 +149,7 @@ def create_user_profile(event):
         else:
             # Direct profile data without nesting
             profile_data = body
-            
+
         print(f"Profile creation for user_id: {user_id}, role: {role}, data: {json.dumps(profile_data, default=str)}")
 
         if not user_id:
@@ -163,11 +163,11 @@ def create_user_profile(event):
             'created_at': timestamp,
             'updated_at': timestamp,
         }
-        
+
         # Add role if provided
         if role:
             profile_item['role'] = role
-        
+
         # Add all other profile data
         for key, value in profile_data.items():
             if key not in ['user_id', 'created_at', 'updated_at'] and key != 'profile_data':
@@ -187,7 +187,7 @@ def create_user_profile(event):
         except Exception as get_error:
             print(f"Error checking for existing profile: {str(get_error)}")
             # Continue with creation even if check fails
-        
+
         # Save the profile
         print(f"Saving profile to table {PROFILE_TABLE}: {json.dumps(profile_item, default=str)}")
         try:
@@ -197,7 +197,7 @@ def create_user_profile(event):
         except Exception as put_error:
             print(f"Error saving profile: {str(put_error)}")
             return response_with_cors(500, {"message": "Error saving profile to database.", "error": str(put_error)})
-            
+
     except Exception as e:
         print(f"Unexpected error in create_user_profile: {str(e)}")
         return response_with_cors(500, {"message": "Error processing profile data.", "error": str(e)})
@@ -336,7 +336,7 @@ def create_availability(event):
         body = json.loads(event['body'])
 
         # Validate required fields
-        required_fields = ['teacher_id', 'start_time', 'end_time', 'topic']
+        required_fields = ['teacher_id', 'start_time', 'end_time']
         for field in required_fields:
             if field not in body:
                 return response_with_cors(400, {"message": f"Missing required field: {field}"})
@@ -624,29 +624,29 @@ def create_chime_meeting(event):
     try:
         body = json.loads(event['body'])
         session_id = body.get('session_id')
-        
+
         if not session_id:
             return response_with_cors(400, {"message": "session_id is required"})
-        
+
         # Get the session to verify it exists
         sessions_table = dynamodb.Table(SESSION_TABLE)
         session_response = sessions_table.get_item(Key={'session_id': session_id})
-        
+
         if 'Item' not in session_response:
             return response_with_cors(404, {"message": "Session not found"})
-            
+
         session = session_response['Item']
-        
+
         # Create a unique meeting ID based on the session
         external_meeting_id = f"session-meeting-{session_id}"
-        
+
         # Check if a meeting already exists for this session
         try:
             # Try to get an existing meeting
             existing_meeting = chime_client.get_meeting(
                 MeetingId=session.get('chime_meeting_id', '')
             )
-            
+
             # If we got here, the meeting exists and is active
             return response_with_cors(200, {
                 "meeting": existing_meeting['Meeting'],
@@ -659,7 +659,7 @@ def create_chime_meeting(event):
             # Some other error occurred, likely the meeting_id is invalid
             # We'll create a new meeting
             print(f"Error getting existing meeting: {str(e)}")
-            
+
         # Create a new Chime meeting
         meeting_response = chime_client.create_meeting(
             ClientRequestToken=str(uuid.uuid4()),
@@ -677,7 +677,7 @@ def create_chime_meeting(event):
                 }
             }
         )
-        
+
         # Update the session with the Chime meeting ID
         sessions_table.update_item(
             Key={'session_id': session_id},
@@ -687,7 +687,7 @@ def create_chime_meeting(event):
                 ':meeting_data': json.dumps(meeting_response['Meeting'])
             }
         )
-        
+
         return response_with_cors(201, {
             "meeting": meeting_response['Meeting'],
             "session_id": session_id
@@ -702,36 +702,36 @@ def create_chime_attendee(event):
         body = json.loads(event['body'])
         session_id = body.get('session_id')
         user_id = body.get('user_id')
-        
+
         if not session_id or not user_id:
             return response_with_cors(400, {"message": "session_id and user_id are required"})
-        
+
         # Get the session to verify it exists and get the meeting ID
         sessions_table = dynamodb.Table(SESSION_TABLE)
         session_response = sessions_table.get_item(Key={'session_id': session_id})
-        
+
         if 'Item' not in session_response:
             return response_with_cors(404, {"message": "Session not found"})
-            
+
         session = session_response['Item']
         meeting_id = session.get('chime_meeting_id')
-        
+
         if not meeting_id:
             return response_with_cors(400, {"message": "No active meeting for this session"})
-            
+
         # Verify the user is either the teacher or student for this session
         if user_id != session['teacher_id'] and user_id != session['student_id']:
             return response_with_cors(403, {"message": "User is not authorized to join this session"})
-        
+
         # Get user profile to include name
         profiles_table = dynamodb.Table(PROFILE_TABLE)
         profile_response = profiles_table.get_item(Key={'user_id': user_id})
-        
+
         if 'Item' in profile_response:
             user_name = profile_response['Item'].get('name', 'Participant')
         else:
             user_name = 'Participant'
-        
+
         # Create an attendee
         attendee_response = chime_client.create_attendee(
             MeetingId=meeting_id,
@@ -742,7 +742,7 @@ def create_chime_attendee(event):
                 'Content': 'SendReceive'
             }
         )
-        
+
         return response_with_cors(201, {
             "attendee": attendee_response['Attendee'],
             "meeting_id": meeting_id,
@@ -756,23 +756,23 @@ def get_chime_meeting(event):
     """Gets the details of a Chime meeting for a session."""
     try:
         session_id = event.get('pathParameters', {}).get('session_id')
-        
+
         if not session_id:
             # Try to extract from query parameters
             session_id = event.get('queryStringParameters', {}).get('session_id')
-            
+
         if not session_id:
             return response_with_cors(400, {"message": "session_id is required"})
-        
+
         # Get the session to verify it exists
         sessions_table = dynamodb.Table(SESSION_TABLE)
         session_response = sessions_table.get_item(Key={'session_id': session_id})
-        
+
         if 'Item' not in session_response:
             return response_with_cors(404, {"message": "Session not found"})
-            
+
         session = session_response['Item']
-        
+
         # If meeting data is stored in the session, return it
         if 'chime_meeting_data' in session:
             try:
@@ -785,14 +785,14 @@ def get_chime_meeting(event):
             except (json.JSONDecodeError, TypeError):
                 # If the stored data is invalid, we'll try to get it from Chime
                 pass
-                
+
         # If we have a meeting ID but no data, try to get it from Chime
         if 'chime_meeting_id' in session:
             try:
                 meeting_response = chime_client.get_meeting(
                     MeetingId=session['chime_meeting_id']
                 )
-                
+
                 # Update the session with the latest meeting data
                 sessions_table.update_item(
                     Key={'session_id': session_id},
@@ -801,7 +801,7 @@ def get_chime_meeting(event):
                         ':meeting_data': json.dumps(meeting_response['Meeting'])
                     }
                 )
-                
+
                 return response_with_cors(200, {
                     "meeting": meeting_response['Meeting'],
                     "session_id": session_id,
@@ -822,7 +822,7 @@ def get_chime_meeting(event):
                     "has_active_meeting": False,
                     "message": "Error retrieving meeting information"
                 })
-        
+
         # No meeting exists for this session
         return response_with_cors(200, {
             "session_id": session_id,
@@ -838,37 +838,37 @@ def end_chime_meeting(event):
     try:
         body = json.loads(event['body'])
         session_id = body.get('session_id')
-        
+
         if not session_id:
             return response_with_cors(400, {"message": "session_id is required"})
-        
+
         # Get the session to verify it exists
         sessions_table = dynamodb.Table(SESSION_TABLE)
         session_response = sessions_table.get_item(Key={'session_id': session_id})
-        
+
         if 'Item' not in session_response:
             return response_with_cors(404, {"message": "Session not found"})
-            
+
         session = session_response['Item']
-        
+
         # Check if there's an active meeting
         if 'chime_meeting_id' not in session:
             return response_with_cors(400, {"message": "No active meeting for this session"})
-            
+
         meeting_id = session['chime_meeting_id']
-        
+
         # End the meeting
         try:
             chime_client.delete_meeting(
                 MeetingId=meeting_id
             )
-            
+
             # Update the session to remove meeting data
             sessions_table.update_item(
                 Key={'session_id': session_id},
                 UpdateExpression="REMOVE chime_meeting_id, chime_meeting_data"
             )
-            
+
             return response_with_cors(200, {
                 "message": "Meeting ended successfully",
                 "session_id": session_id
@@ -879,7 +879,7 @@ def end_chime_meeting(event):
                 Key={'session_id': session_id},
                 UpdateExpression="REMOVE chime_meeting_id, chime_meeting_data"
             )
-            
+
             return response_with_cors(200, {
                 "message": "Meeting was already ended",
                 "session_id": session_id
@@ -925,58 +925,58 @@ def get_booking_session(event):
     try:
         # Log the full event for debugging
         print(f"get_booking_session called with event: {json.dumps(event, default=str)}")
-        
+
         # First try to get booking_id from path parameters (check both formats)
         path_params = event.get('pathParameters', {}) or {}
         booking_id = path_params.get('booking_id')
         if not booking_id:
             booking_id = path_params.get('booking-id')
         print(f"Initial booking_id from pathParameters: {booking_id}")
-        
+
         if not booking_id:
             # Try to extract from the path as a fallback
             path = event.get('path', '')
             print(f"Extracting booking_id from path: {path}")
-            
+
             path_parts = path.split('/')
             for i, part in enumerate(path_parts):
                 if part == 'bookings' and i + 1 < len(path_parts):
                     booking_id = path_parts[i + 1]
                     print(f"Extracted booking_id from path: {booking_id}")
                     break
-        
+
         if not booking_id:
             print("Failed to extract booking_id from request")
             return response_with_cors(400, {"message": "Missing booking ID"})
-        
+
         # Remove any additional path parts or query parameters from booking_id
         if '/' in booking_id:
             booking_id_parts = booking_id.split('/')
             booking_id = booking_id_parts[0]
             print(f"Stripped path from booking_id: {booking_id}")
-        
+
         if '?' in booking_id:
             booking_id_parts = booking_id.split('?')
             booking_id = booking_id_parts[0]
             print(f"Stripped query from booking_id: {booking_id}")
-            
+
         print(f"Final booking_id for lookup: {booking_id}")
-        
+
         # First verify the booking exists
         bookings_table = dynamodb.Table(BOOKINGS_TABLE)
         booking_response = bookings_table.get_item(Key={'booking_id': booking_id})
-        
+
         if 'Item' not in booking_response:
             return response_with_cors(404, {"message": "Booking not found"})
-        
+
         booking = booking_response['Item']
-        
+
         # Then look for sessions associated with this booking
         sessions_table = dynamodb.Table(SESSION_TABLE)
         session_response = sessions_table.scan(
             FilterExpression=Attr('booking_id').eq(booking_id)
         )
-        
+
         if not session_response['Items']:
             # No session exists yet, but return a structured response instead of 404
             # This way frontend knows it's a valid booking but without a session
@@ -985,11 +985,11 @@ def get_booking_session(event):
                 "session_exists": False,
                 "message": "No session exists for this booking yet"
             })
-        
+
         # Return the first (and hopefully only) session
         session = convert_decimal(session_response['Items'][0])
         session["session_exists"] = True
-        
+
         return response_with_cors(200, session)
     except ClientError as e:
         print(f"Database error in get_booking_session: {str(e)}")
@@ -1003,7 +1003,7 @@ def lambda_handler(event, context):
     # Log request info and environment details for debugging
     print(f"Sessions API request: {event.get('path', '')} [{event.get('httpMethod', 'DIRECT')}]")
     print(f"Lambda v{context.function_version} [{os.environ.get('BUILD_VERSION', 'undefined')}], alias: {os.environ.get('AWS_LAMBDA_FUNCTION_ALIAS', 'undefined')}")
-    
+
     # Only log table names during cold start to reduce noise
     # Check if this is likely a cold start by using environment variable timestamp
     if not hasattr(lambda_handler, 'initialized'):
@@ -1014,18 +1014,18 @@ def lambda_handler(event, context):
             lambda_handler.initialized = True
         except Exception as e:
             print(f"Error during initialization: {str(e)}")
-    
+
     try:
         # Handle direct invocations or API Gateway proxied requests
         if 'httpMethod' not in event:
             # This is likely a direct Lambda invocation, handle accordingly
             print("Direct Lambda invocation detected")
             return response_with_cors(400, {"message": "API Gateway proxy request expected."})
-    
+
         method = event['httpMethod']
         resource = event.get('resource')
         path = event.get('path', '')
-        
+
         # Handle case when resource is not present but path is (older API Gateway config)
         if not resource and path:
             print(f"Resource not found, using path: {path}")
@@ -1039,17 +1039,17 @@ def lambda_handler(event, context):
                 # Extract booking_id from path and add to pathParameters
                 path_parts = path.split('/')
                 booking_index = -1
-                
+
                 # Find the index of 'bookings' in the path
                 for i, part in enumerate(path_parts):
                     if part == 'bookings':
                         booking_index = i
                         break
-                
+
                 if booking_index >= 0 and booking_index + 1 < len(path_parts):
                     booking_id = path_parts[booking_index + 1]
                     print(f"Extracted booking_id: {booking_id} for session lookup")
-                    
+
                     if 'pathParameters' not in event:
                         event['pathParameters'] = {}
                     event['pathParameters']['booking_id'] = booking_id
@@ -1077,30 +1077,30 @@ def lambda_handler(event, context):
                 resource = "/meetings"
             elif path.startswith('/attendees'):
                 resource = "/attendees"
-        
+
         # Log the resource and method being handled
         print(f"Handling request: {resource} [{method}]")
 
         # CORS Preflight Handling
         if method == "OPTIONS":
             return response_with_cors(200, {"message": "CORS preflight successful"})
-            
+
         # Log request details for debugging
         print(f"Headers: {json.dumps(event.get('headers', {}), default=str)}")
         print(f"Query parameters: {json.dumps(event.get('queryStringParameters', {}), default=str)}")
-            
+
         # Log additional debug information for bookings/session path
         if '/bookings/' in path and '/session' in path:
             print(f"Debug - Path contains booking/session pattern")
             print(f"Debug - Resource resolved to: {resource}")
             print(f"Debug - pathParameters: {event.get('pathParameters')}")
-            
+
             # Ensure we have consistent parameter naming
             if 'pathParameters' in event and event['pathParameters'] is not None:
                 if 'booking-id' in event['pathParameters'] and 'booking_id' not in event['pathParameters']:
                     event['pathParameters']['booking_id'] = event['pathParameters']['booking-id']
                     print(f"Debug - Copied booking-id to booking_id: {event['pathParameters']['booking_id']}")
-            
+
         try:
             # Routing based on resource and method
             if resource == "/profiles" and method == "GET":
@@ -1148,7 +1148,7 @@ def lambda_handler(event, context):
         except Exception as route_error:
             print(f"Error in route handling: {str(route_error)}")
             return response_with_cors(500, {"message": "Error processing request", "error": str(route_error)})
-    
+
     except Exception as e:
         print(f"Unhandled exception in lambda_handler: {str(e)}")
         return response_with_cors(500, {"message": "Internal server error", "error": str(e)})
