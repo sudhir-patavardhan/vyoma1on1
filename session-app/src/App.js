@@ -26,7 +26,7 @@ function App() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [profileError, setProfileError] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [activeSession, setActiveSession] = useState(null);
   const [upcomingSession, setUpcomingSession] = useState(null);
 
@@ -55,10 +55,12 @@ function App() {
 
   const renderHeader = () => (
     <header className="header">
-      <div 
+      <div
         className="header-logo"
-        onClick={() => auth.isAuthenticated ? setActiveTab('dashboard') : null}
-        style={{ cursor: 'pointer' }}
+        onClick={() =>
+          auth.isAuthenticated ? setActiveTab("dashboard") : null
+        }
+        style={{ cursor: "pointer" }}
       >
         <img
           src="/vyoma/Vyoma_Logo_Blue_500x243.png"
@@ -80,48 +82,59 @@ function App() {
           <>
             {/* Dashboard button */}
             <button
-              className={`header-link ${activeTab === 'dashboard' ? 'active' : ''}`}
-              onClick={() => setActiveTab('dashboard')}
+              className={`header-link ${
+                activeTab === "dashboard" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("dashboard")}
             >
               <FaHome className="header-icon" /> Dashboard
             </button>
-            
+
             {/* Profile button */}
             <button
-              className={`header-link ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => setActiveTab('profile')}
+              className={`header-link ${
+                activeTab === "profile" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("profile")}
             >
-              <FaUserCircle className="header-icon" /> {profile?.name || 'Profile'}
+              <FaUserCircle className="header-icon" />{" "}
+              {profile?.name || "Profile"}
             </button>
-            
+
             {/* Only show these buttons if profile is loaded and has a role */}
             {profile && profile.role === "student" && (
               <button
-                className={`header-link ${activeTab === 'search' ? 'active' : ''}`}
-                onClick={() => setActiveTab('search')}
+                className={`header-link ${
+                  activeTab === "search" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("search")}
               >
                 <FaSearch className="header-icon" /> Find Teachers
               </button>
             )}
-            
+
             {profile && profile.role === "student" && (
               <button
-                className={`header-link ${activeTab === 'bookings' ? 'active' : ''}`}
-                onClick={() => setActiveTab('bookings')}
+                className={`header-link ${
+                  activeTab === "bookings" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("bookings")}
               >
                 <FaBookOpen className="header-icon" /> My Classes
               </button>
             )}
-            
+
             {profile && profile.role === "teacher" && (
               <button
-                className={`header-link ${activeTab === 'schedule' ? 'active' : ''}`}
-                onClick={() => setActiveTab('schedule')}
+                className={`header-link ${
+                  activeTab === "schedule" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("schedule")}
               >
                 <FaCalendarAlt className="header-icon" /> My Schedule
               </button>
             )}
-            
+
             {profile && upcomingSession && (
               <button
                 className="header-link join-session"
@@ -130,7 +143,7 @@ function App() {
                 <FaVideo className="header-icon" /> Join Session
               </button>
             )}
-            
+
             <button className="header-link" onClick={signoutRedirect}>
               <FaSignOutAlt className="header-icon" /> Sign Out
             </button>
@@ -148,9 +161,9 @@ function App() {
           {renderHeader()}
           <div className="main-content">
             <div className="content-area full-width">
-              <VirtualSession 
-                sessionId={activeSession} 
-                onEndSession={() => setActiveSession(null)} 
+              <VirtualSession
+                sessionId={activeSession}
+                onEndSession={() => setActiveSession(null)}
               />
             </div>
           </div>
@@ -167,14 +180,14 @@ function App() {
             <div className="container">
               <div className="card">
                 <div className="card-body">
-                  {(!profile || activeTab === 'profile') && (
+                  {(!profile || activeTab === "profile") && (
                     <ProfileForm
                       saveUserProfile={saveUserProfile}
                       profile={profile}
                     />
                   )}
-                  
-                  {profile && activeTab === 'dashboard' && (
+
+                  {profile && activeTab === "dashboard" && (
                     <Dashboard
                       profile={profile}
                       onTabChange={setActiveTab}
@@ -182,21 +195,21 @@ function App() {
                       upcomingSession={upcomingSession}
                     />
                   )}
-                  
-                  {profile?.role === "student" && activeTab === 'search' && (
+
+                  {profile?.role === "student" && activeTab === "search" && (
                     <TeacherSearch />
                   )}
-                  
-                  {profile?.role === "student" && activeTab === 'bookings' && (
-                    <Bookings 
-                      userId={auth.user?.profile.sub} 
+
+                  {profile?.role === "student" && activeTab === "bookings" && (
+                    <Bookings
+                      userId={auth.user?.profile.sub}
                       userRole="student"
                       onJoinSession={setActiveSession}
                       onUpcomingSession={setUpcomingSession}
                     />
                   )}
-                  
-                  {profile?.role === "teacher" && activeTab === 'schedule' && (
+
+                  {profile?.role === "teacher" && activeTab === "schedule" && (
                     <TeacherSchedule />
                   )}
                 </div>
@@ -213,15 +226,15 @@ function App() {
       // Reset states when authentication changes
       setLoadingProfile(true);
       setProfileError(null);
-      
+
       if (auth.isAuthenticated && auth.user && auth.user.profile) {
         console.log("Auth authenticated, fetching profile");
         try {
-          const userId = auth.user.profile.sub; 
+          const userId = auth.user.profile.sub;
           if (!userId) {
             throw new Error("User ID not found in authentication data");
           }
-          
+
           console.log("Fetching profile for user:", userId);
           const response = await fetch(
             `${API_BASE_URL}/profiles?user_id=${userId}`,
@@ -233,35 +246,41 @@ function App() {
               },
             }
           );
-          
+
           if (!response.ok) {
             const errorText = await response.text();
             console.error("Profile error response:", errorText);
-            throw new Error(`Profile fetch failed with status: ${response.status}`);
+            throw new Error(
+              `Profile fetch failed with status: ${response.status}`
+            );
           }
-          
+
           let data;
           try {
             const responseText = await response.text();
             console.log("Raw response:", responseText);
-            
+
             // Check if response starts with HTML doctype
-            if (responseText.trim().toLowerCase().startsWith('<!doctype')) {
+            if (responseText.trim().toLowerCase().startsWith("<!doctype")) {
               console.error("Received HTML instead of JSON");
-              throw new Error("API returned HTML instead of JSON. The server might be down or misconfigured.");
+              throw new Error(
+                "API returned HTML instead of JSON. The server might be down or misconfigured."
+              );
             }
-            
+
             // Try to parse JSON
             data = JSON.parse(responseText);
             console.log("Profile response:", data);
           } catch (parseError) {
             console.error("JSON parse error:", parseError);
-            throw new Error(`Failed to parse profile data: ${parseError.message}`);
+            throw new Error(
+              `Failed to parse profile data: ${parseError.message}`
+            );
           }
-          
+
           if (data && data.profile) {
             setProfile(data.profile);
-            
+
             // Check for upcoming sessions
             checkUpcomingSessions(userId, data.profile.role);
           } else {
@@ -277,25 +296,27 @@ function App() {
           setLoadingProfile(false);
         }
       } else {
-        console.log("Not authenticated or missing user data, skipping profile fetch");
+        console.log(
+          "Not authenticated or missing user data, skipping profile fetch"
+        );
         setLoadingProfile(false);
       }
     };
 
     fetchUserProfile();
   }, [auth.isAuthenticated, auth.user]);
-  
+
   const checkUpcomingSessions = async (userId, role) => {
     if (!auth.isAuthenticated || !auth.user || !auth.user.access_token) {
       console.log("Skipping upcoming sessions check - not authenticated");
       return;
     }
-    
+
     try {
       // Fetch bookings for the user
-      const userType = role === 'student' ? 'student_id' : 'teacher_id';
+      const userType = role === "student" ? "student_id" : "teacher_id";
       console.log(`Checking upcoming sessions for ${userType}=${userId}`);
-      
+
       const response = await fetch(
         `${API_BASE_URL}/bookings?${userType}=${userId}`,
         {
@@ -306,24 +327,26 @@ function App() {
           },
         }
       );
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Bookings error response:", errorText);
-        throw new Error(`Failed to fetch bookings: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch bookings: ${response.status} ${response.statusText}`
+        );
       }
-      
+
       let bookings;
       try {
         const responseText = await response.text();
         console.log("Raw bookings response:", responseText);
-        
+
         // Check for HTML response
-        if (responseText.trim().toLowerCase().startsWith('<!doctype')) {
+        if (responseText.trim().toLowerCase().startsWith("<!doctype")) {
           console.error("Received HTML instead of JSON in bookings");
           throw new Error("API returned HTML instead of JSON for bookings");
         }
-        
+
         // Only try to parse if we have content
         if (responseText.trim()) {
           bookings = JSON.parse(responseText);
@@ -335,23 +358,23 @@ function App() {
         throw new Error(`Failed to parse bookings data: ${parseError.message}`);
       }
       console.log("Bookings fetched:", bookings);
-      
+
       if (!Array.isArray(bookings)) {
         console.warn("Unexpected bookings response format:", bookings);
         return;
       }
-      
+
       // Check for upcoming sessions (within 15 minutes from now)
       const now = new Date();
       const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60000);
-      
-      const upcoming = bookings.find(booking => {
+
+      const upcoming = bookings.find((booking) => {
         if (!booking || !booking.start_time) return false;
-        
+
         const startTime = new Date(booking.start_time);
         return startTime > now && startTime < fifteenMinutesFromNow;
       });
-      
+
       if (upcoming && upcoming.session_id) {
         console.log("Found upcoming session:", upcoming.session_id);
         setUpcomingSession(upcoming.session_id);
@@ -365,7 +388,12 @@ function App() {
   };
 
   const saveUserProfile = async (profileData) => {
-    if (!auth.isAuthenticated || !auth.user || !auth.user.profile || !auth.user.profile.sub) {
+    if (
+      !auth.isAuthenticated ||
+      !auth.user ||
+      !auth.user.profile ||
+      !auth.user.profile.sub
+    ) {
       const error = new Error("You must be signed in to save a profile");
       console.error(error);
       throw error;
@@ -373,54 +401,57 @@ function App() {
 
     try {
       console.log("Saving profile for user:", auth.user.profile.sub);
-      
-      const response = await fetch(
-        `${API_BASE_URL}/profiles`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.user.access_token}`,
-          },
-          body: JSON.stringify({
-            user_id: auth.user.profile.sub,
-            role: profileData.role,
-            profile_data: profileData,
-          }),
-        }
-      );
+
+      const response = await fetch(`${API_BASE_URL}/profiles`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.user.access_token}`,
+        },
+        body: JSON.stringify({
+          user_id: auth.user.profile.sub,
+          role: profileData.role,
+          profile_data: profileData,
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Server error response:", errorText);
-        throw new Error(`Failed to save profile: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to save profile: ${response.status} ${response.statusText}`
+        );
       }
 
       let result;
       try {
         const responseText = await response.text();
         console.log("Raw save profile response:", responseText);
-        
+
         // Check if response starts with HTML doctype
-        if (responseText.trim().toLowerCase().startsWith('<!doctype')) {
+        if (responseText.trim().toLowerCase().startsWith("<!doctype")) {
           console.error("Received HTML instead of JSON in profile save");
-          throw new Error("API returned HTML instead of JSON. The server might be down or misconfigured.");
+          throw new Error(
+            "API returned HTML instead of JSON. The server might be down or misconfigured."
+          );
         }
-        
+
         // Try to parse JSON
         result = JSON.parse(responseText);
       } catch (parseError) {
         console.error("JSON parse error in profile save:", parseError);
-        throw new Error(`Failed to parse profile save response: ${parseError.message}`);
+        throw new Error(
+          `Failed to parse profile save response: ${parseError.message}`
+        );
       }
       console.log("Profile successfully created:", result);
-      
+
       // Update the profile state
-      setProfile(profileData); 
-      
+      setProfile(profileData);
+
       // Set to dashboard after creating profile
-      setActiveTab('dashboard');
-      
+      setActiveTab("dashboard");
+
       return result;
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -439,9 +470,10 @@ function App() {
                 <div className="card-body">
                   <h1 className="landing-heading">Welcome to Vyoma 1:1</h1>
                   <p className="landing-text">
-                    Connect with expert Sanskrit teachers for personalized 1:1 learning experiences.
-                    Our platform helps students find teachers based on their learning needs,
-                    schedule sessions, and attend virtual meetings - all in one place.
+                    Connect with expert Sanskrit teachers for personalized 1:1
+                    learning experiences. Our platform helps students find
+                    teachers based on their learning needs, schedule sessions,
+                    and attend virtual meetings - all in one place.
                   </p>
                   <div className="landing-features">
                     <div className="feature">
@@ -457,11 +489,17 @@ function App() {
                     <div className="feature">
                       <FaVideo className="feature-icon" />
                       <h3>Virtual Learning</h3>
-                      <p>Join video sessions, share notes, and learn interactively</p>
+                      <p>
+                        Join video sessions, share notes, and learn
+                        interactively
+                      </p>
                     </div>
                   </div>
                   <div className="text-center">
-                    <button className="btn btn-primary btn-lg" onClick={() => auth.signinRedirect()}>
+                    <button
+                      className="btn btn-primary btn-lg"
+                      onClick={() => auth.signinRedirect()}
+                    >
                       Sign In to Get Started
                     </button>
                   </div>
@@ -489,7 +527,9 @@ function App() {
                     <div className="loading-spinner"></div>
                     <h2>Loading...</h2>
                     <p className="text-muted">
-                      {loadingProfile && auth.isAuthenticated ? "Loading your profile..." : "Authenticating..."}
+                      {loadingProfile && auth.isAuthenticated
+                        ? "Loading your profile..."
+                        : "Authenticating..."}
                     </p>
                     <p className="text-muted small">
                       This may take a few moments. Please wait...
@@ -516,9 +556,13 @@ function App() {
                 <div className="card-body text-center">
                   <h2 className="text-danger mb-4">Authentication Error</h2>
                   <div className="error-message mb-4">
-                    {auth.error.message || "There was a problem with your authentication"}
+                    {auth.error.message ||
+                      "There was a problem with your authentication"}
                   </div>
-                  <button className="btn btn-primary" onClick={() => auth.signinRedirect()}>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => auth.signinRedirect()}
+                  >
                     Try Signing In Again
                   </button>
                 </div>
@@ -529,14 +573,15 @@ function App() {
       </div>
     );
   }
-  
+
   if (profileError) {
     console.error("Profile error:", profileError);
-    
+
     // Check if the error message indicates an HTML response
-    const isServerDown = profileError.includes("HTML instead of JSON") || 
-                          profileError.includes("Failed to parse profile data");
-    
+    const isServerDown =
+      profileError.includes("HTML instead of JSON") ||
+      profileError.includes("Failed to parse profile data");
+
     return (
       <div className="app-layout">
         {renderHeader()}
@@ -551,17 +596,26 @@ function App() {
                   <div className="error-message mb-4">
                     {isServerDown ? (
                       <>
-                        <p><strong>Our API server appears to be down or misconfigured.</strong></p>
-                        <p>We're experiencing technical difficulties connecting to our servers. Please try again later.</p>
-                        <p className="text-muted small">Technical details: {profileError}</p>
+                        <p>
+                          <strong>
+                            Our API server appears to be down or misconfigured.
+                          </strong>
+                        </p>
+                        <p>
+                          We're experiencing technical difficulties connecting
+                          to our servers. Please try again later.
+                        </p>
+                        <p className="text-muted small">
+                          Technical details: {profileError}
+                        </p>
                       </>
                     ) : (
                       profileError
                     )}
                   </div>
-                  
+
                   {isServerDown ? (
-                    <button 
+                    <button
                       className="btn btn-primary"
                       onClick={() => window.location.reload()}
                     >
@@ -592,12 +646,12 @@ function App() {
       <div className="container">
         <div className="footer-content">
           <div className="footer-logo">
-            <img 
-              src="/vyoma/Vyoma_Logo_Blue_500x243.png" 
-              alt="Vyoma 1:1" 
+            <img
+              src="/vyoma/Vyoma_Logo_Blue_500x243.png"
+              alt="Vyoma 1:1"
               height="30"
             />
-            <span>1:1</span>
+            <span>Vyoma 1:1</span>
           </div>
           <div className="footer-links">
             <a href="#">Terms of Service</a>
@@ -605,7 +659,8 @@ function App() {
             <a href="#">Contact Us</a>
           </div>
           <div className="footer-copyright">
-            © {new Date().getFullYear()} Vyoma Learning, Inc. All rights reserved.
+            © {new Date().getFullYear()} Vyoma Learning, Inc. All rights
+            reserved.
           </div>
         </div>
       </div>
