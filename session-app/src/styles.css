@@ -1,36 +1,35 @@
-/* Global Styles - Modern Dark Blue Theme */
+/* Global Styles - Modern Professional Theme */
 :root {
-  /* Primary brand colors */
-  --primary: #0050a8; /* Primary blue */
-  --primary-light: #2a78d4; /* Lighter blue */
-  --primary-dark: #003a7a; /* Darker blue */
-  --secondary: #f0f4f8; /* Light blue-gray */
-  --accent: #ffc107; /* Gold accent */
-  --accent-light: #ffda75; /* Lighter gold */
+  /* Primary brand colors - refined blue palette */
+  --primary: #1a365d; /* Deep navy blue - primary */
+  --primary-light: #2c5282; /* Medium blue - for hover states */
+  --primary-dark: #0f2942; /* Darker blue - for active states */
+  --secondary: #e2e8f0; /* Light blue-gray - secondary color */
+  --accent: #4a5568; /* Neutral dark gray - accent */
   
-  /* UI colors */
-  --bg-light: #f0f4f8; /* Light background */
-  --bg-dark: #0f1e2d; /* Dark blue background */
-  --bg-card: #1a2c40; /* Slightly lighter card background */
-  --text-dark: #0a1525; /* Almost black text */
-  --text-light: #edf2f7; /* Light text for dark backgrounds */
+  /* UI colors - consistent and professional */
+  --bg-light: #f7fafc; /* Light background */
+  --bg-dark: #1a202c; /* Dark background */
+  --bg-card: #2d3748; /* Card background */
+  --text-dark: #1a202c; /* Dark text */
+  --text-light: #e2e8f0; /* Light text */
   --text-muted: #a0aec0; /* Muted text */
   
-  /* Functional colors */
-  --success: #557A4F; /* Earthy green */
-  --warning: #C5922E; /* Gold */
-  --danger: #B92D00; /* Red-brown */
+  /* Functional colors - professional and subdued */
+  --success: #2f855a; /* Professional green */
+  --warning: #744210; /* Subdued amber */
+  --danger: #9b2c2c; /* Professional red */
   
-  /* Gray scale - warmer tones */
-  --gray-100: #F9F6F3;
-  --gray-200: #F3EDE7;
-  --gray-300: #E4D9CF;
-  --gray-400: #D1C3B6;
-  --gray-500: #B9A79A;
-  --gray-600: #9D8A7B;
-  --gray-700: #7F7267;
-  --gray-800: #5A4E44;
-  --gray-900: #2D231D;
+  /* Gray scale - professional, neutral tones */
+  --gray-100: #f7fafc;
+  --gray-200: #edf2f7;
+  --gray-300: #e2e8f0;
+  --gray-400: #cbd5e0;
+  --gray-500: #a0aec0;
+  --gray-600: #718096;
+  --gray-700: #4a5568;
+  --gray-800: #2d3748;
+  --gray-900: #1a202c;
   
   /* UI properties */
   --radius-sm: 2px;
@@ -145,10 +144,10 @@ body {
 
 /* Header - Modern Dark Style */
 .header {
-  background-color: rgba(15, 30, 45, 0.95); /* Slightly transparent dark blue */
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(26, 32, 44, 0.95); /* Slightly transparent dark background */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   height: var(--header-height);
   position: sticky;
   top: 0;
@@ -158,7 +157,7 @@ body {
   align-items: center;
   padding: 0 24px;
   justify-content: space-between;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .header-logo {
@@ -187,11 +186,10 @@ body {
   font-size: 20px;
   color: var(--text-light);
   font-weight: 600;
-  font-family: 'Playfair Display', serif;
-  letter-spacing: 0.7px;
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: 0.25px;
   position: relative;
   padding-bottom: 2px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .header-nav {
@@ -250,16 +248,16 @@ body {
 .header-link.join-session {
   background-color: var(--primary);
   color: white;
-  padding: 9px 18px;
+  padding: 8px 16px;
   border-radius: 4px;
   opacity: 1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .header-link.join-session:hover {
   background-color: var(--primary-light);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
 }
 
 .header-icon {
@@ -269,15 +267,13 @@ body {
 /* Dashboard Card Container */
 .card {
   background-color: var(--bg-card);
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   margin-bottom: 32px;
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  transition: box-shadow 0.3s ease;
 }
 
 .card-header {
@@ -311,15 +307,15 @@ body {
 
 /* Landing Page */
 .landing-heading {
-  font-size: 42px;
-  font-weight: 700;
-  margin-bottom: 26px;
+  font-size: 38px;
+  font-weight: 600;
+  margin-bottom: 24px;
   color: var(--text-light);
-  font-family: 'Playfair Display', serif;
+  font-family: 'Poppins', sans-serif;
   position: relative;
   padding-bottom: 20px;
   text-align: center;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  letter-spacing: -0.02em;
 }
 
 .landing-heading::after {
@@ -328,10 +324,9 @@ body {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 80px;
-  height: 3px;
-  background-color: var(--accent);
-  box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+  width: 60px;
+  height: 2px;
+  background-color: var(--primary-light);
 }
 
 .landing-text {
@@ -357,15 +352,13 @@ body {
   flex: 1;
   min-width: 250px;
   max-width: 350px;
-  padding: 36px 28px;
-  background-color: rgba(26, 44, 64, 0.7);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  padding: 32px 24px;
+  background-color: rgba(45, 55, 72, 0.7);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   text-align: center;
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(7px);
-  -webkit-backdrop-filter: blur(7px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   position: relative;
   overflow: hidden;
 }
@@ -377,80 +370,54 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(to right, var(--primary), var(--primary-light));
-  opacity: 0.8;
+  background-color: var(--primary);
   transition: height 0.3s ease;
 }
 
 .feature:nth-child(1)::before {
-  background: linear-gradient(to right, var(--primary), var(--primary-light));
+  background-color: var(--primary);
 }
 
 .feature:nth-child(2)::before {
-  background: linear-gradient(to right, var(--accent), var(--accent-light));
+  background-color: var(--primary);
 }
 
 .feature:nth-child(3)::before {
-  background: linear-gradient(to right, var(--success), #6B9A65);
+  background-color: var(--primary);
 }
 
 .feature:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-}
-
-.feature:hover::before {
-  height: 6px;
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .feature-icon {
-  font-size: 32px;
-  color: var(--primary);
-  margin-bottom: 24px;
-  background-color: rgba(240, 244, 248, 0.1);
-  width: 80px;
-  height: 80px;
+  font-size: 28px;
+  color: var(--primary-light);
+  margin-bottom: 20px;
+  background-color: rgba(255, 255, 255, 0.05);
+  width: 70px;
+  height: 70px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 8px;
   margin-left: auto;
   margin-right: auto;
-  box-shadow: 0 0 20px rgba(0, 80, 168, 0.3);
   transition: all 0.3s ease;
-  backdrop-filter: blur(3px);
 }
 
 .feature:hover .feature-icon {
-  transform: scale(1.1);
-  box-shadow: 0 0 30px rgba(0, 80, 168, 0.5);
-}
-
-.feature:nth-child(2) .feature-icon {
-  color: var(--accent);
-  box-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
-}
-
-.feature:nth-child(2):hover .feature-icon {
-  box-shadow: 0 0 30px rgba(255, 193, 7, 0.5);
-}
-
-.feature:nth-child(3) .feature-icon {
-  color: var(--success);
-  box-shadow: 0 0 20px rgba(85, 122, 79, 0.3);
-}
-
-.feature:nth-child(3):hover .feature-icon {
-  box-shadow: 0 0 30px rgba(85, 122, 79, 0.5);
+  transform: scale(1.05);
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .feature h3 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   color: var(--text-light);
-  font-family: 'Playfair Display', serif;
-  letter-spacing: 0.5px;
+  font-family: 'Poppins', sans-serif;
 }
 
 .feature p {
@@ -486,11 +453,11 @@ body {
 
 .dashboard-header h1 {
   color: var(--text-light);
-  font-size: 30px;
+  font-size: 28px;
   margin-bottom: 10px;
-  font-family: 'Playfair Display', serif;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  letter-spacing: 0.5px;
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: 0.25px;
+  font-weight: 600;
 }
 
 .user-role {
@@ -565,11 +532,11 @@ body {
 }
 
 .stat-value {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--text-dark);
   margin: 0;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 .dashboard-actions {
@@ -579,10 +546,11 @@ body {
 .dashboard-actions h2,
 .dashboard-recent .section-header h2,
 .dashboard-availability .section-header h2 {
-  font-size: 20px;
+  font-size: 18px;
   margin-bottom: 16px;
-  color: var(--primary-dark);
-  font-family: 'Playfair Display', serif;
+  color: var(--text-light);
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
 }
 
 .action-buttons {

@@ -16,7 +16,6 @@ import {
   FaBookOpen,
   FaCalendarAlt,
   FaVideo,
-  FaChalkboardTeacher,
   FaHome,
 } from "react-icons/fa"; // Import icons
 
