@@ -55,17 +55,21 @@ function App() {
 
   const renderHeader = () => (
     <header className="header">
-      <div className="header-logo">
+      <div 
+        className="header-logo"
+        onClick={() => auth.isAuthenticated ? setActiveTab('dashboard') : null}
+        style={{ cursor: 'pointer' }}
+      >
         <img
-          src="/vyoma/vyoma-logo.svg"
-          alt="Vyoma Learning Logo"
-          className="header-logo-image"
+          src="/vyoma/Vyoma_Logo_Blue_500x243.png"
+          alt="Vyoma 1:1 Logo"
+          className="header-logo-full"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = "/logo.jpeg"; // Fallback if SVG doesn't exist
+            e.target.src = "/logo.jpeg"; // Fallback if PNG doesn't exist
           }}
         />
-        <span className="header-title">Vyoma Learning</span>
+        <span className="app-name">1:1</span>
       </div>
       <nav className="header-nav">
         {!auth.isAuthenticated ? (
@@ -433,7 +437,7 @@ function App() {
             <div className="container">
               <div className="card">
                 <div className="card-body">
-                  <h1 className="landing-heading">Welcome to Vyoma Learning</h1>
+                  <h1 className="landing-heading">Welcome to Vyoma 1:1</h1>
                   <p className="landing-text">
                     Connect with expert Sanskrit teachers for personalized 1:1 learning experiences.
                     Our platform helps students find teachers based on their learning needs,
@@ -583,7 +587,37 @@ function App() {
     );
   }
 
-  return renderContent();
+  const renderFooter = () => (
+    <footer className="footer">
+      <div className="container">
+        <div className="footer-content">
+          <div className="footer-logo">
+            <img 
+              src="/vyoma/Vyoma_Logo_Blue_500x243.png" 
+              alt="Vyoma 1:1" 
+              height="30"
+            />
+            <span>1:1</span>
+          </div>
+          <div className="footer-links">
+            <a href="#">Terms of Service</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Contact Us</a>
+          </div>
+          <div className="footer-copyright">
+            © {new Date().getFullYear()} Vyoma Learning, Inc. All rights reserved.
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+
+  return (
+    <>
+      {renderContent()}
+      {renderFooter()}
+    </>
+  );
 }
 
 export default App;

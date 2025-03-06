@@ -1,11 +1,11 @@
 /* Global Styles - Modern Professional Theme */
 :root {
-  /* Primary brand colors - maroon-based professional palette */
-  --primary: #7D2240; /* Rich maroon - primary */
-  --primary-light: #9D2A4F; /* Lighter maroon - for hover states */
-  --primary-dark: #5D1A30; /* Darker maroon - for active states */
+  /* Primary brand colors - AWS blue professional palette */
+  --primary: #0972D3; /* AWS blue - primary */
+  --primary-light: #1E88E5; /* Lighter blue - for hover states */
+  --primary-dark: #0A5BBF; /* Darker blue - for active states */
   --secondary: #f0f4f8; /* Light blue-gray - secondary color */
-  --accent: #7D2240; /* Maroon accent (same as primary) */
+  --accent: #0972D3; /* Blue accent (same as primary) */
   
   /* UI colors - light, clean and professional */
   --bg-light: #ffffff; /* Pure white background */
@@ -121,7 +121,7 @@ body {
 .content-area {
   flex: 1;
   padding: 24px;
-  max-width: calc(100vw - var(--sidebar-width));
+  width: 100%;
 }
 
 .full-width {
@@ -144,7 +144,7 @@ body {
 
 /* Header - Modern Dark Style */
 .header {
-  background-color: var(--primary); /* Teal background */
+  background-color: white; /* White background to match logo */
   height: var(--header-height);
   position: sticky;
   top: 0;
@@ -155,6 +155,7 @@ body {
   padding: 0 24px;
   justify-content: space-between;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(9, 114, 211, 0.2);
 }
 
 .header-logo {
@@ -165,28 +166,29 @@ body {
   font-weight: 600;
 }
 
-.header-logo-image {
-  height: 36px;
-  width: 36px;
-  margin-right: 14px;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2), 0 0 10px rgba(125, 34, 64, 0.4);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+.header-logo {
+  display: flex;
+  align-items: center;
 }
 
-.header-logo:hover .header-logo-image {
+.header-logo-full {
+  height: 38px;
+  max-width: 180px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.header-logo:hover .header-logo-full {
   transform: scale(1.05);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3), 0 0 15px rgba(157, 42, 79, 0.6);
 }
 
-.header-title {
-  font-size: 20px;
-  color: var(--text-light);
+.app-name {
+  font-size: 24px;
   font-weight: 600;
-  font-family: 'Poppins', sans-serif;
-  letter-spacing: 0.25px;
+  color: var(--primary-dark);
+  margin-left: 8px;
   position: relative;
-  padding-bottom: 2px;
+  top: 1px;
 }
 
 .header-nav {
@@ -198,7 +200,7 @@ body {
 .header-link {
   padding: 8px 16px;
   border-radius: var(--radius-md);
-  color: var(--text-light);
+  color: var(--text-dark);
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
@@ -213,16 +215,16 @@ body {
 }
 
 .header-link:hover {
-  color: white;
+  color: var(--primary);
   opacity: 1;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(9, 114, 211, 0.05);
   transform: translateY(-1px);
 }
 
 .header-link.active {
-  color: white;
+  color: var(--primary);
   opacity: 1;
-  background-color: rgba(157, 42, 79, 0.15);
+  background-color: rgba(9, 114, 211, 0.1);
 }
 
 .header-link.active::after {
@@ -232,7 +234,7 @@ body {
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: white;
+  background-color: var(--primary);
   border-radius: 2px;
   transform: scaleX(0.7);
   transition: transform 0.2s ease;
@@ -279,7 +281,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: rgba(125, 34, 64, 0.05);
+  background-color: rgba(9, 114, 211, 0.05);
 }
 
 .card-title {
@@ -1584,6 +1586,57 @@ textarea {
 }
 
 .small {
+  font-size: 12px;
+}
+
+/* Footer Styles */
+.footer {
+  background-color: var(--bg-light);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 32px 0;
+  margin-top: 32px;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.footer-logo span {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-left: 8px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 8px;
+}
+
+.footer-links a {
+  color: var(--text-dark);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.footer-links a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.footer-copyright {
+  color: var(--text-muted);
   font-size: 12px;
 }
 
