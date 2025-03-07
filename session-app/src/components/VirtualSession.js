@@ -61,6 +61,74 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
   const remoteVideoRef = useRef(null);
   const screenShareStreamRef = useRef(null);
   
+  // Helper function to detect audio output selection capability with enhanced browser compatibility detection
+  const checkAudioOutputSupport = () => {
+    // Check browser support for audio output selection
+    const hasSetSinkId = typeof HTMLMediaElement.prototype.setSinkId === 'function';
+    
+    // Check if we have Chime SDK methods for audio output
+    const hasChimeMethods = meetingSession && 
+      meetingSession.audioVideo && 
+      (typeof meetingSession.audioVideo.chooseAudioOutputDevice === 'function' || 
+       typeof meetingSession.audioVideo.setAudioOutputDevice === 'function');
+    
+    // Get browser info for better compatibility detection
+    const browser = detectBrowser();
+    
+    return {
+      supported: hasSetSinkId || hasChimeMethods,
+      hasSetSinkId,
+      hasChimeMethods,
+      browser
+    };
+  };
+  
+  // Helper function to detect browser type and version
+  const detectBrowser = () => {
+    const userAgent = navigator.userAgent;
+    let browserName = "Unknown";
+    let browserVersion = "Unknown";
+    
+    // Detect Chrome
+    if (userAgent.match(/chrome|chromium|crios/i)) {
+      browserName = "Chrome";
+      const match = userAgent.match(/(?:chrome|chromium|crios)\/(\d+)/i);
+      if (match) browserVersion = match[1];
+    } 
+    // Detect Firefox
+    else if (userAgent.match(/firefox|fxios/i)) {
+      browserName = "Firefox";
+      const match = userAgent.match(/(?:firefox|fxios)\/(\d+)/i);
+      if (match) browserVersion = match[1];
+    } 
+    // Detect Safari
+    else if (userAgent.match(/safari/i) && !userAgent.match(/chrome|chromium|crios/i)) {
+      browserName = "Safari";
+      const match = userAgent.match(/version\/(\d+)/i);
+      if (match) browserVersion = match[1];
+    } 
+    // Detect Edge
+    else if (userAgent.match(/edg/i)) {
+      browserName = "Edge";
+      const match = userAgent.match(/edg\/(\d+)/i);
+      if (match) browserVersion = match[1];
+    }
+    
+    // Detect iOS
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    return { 
+      name: browserName, 
+      version: browserVersion,
+      isIOS,
+      isChrome: browserName === "Chrome",
+      isSafari: browserName === "Safari",
+      isFirefox: browserName === "Firefox",
+      isEdge: browserName === "Edge"
+    };
+  };
+
   // Effect to ensure remote video element has audio enabled
   useEffect(() => {
     if (remoteVideoRef.current) {
@@ -75,6 +143,13 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
         // Try to set volume to 100%
         remoteVideo.volume = 1.0;
         console.log('Remote video unmuted, volume set to:', remoteVideo.volume);
+        
+        // Re-apply audio output device if one was selected
+        if (selectedAudioOutputDevice && typeof remoteVideo.setSinkId === 'function') {
+          remoteVideo.setSinkId(selectedAudioOutputDevice).catch(err => {
+            console.warn('Error applying audio output device to video after load:', err);
+          });
+        }
       };
       
       // Setup canplaythrough event listener
@@ -88,7 +163,7 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
         }
       };
     }
-  }, [remoteVideoRef.current]);
+  }, [remoteVideoRef.current, selectedAudioOutputDevice]);
   
   useEffect(() => {
     // Fetch session details and set up the meeting
@@ -181,6 +256,13 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
         } catch (err) {
           console.error("Error leaving meeting:", err);
         }
+      }
+      
+      // Cleanup the audio output observer if it exists
+      if (window.audioOutputObserver) {
+        window.audioOutputObserver.disconnect();
+        window.audioOutputObserver = null;
+        console.log("Cleaned up audio output observer");
       }
     };
   }, [sessionId, auth.user.access_token, auth.user.profile.sub]);
@@ -386,29 +468,8 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
             const defaultDevice = audioOutputDevices[0].deviceId;
             setSelectedAudioOutputDevice(defaultDevice);
             
-            // Try various potential method names for speaker selection
-            if (typeof audioVideo.chooseAudioOutputDevice === 'function') {
-              console.log('Using chooseAudioOutputDevice method');
-              await audioVideo.chooseAudioOutputDevice(defaultDevice);
-            } else if (typeof audioVideo.setAudioOutputDevice === 'function') {
-              console.log('Using setAudioOutputDevice method');
-              await audioVideo.setAudioOutputDevice(defaultDevice);
-            } else {
-              console.warn('No compatible audio output selection method found');
-              
-              // Try browser's built-in audio output selection if available
-              try {
-                if (typeof HTMLMediaElement.prototype.setSinkId === 'function') {
-                  console.log('Using browser setSinkId API');
-                  if (remoteVideoRef.current) {
-                    await remoteVideoRef.current.setSinkId(defaultDevice);
-                    console.log('Set sink ID for remote video');
-                  }
-                }
-              } catch (sinkIdError) {
-                console.error('Error setting sink ID:', sinkIdError);
-              }
-            }
+            // Use the enhanced changeAudioOutputDevice function for consistent behavior
+            await changeAudioOutputDevice(defaultDevice);
           }
         } catch (audioOutputError) {
           console.error('Error listing audio output devices:', audioOutputError);
@@ -426,35 +487,148 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
     }
   };
   
-  // Function to change audio output device
+  // Function to change audio output device - enhanced with fallbacks and error handling
   const changeAudioOutputDevice = async (deviceId) => {
-    if (!meetingSession) return;
+    if (!meetingSession) {
+      console.log('No active meeting session available for audio output selection');
+      return;
+    }
     
     try {
-      console.log(`Changing audio output device to: ${deviceId}`);
+      console.log(`Attempting to change audio output device to: ${deviceId}`);
       setSelectedAudioOutputDevice(deviceId);
+      
+      let methodUsed = false;
+      let lastError = null;
+      const supportInfo = checkAudioOutputSupport();
+      const { browser } = supportInfo;
       
       // Try various methods to set the audio output device
       const audioVideo = meetingSession.audioVideo;
       
+      // Method 1: Amazon Chime SDK's chooseAudioOutputDevice
       if (typeof audioVideo.chooseAudioOutputDevice === 'function') {
-        await audioVideo.chooseAudioOutputDevice(deviceId);
-        console.log('Successfully changed audio output using chooseAudioOutputDevice');
-      } else if (typeof audioVideo.setAudioOutputDevice === 'function') {
-        await audioVideo.setAudioOutputDevice(deviceId);
-        console.log('Successfully changed audio output using setAudioOutputDevice');
-      } else if (typeof HTMLMediaElement.prototype.setSinkId === 'function') {
-        // Use browser's built-in audio output selection
-        if (remoteVideoRef.current) {
-          await remoteVideoRef.current.setSinkId(deviceId);
-          console.log('Successfully changed audio output using setSinkId');
+        try {
+          await audioVideo.chooseAudioOutputDevice(deviceId);
+          console.log('Successfully changed audio output using chooseAudioOutputDevice');
+          methodUsed = true;
+        } catch (err) {
+          console.warn('Error using chooseAudioOutputDevice:', err);
+          lastError = err;
         }
-      } else {
-        console.warn('No method available to change audio output device');
+      }
+      
+      // Method 2: Amazon Chime SDK's setAudioOutputDevice (if method 1 failed)
+      if (!methodUsed && typeof audioVideo.setAudioOutputDevice === 'function') {
+        try {
+          await audioVideo.setAudioOutputDevice(deviceId);
+          console.log('Successfully changed audio output using setAudioOutputDevice');
+          methodUsed = true;
+        } catch (err) {
+          console.warn('Error using setAudioOutputDevice:', err);
+          lastError = err;
+        }
+      }
+      
+      // Method 3: Browser's built-in audio output selection (if methods 1 and 2 failed)
+      if (!methodUsed && typeof HTMLMediaElement.prototype.setSinkId === 'function') {
+        try {
+          // Apply to remote video element
+          if (remoteVideoRef.current) {
+            await remoteVideoRef.current.setSinkId(deviceId);
+            console.log('Applied setSinkId to remote video element');
+            methodUsed = true;
+          }
+          
+          // Find and update all audio and video elements
+          const mediaElements = document.querySelectorAll('audio, video');
+          for (const elem of mediaElements) {
+            try {
+              // Skip the local video element since it should be muted
+              if (elem === localVideoRef.current) continue;
+              
+              await elem.setSinkId(deviceId);
+              console.log('Applied setSinkId to media element:', elem);
+            } catch (mediaElemErr) {
+              console.warn('Could not set sink ID for media element:', mediaElemErr);
+            }
+          }
+          
+          // For Chrome-based browsers that might create dynamic audio elements, ensure we keep track
+          // of new audio elements created by the Chime SDK
+          if (browser.isChrome || browser.isEdge) {
+            // Create a MutationObserver to detect new audio elements
+            const observer = new MutationObserver((mutations) => {
+              mutations.forEach((mutation) => {
+                if (mutation.addedNodes) {
+                  mutation.addedNodes.forEach((node) => {
+                    // Check if the added node is an audio element or contains audio elements
+                    if (node.nodeType === 1) { // ELEMENT_NODE
+                      if (node.tagName === 'AUDIO' || node.tagName === 'VIDEO') {
+                        try {
+                          node.setSinkId(deviceId);
+                          console.log('Applied setSinkId to dynamically added media element');
+                        } catch (err) {
+                          console.warn('Failed to set sink ID on dynamically added media element:', err);
+                        }
+                      } else {
+                        // Check for audio/video elements inside the added node
+                        const childMediaElements = node.querySelectorAll('audio, video');
+                        childMediaElements.forEach(async (mediaElem) => {
+                          try {
+                            // Skip the local video element
+                            if (mediaElem === localVideoRef.current) return;
+                            
+                            await mediaElem.setSinkId(deviceId);
+                            console.log('Applied setSinkId to nested media element');
+                          } catch (err) {
+                            console.warn('Failed to set sink ID on nested media element:', err);
+                          }
+                        });
+                      }
+                    }
+                  });
+                }
+              });
+            });
+            
+            // Start observing the document with the configured parameters
+            observer.observe(document.body, { childList: true, subtree: true });
+            
+            // Store the observer in a ref for cleanup
+            // This will be defined at the component level
+            if (window.audioOutputObserver) {
+              window.audioOutputObserver.disconnect();
+            }
+            window.audioOutputObserver = observer;
+          }
+        } catch (sinkIdErr) {
+          console.warn('Error using setSinkId API:', sinkIdErr);
+          lastError = sinkIdErr;
+        }
+      }
+      
+      // Method 4: Special handling for Safari (which doesn't support setSinkId)
+      if (!methodUsed && browser.isSafari) {
+        // For Safari, we can't change the output device via API, but we can guide the user
+        setError('Safari does not support changing audio output devices through the browser API. Please use system settings to select your preferred output device.');
+        methodUsed = true; // Mark as handled to avoid generic error
+      }
+      
+      // Method 5: Special handling for iOS devices
+      if (!methodUsed && browser.isIOS) {
+        setError('iOS devices do not support changing audio output devices through the browser. Audio will play through the currently active output.');
+        methodUsed = true; // Mark as handled to avoid generic error
+      }
+      
+      // If no method worked, create a fallback notification
+      if (!methodUsed) {
+        console.warn('No compatible audio output selection method found:', lastError);
+        setError(`Unable to change audio output device. Your browser (${browser.name} ${browser.version}) may not support this feature. Try using Chrome, Edge, or Firefox instead.`);
       }
     } catch (err) {
-      console.error('Error changing audio output device:', err);
-      setError('Failed to change audio output device. Please check browser permissions.');
+      console.error('Error in audio output device change process:', err);
+      setError('Failed to change audio output device. Please check browser permissions or try a different browser.');
     }
   };
   
@@ -1248,10 +1422,70 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
               </div>
               
               <div className="browser-support-note">
-                <p>
-                  <strong>Note:</strong> Audio device selection is not supported in all browsers. 
-                  If you're having issues, try using Chrome or Edge for better compatibility.
-                </p>
+                {(() => {
+                  const support = checkAudioOutputSupport();
+                  const { browser } = support;
+                  
+                  // Browser-specific guidance
+                  if (browser.isSafari) {
+                    return (
+                      <>
+                        <p>
+                          <strong>Safari Browser Detected:</strong> Safari does not currently support changing audio output devices through browser APIs.
+                        </p>
+                        <p className="browser-fallback-tip">
+                          To change your audio output, please use your macOS system settings or select a different browser.
+                        </p>
+                      </>
+                    );
+                  } else if (browser.isIOS) {
+                    return (
+                      <>
+                        <p>
+                          <strong>iOS Device Detected:</strong> iOS does not allow changing audio output devices through the browser.
+                        </p>
+                        <p className="browser-fallback-tip">
+                          Audio will play through your currently active system output (e.g., speaker, AirPods, or other connected device).
+                        </p>
+                      </>
+                    );
+                  } else if (!support.supported) {
+                    return (
+                      <>
+                        <p>
+                          <strong>Limited Support Detected:</strong> Your browser ({browser.name} {browser.version}) may not fully support changing audio output devices.
+                        </p>
+                        <p className="browser-fallback-tip">
+                          For best results, we recommend using the latest version of Chrome, Edge, or Firefox. If you need to use your current browser,
+                          you can manually change your audio output in your system settings.
+                        </p>
+                      </>
+                    );
+                  } else if (browser.isChrome || browser.isEdge) {
+                    return (
+                      <p>
+                        <strong>Compatible Browser Detected:</strong> Your browser fully supports audio device selection. If you encounter issues, please ensure your browser permissions are set correctly.
+                      </p>
+                    );
+                  } else if (browser.isFirefox) {
+                    return (
+                      <>
+                        <p>
+                          <strong>Firefox Browser Detected:</strong> Firefox has limited support for changing audio output devices.
+                        </p>
+                        <p className="browser-fallback-tip">
+                          If you encounter issues, try setting your preferred audio output device in your system settings before joining the session.
+                        </p>
+                      </>
+                    );
+                  } else {
+                    return (
+                      <p>
+                        <strong>Note:</strong> Audio device selection compatibility varies by browser. For best results, we recommend using Chrome or Edge.
+                      </p>
+                    );
+                  }
+                })()}
               </div>
             </div>
           </div>
