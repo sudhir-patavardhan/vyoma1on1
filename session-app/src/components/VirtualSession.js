@@ -874,7 +874,41 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
             <div className="video-label">Remote</div>
           </div>
           
-          <div className="video-box local">
+          <div 
+            className="video-box local"
+            onMouseDown={(e) => {
+              // Make video draggable when holding mouse button
+              const videoBox = e.currentTarget;
+              
+              // Track initial position
+              const initialX = e.clientX;
+              const initialY = e.clientY;
+              const initialStyle = window.getComputedStyle(videoBox);
+              const initialRight = parseInt(initialStyle.right);
+              const initialBottom = parseInt(initialStyle.bottom);
+              
+              // Function to handle mouse movement
+              const handleMouseMove = (moveEvent) => {
+                // Calculate new position
+                const deltaX = initialX - moveEvent.clientX;
+                const deltaY = moveEvent.clientY - initialY;
+                
+                // Update position
+                videoBox.style.right = `${initialRight + deltaX}px`;
+                videoBox.style.bottom = `${initialBottom + deltaY}px`;
+              };
+              
+              // Function to cleanup drag operations
+              const handleMouseUp = () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+              };
+              
+              // Add event listeners
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+            }}
+          >
             <video 
               ref={localVideoRef} 
               autoPlay 
@@ -883,6 +917,7 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
               className="local-video"
             />
             <div className="video-label">You</div>
+            <div className="drag-handle" title="Drag to reposition">⋮⋮</div>
           </div>
         </div>
         
