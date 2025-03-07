@@ -31,7 +31,9 @@ phases:
       # Build both frontend and backend
       - echo "Building the React frontend"
       - cd session-app
-      - npm run build
+      - NODE_ENV=production CI=false npm run build
+      - echo "Completed building React frontend"
+      - ls -la build/ || echo "Build directory not found"
       - cd ..
       - echo "Packaging the Lambda function"
       - cd connectplatform
@@ -42,8 +44,14 @@ phases:
   post_build:
     commands:
       # Deploy both frontend and backend
+      - echo "Checking if frontend build directory exists"
+      - if [ -d "session-app/build" ]; then
       - echo "Syncing frontend build artifacts to S3"
       - aws s3 sync session-app/build/ s3://sessions-red-react-app-deployments/ --delete --exact-timestamps
+      - else 
+      - echo "ERROR: Build directory does not exist. Build may have failed."
+      - ls -la session-app/ 
+      - fi
       - echo "Deploying backend Lambda functions"
       - cd connectplatform
       - echo "Creating/updating CloudFormation stack"
