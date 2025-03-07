@@ -266,12 +266,111 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
   };
   
   // Effect to apply audio output device selection when meeting session becomes available
+  // Add a function to check and fix missing srcObject
+  const checkAndFixMissingSrcObject = useCallback(() => {
+    console.log('Checking for missing srcObject on remote video element');
+    
+    if (remoteVideoRef.current && !remoteVideoRef.current.srcObject && meetingSession) {
+      console.log('Remote video has no srcObject, attempting to fix');
+      
+      try {
+        // Method 1: Try to get the active video tile
+        if (remoteTileId && typeof meetingSession.audioVideo.bindVideoElement === 'function') {
+          console.log('Attempting to rebind video element for tile:', remoteTileId);
+          meetingSession.audioVideo.bindVideoElement(remoteTileId, remoteVideoRef.current);
+        }
+        
+        // Method 2: Try to extract an audio stream from the meeting and create a media stream
+        if (typeof meetingSession.audioVideo.getCurrentMeetingAudioStream === 'function') {
+          console.log('Attempting to get meeting audio stream');
+          meetingSession.audioVideo.getCurrentMeetingAudioStream()
+            .then(audioStream => {
+              if (audioStream && (!remoteVideoRef.current.srcObject || !remoteVideoRef.current.srcObject.getAudioTracks().length)) {
+                console.log('Got audio stream from meeting, attaching to video element');
+                
+                // Create a new MediaStream if needed
+                if (!remoteVideoRef.current.srcObject) {
+                  remoteVideoRef.current.srcObject = new MediaStream();
+                }
+                
+                // Add audio tracks to the stream
+                audioStream.getAudioTracks().forEach(track => {
+                  if (!remoteVideoRef.current.srcObject.getTrackById(track.id)) {
+                    remoteVideoRef.current.srcObject.addTrack(track);
+                    console.log('Added audio track to remote video srcObject:', track.id);
+                  }
+                });
+                
+                // Try to play the video with the new stream
+                remoteVideoRef.current.play()
+                  .then(() => console.log('Playing remote video with new audio stream'))
+                  .catch(err => console.warn('Failed to play remote video with new audio stream:', err));
+              }
+            })
+            .catch(err => console.warn('Error getting meeting audio stream:', err));
+        } else {
+          console.warn('getCurrentMeetingAudioStream method not available');
+        }
+        
+        // Method 3: Try calling bindAudioElement directly
+        if (!remoteVideoRef.current.srcObject && typeof meetingSession.audioVideo.bindAudioElement === 'function') {
+          console.log('Attempting to bind audio element directly');
+          meetingSession.audioVideo.bindAudioElement(remoteVideoRef.current)
+            .then(() => console.log('Successfully bound audio element'))
+            .catch(err => console.warn('Error binding audio element:', err));
+        }
+      } catch (err) {
+        console.warn('Error trying to fix missing srcObject:', err);
+      }
+    } else if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
+      // Check if there are any audio tracks
+      const audioTracks = remoteVideoRef.current.srcObject.getAudioTracks();
+      console.log(`Remote video has srcObject with ${audioTracks.length} audio tracks`);
+      
+      if (audioTracks.length === 0 && meetingSession) {
+        console.log('srcObject exists but has no audio tracks, attempting to add audio');
+        // Try to get and add audio tracks
+        if (typeof meetingSession.audioVideo.getCurrentMeetingAudioStream === 'function') {
+          meetingSession.audioVideo.getCurrentMeetingAudioStream()
+            .then(audioStream => {
+              if (audioStream) {
+                const newAudioTracks = audioStream.getAudioTracks();
+                console.log(`Found ${newAudioTracks.length} audio tracks in meeting stream`);
+                
+                newAudioTracks.forEach(track => {
+                  remoteVideoRef.current.srcObject.addTrack(track);
+                  console.log('Added audio track to existing srcObject:', track.id);
+                });
+              }
+            })
+            .catch(err => console.warn('Error getting audio stream for existing srcObject:', err));
+        }
+      }
+    }
+  }, [meetingSession, remoteTileId]);
+  
+  // Effect to periodically check for missing srcObject
+  useEffect(() => {
+    if (meetingSession) {
+      // Check immediately
+      checkAndFixMissingSrcObject();
+      
+      // Then check periodically
+      const intervalId = setInterval(checkAndFixMissingSrcObject, 5000);
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [meetingSession, checkAndFixMissingSrcObject]);
+
   useEffect(() => {
     if (meetingSession && selectedAudioOutputDevice) {
       console.log('Meeting session now available, applying saved audio output device selection');
       applyAudioDeviceWhenReady(selectedAudioOutputDevice);
+      
+      // Also check if we need to fix the srcObject
+      setTimeout(checkAndFixMissingSrcObject, 2000);
     }
-  }, [meetingSession, selectedAudioOutputDevice]);
+  }, [meetingSession, selectedAudioOutputDevice, checkAndFixMissingSrcObject]);
 
   // Effect to ensure remote video element has audio enabled
   useEffect(() => {
@@ -639,26 +738,81 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
     session.audioVideo.addObserver({
       // Video tile events
       videoTileDidUpdate: (tileState) => {
+        console.log('Video tile update:', tileState);
         if (!tileState.boundAttendeeId) {
+          console.log('Ignoring tile update with no boundAttendeeId');
           return;
         }
         
         const isLocalTile = tileState.localTile;
+        console.log(`Processing ${isLocalTile ? 'local' : 'remote'} video tile:`, tileState.tileId);
         
         if (isLocalTile) {
           // Local video tile
           setLocalTileId(tileState.tileId);
+          console.log('Binding local video element to tile:', tileState.tileId);
           session.audioVideo.bindVideoElement(
             tileState.tileId,
             localVideoRef.current
-          );
+          ).then(() => {
+            console.log('Successfully bound local video element');
+            
+            // Check if local video has srcObject
+            if (localVideoRef.current && !localVideoRef.current.srcObject) {
+              console.warn('Local video element bound but no srcObject present');
+            } else if (localVideoRef.current) {
+              console.log('Local video element has srcObject with tracks:', 
+                localVideoRef.current.srcObject.getTracks().length);
+            }
+          }).catch(err => {
+            console.error('Error binding local video element:', err);
+          });
         } else if (!tileState.isContent) {
           // Remote participant camera
           setRemoteTileId(tileState.tileId);
+          console.log('Binding remote video element to tile:', tileState.tileId);
           session.audioVideo.bindVideoElement(
             tileState.tileId,
             remoteVideoRef.current
-          );
+          ).then(() => {
+            console.log('Successfully bound remote video element');
+            
+            // Force unmute and volume up
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current.muted = false;
+              remoteVideoRef.current.volume = 1.0;
+              
+              // Explicitly try to play the video
+              if (remoteVideoRef.current.paused) {
+                remoteVideoRef.current.play()
+                  .then(() => console.log('Remote video playback started after binding'))
+                  .catch(err => console.warn('Could not auto-play remote video after binding:', err));
+              }
+              
+              // Check if remote video has srcObject
+              if (!remoteVideoRef.current.srcObject) {
+                console.warn('Remote video element bound but no srcObject present');
+                
+                // Attempt to create a stream from the meeting audio
+                if (typeof session.audioVideo.getCurrentMeetingAudioStream === 'function') {
+                  session.audioVideo.getCurrentMeetingAudioStream()
+                    .then(audioStream => {
+                      if (audioStream && !remoteVideoRef.current.srcObject) {
+                        remoteVideoRef.current.srcObject = audioStream;
+                        console.log('Set meeting audio stream as srcObject for remote video');
+                      }
+                    })
+                    .catch(err => console.warn('Error getting meeting audio stream:', err));
+                }
+              } else {
+                console.log('Remote video element has srcObject with tracks:', 
+                  remoteVideoRef.current.srcObject.getTracks().map(t => 
+                    ({ kind: t.kind, id: t.id, enabled: t.enabled, muted: t.muted })));
+              }
+            }
+          }).catch(err => {
+            console.error('Error binding remote video element:', err);
+          });
         } else {
           // This is a screen share tile
           console.log('Screen share tile added:', tileState.tileId);
@@ -1246,11 +1400,71 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
         // Continue without video if there's an error
       }
       
+      // Explicitly handle audio
+      try {
+        console.log('Ensuring audio is properly configured');
+        
+        // Make sure audio is not muted at the source
+        if (typeof session.audioVideo.realtimeUnmuteLocalAudio === 'function') {
+          await session.audioVideo.realtimeUnmuteLocalAudio();
+          console.log('Explicitly unmuted local audio');
+        }
+        
+        // Try to bind audio to the remote video element
+        if (remoteVideoRef.current && typeof session.audioVideo.bindAudioElement === 'function') {
+          await session.audioVideo.bindAudioElement(remoteVideoRef.current);
+          console.log('Explicitly bound audio element during join');
+          
+          // Force unmute and set volume
+          remoteVideoRef.current.muted = false;
+          remoteVideoRef.current.volume = 1.0;
+        }
+        
+        // Check if we can get the meeting audio stream
+        if (typeof session.audioVideo.getCurrentMeetingAudioStream === 'function') {
+          try {
+            const audioStream = await session.audioVideo.getCurrentMeetingAudioStream();
+            if (audioStream) {
+              console.log('Got meeting audio stream during join');
+              
+              // Check if we already have a srcObject on the remote video
+              if (remoteVideoRef.current && !remoteVideoRef.current.srcObject) {
+                remoteVideoRef.current.srcObject = audioStream;
+                console.log('Set meeting audio stream as srcObject for remote video during join');
+                
+                // Try to play
+                remoteVideoRef.current.play()
+                  .then(() => console.log('Started playback with audio stream during join'))
+                  .catch(playErr => console.warn('Could not auto-play with audio stream during join:', playErr));
+              }
+            } else {
+              console.log('No audio stream available during join');
+            }
+          } catch (audioStreamErr) {
+            console.warn('Error getting audio stream during join:', audioStreamErr);
+          }
+        }
+      } catch (audioErr) {
+        console.error('Error setting up audio during join:', audioErr);
+        console.log('Continuing with limited audio functionality');
+      }
+      
       // Handle presence events with error handling
       try {
         console.log('Setting up attendee presence subscription');
         session.audioVideo.realtimeSubscribeToAttendeeIdPresence((attendeeId, present) => {
           console.log(`Attendee ${attendeeId} presence: ${present}`);
+          
+          // When a new attendee joins, check and refresh audio
+          if (present) {
+            console.log('New attendee joined, checking audio setup');
+            setTimeout(() => {
+              // This is a trigger to check audio setup when someone joins
+              if (typeof checkAndFixMissingSrcObject === 'function') {
+                checkAndFixMissingSrcObject();
+              }
+            }, 1000);
+          }
         });
         console.log('Attendee presence subscription established');
       } catch (presenceErr) {
