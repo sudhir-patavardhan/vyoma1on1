@@ -129,18 +129,50 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
     };
   };
 
+  // Function to apply audio output device when meeting session becomes available
+  // This is defined early to avoid circular dependencies
+  const applyAudioDeviceWhenReady = (deviceId) => {
+    if (!meetingSession || !deviceId) return;
+    
+    console.log('Attempting to apply audio device:', deviceId);
+    
+    // Small delay to ensure everything is properly initialized
+    setTimeout(() => {
+      try {
+        // Try to directly use the Chime SDK methods first
+        if (meetingSession.audioVideo) {
+          if (typeof meetingSession.audioVideo.chooseAudioOutputDevice === 'function') {
+            meetingSession.audioVideo.chooseAudioOutputDevice(deviceId)
+              .then(() => console.log('Applied audio output device via chooseAudioOutputDevice'))
+              .catch(err => console.warn('Error applying audio output device:', err));
+            return;
+          } else if (typeof meetingSession.audioVideo.setAudioOutputDevice === 'function') {
+            meetingSession.audioVideo.setAudioOutputDevice(deviceId)
+              .then(() => console.log('Applied audio output device via setAudioOutputDevice'))
+              .catch(err => console.warn('Error applying audio output device:', err));
+            return;
+          }
+        }
+        
+        // If Chime SDK methods aren't available, try browser API directly
+        if (typeof HTMLMediaElement.prototype.setSinkId === 'function' && remoteVideoRef.current) {
+          remoteVideoRef.current.setSinkId(deviceId)
+            .then(() => console.log('Applied audio output device via setSinkId'))
+            .catch(err => console.warn('Error applying audio output device:', err));
+        }
+      } catch (err) {
+        console.error('Error in applyAudioDeviceWhenReady:', err);
+      }
+    }, 1000);
+  };
+  
   // Effect to apply audio output device selection when meeting session becomes available
   useEffect(() => {
     if (meetingSession && selectedAudioOutputDevice) {
       console.log('Meeting session now available, applying saved audio output device selection');
-      
-      // Small delay to ensure everything is properly initialized
-      setTimeout(() => {
-        changeAudioOutputDevice(selectedAudioOutputDevice)
-          .catch(err => console.warn('Error applying audio output device after session init:', err));
-      }, 1000);
+      applyAudioDeviceWhenReady(selectedAudioOutputDevice);
     }
-  }, [meetingSession, selectedAudioOutputDevice, changeAudioOutputDevice]);
+  }, [meetingSession, selectedAudioOutputDevice]);
 
   // Effect to ensure remote video element has audio enabled
   useEffect(() => {
@@ -495,8 +527,8 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
             
             // Only try to change device if meeting session is ready
             if (meetingSession) {
-              // Use the enhanced changeAudioOutputDevice function for consistent behavior
-              await changeAudioOutputDevice(defaultDevice);
+              // Use the direct method to avoid circular references
+              applyAudioDeviceWhenReady(defaultDevice);
             } else {
               console.log('Meeting session not ready yet, audio device selection will be applied when session is ready');
             }
