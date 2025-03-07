@@ -136,29 +136,128 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
     
     console.log('Attempting to apply audio device:', deviceId);
     
+    // First try to force audio to play with a user gesture simulation
+    const tryForcingAudioPlay = () => {
+      if (remoteVideoRef.current) {
+        const videoElem = remoteVideoRef.current;
+        
+        // Ensure it's not muted and volume is up
+        videoElem.muted = false;
+        videoElem.volume = 1.0;
+        
+        // Force a play attempt to overcome browser autoplay restrictions
+        videoElem.play()
+          .then(() => console.log('Successfully played video element to enable audio'))
+          .catch(playErr => console.warn('Could not autoplay video element:', playErr));
+        
+        // Create a temporary audio context - this can help "wake up" the audio system
+        try {
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          // Create a silent oscillator
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          gainNode.gain.value = 0; // Silent
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + 0.001); // Very brief
+          
+          // Resume the audio context
+          if (audioContext.state !== 'running') {
+            audioContext.resume()
+              .then(() => console.log('Audio context resumed'))
+              .catch(err => console.warn('Could not resume audio context:', err));
+          }
+        } catch (audioErr) {
+          console.warn('Audio context initialization error:', audioErr);
+        }
+      }
+    };
+    
     // Small delay to ensure everything is properly initialized
     setTimeout(() => {
+      // Try to force audio playback first
+      tryForcingAudioPlay();
+      
       try {
+        // Log available audio devices for debugging
+        if (meetingSession && meetingSession.audioVideo) {
+          meetingSession.audioVideo.listAudioOutputDevices()
+            .then(devices => {
+              console.log('Available audio output devices:', devices);
+              // Find the device that matches our deviceId
+              const matchingDevice = devices.find(device => device.deviceId === deviceId);
+              console.log('Matching device:', matchingDevice || 'None found');
+            })
+            .catch(err => console.warn('Could not list audio devices:', err));
+        }
+        
         // Try to directly use the Chime SDK methods first
         if (meetingSession.audioVideo) {
           if (typeof meetingSession.audioVideo.chooseAudioOutputDevice === 'function') {
             meetingSession.audioVideo.chooseAudioOutputDevice(deviceId)
-              .then(() => console.log('Applied audio output device via chooseAudioOutputDevice'))
+              .then(() => {
+                console.log('Applied audio output device via chooseAudioOutputDevice');
+                // Try to play audio after setting the device
+                tryForcingAudioPlay();
+              })
               .catch(err => console.warn('Error applying audio output device:', err));
+            
+            // Also try to bind the audio element specifically
+            if (typeof meetingSession.audioVideo.bindAudioElement === 'function' && remoteVideoRef.current) {
+              meetingSession.audioVideo.bindAudioElement(remoteVideoRef.current)
+                .then(() => console.log('Successfully bound audio element'))
+                .catch(err => console.warn('Error binding audio element:', err));
+            }
+            
             return;
           } else if (typeof meetingSession.audioVideo.setAudioOutputDevice === 'function') {
             meetingSession.audioVideo.setAudioOutputDevice(deviceId)
-              .then(() => console.log('Applied audio output device via setAudioOutputDevice'))
+              .then(() => {
+                console.log('Applied audio output device via setAudioOutputDevice');
+                // Try to play audio after setting the device
+                tryForcingAudioPlay();
+              })
               .catch(err => console.warn('Error applying audio output device:', err));
             return;
           }
         }
         
         // If Chime SDK methods aren't available, try browser API directly
-        if (typeof HTMLMediaElement.prototype.setSinkId === 'function' && remoteVideoRef.current) {
-          remoteVideoRef.current.setSinkId(deviceId)
-            .then(() => console.log('Applied audio output device via setSinkId'))
-            .catch(err => console.warn('Error applying audio output device:', err));
+        if (typeof HTMLMediaElement.prototype.setSinkId === 'function') {
+          // Apply to ALL audio and video elements in the document
+          const mediaElements = document.querySelectorAll('audio, video');
+          console.log(`Applying setSinkId to ${mediaElements.length} media elements`);
+          
+          mediaElements.forEach((elem, index) => {
+            // Skip the local video element (should remain on default)
+            if (elem === localVideoRef.current) return;
+            
+            try {
+              elem.setSinkId(deviceId)
+                .then(() => {
+                  console.log(`Applied audio output device via setSinkId to element ${index}`);
+                  if (elem.paused && elem.readyState >= 2) {
+                    elem.play()
+                      .then(() => console.log(`Successfully played element ${index}`))
+                      .catch(err => console.warn(`Could not play element ${index}:`, err));
+                  }
+                })
+                .catch(err => console.warn(`Error setting sink ID for element ${index}:`, err));
+            } catch (elemErr) {
+              console.warn(`Exception setting sink ID for element ${index}:`, elemErr);
+            }
+          });
+          
+          // Explicitly try the remote video ref
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.setSinkId(deviceId)
+              .then(() => {
+                console.log('Applied audio output device via setSinkId to remote video');
+                tryForcingAudioPlay();
+              })
+              .catch(err => console.warn('Error applying audio output device to remote video:', err));
+          }
         }
       } catch (err) {
         console.error('Error in applyAudioDeviceWhenReady:', err);
@@ -180,25 +279,116 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
       // Set up event listeners for the remote video element
       const remoteVideo = remoteVideoRef.current;
       
-      // Log when video is loaded
-      remoteVideo.onloadedmetadata = () => {
-        console.log('Remote video metadata loaded');
+      // Enhanced audio setup function
+      const setupAudioForVideo = () => {
+        console.log('Setting up audio for remote video');
+        
         // Ensure it's not muted
         remoteVideo.muted = false;
+        
+        // Force unmute at the browser level
+        document.querySelectorAll('audio, video').forEach(elem => {
+          elem.muted = false;
+        });
+        
         // Try to set volume to 100%
         remoteVideo.volume = 1.0;
         console.log('Remote video unmuted, volume set to:', remoteVideo.volume);
+        
+        // Check audio tracks
+        if (remoteVideo.srcObject) {
+          const audioTracks = remoteVideo.srcObject.getAudioTracks();
+          console.log(`Video has ${audioTracks.length} audio tracks:`, 
+            audioTracks.map(track => ({ 
+              enabled: track.enabled, 
+              muted: track.muted, 
+              id: track.id 
+            }))
+          );
+          
+          // Ensure all audio tracks are enabled
+          audioTracks.forEach(track => {
+            track.enabled = true;
+          });
+        } else {
+          console.warn('Remote video has no srcObject yet');
+        }
+        
+        // Try to make the audio system "wake up"
+        const wakeAudioSystem = () => {
+          try {
+            // Create a temporary audio context
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            // Make it very quiet
+            gainNode.gain.value = 0.01;
+            
+            // Connect and start/stop
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+            
+            // Resume the audio context if needed
+            if (audioContext.state !== 'running') {
+              audioContext.resume()
+                .then(() => console.log('Audio context resumed'))
+                .catch(err => console.warn('Could not resume audio context:', err));
+            }
+          } catch (err) {
+            console.warn('Error trying to wake audio system:', err);
+          }
+        };
+        
+        // Run the audio wake-up
+        wakeAudioSystem();
+        
+        // Try to play the video
+        const attemptPlay = () => {
+          if (remoteVideo.paused) {
+            console.log('Attempting to play remote video');
+            remoteVideo.play()
+              .then(() => console.log('Successfully started remote video playback'))
+              .catch(playErr => {
+                console.warn('Error auto-playing remote video, will retry:', playErr);
+                
+                // If autoplay was prevented, we'll try again after user interaction
+                const anyUserInteraction = () => {
+                  console.log('User interaction detected, trying playback again');
+                  remoteVideo.play()
+                    .then(() => console.log('Play succeeded after user interaction'))
+                    .catch(err => console.warn('Play still failed after user interaction:', err));
+                  
+                  // Remove the interaction listeners once we've tried
+                  document.removeEventListener('click', anyUserInteraction);
+                  document.removeEventListener('keydown', anyUserInteraction);
+                };
+                
+                // Listen for any user interaction
+                document.addEventListener('click', anyUserInteraction, { once: true });
+                document.addEventListener('keydown', anyUserInteraction, { once: true });
+              });
+          }
+        };
+        
+        // Try to play now and again shortly (for reliability)
+        attemptPlay();
+        setTimeout(attemptPlay, 1000);
+        setTimeout(attemptPlay, 3000);
+      };
+      
+      // Log when video is loaded
+      remoteVideo.onloadedmetadata = () => {
+        console.log('Remote video metadata loaded');
+        setupAudioForVideo();
       };
       
       // Setup canplaythrough event listener
       remoteVideo.oncanplaythrough = () => {
         console.log('Remote video can play through');
-        // Try to play automatically if not already playing
-        if (remoteVideo.paused) {
-          remoteVideo.play().catch(err => {
-            console.error('Error auto-playing remote video:', err);
-          });
-        }
+        setupAudioForVideo();
         
         // Apply audio output device after the video can play through
         // This ensures the browser is ready to accept the setSinkId operation
@@ -207,7 +397,15 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
             try {
               // We wrap this in another try-catch to prevent AbortError from bubbling up
               remoteVideo.setSinkId(selectedAudioOutputDevice)
-                .then(() => console.log('Successfully applied setSinkId to remote video after it can play through'))
+                .then(() => {
+                  console.log('Successfully applied setSinkId to remote video after it can play through');
+                  // Try to play again after changing output device
+                  if (remoteVideo.paused) {
+                    remoteVideo.play()
+                      .then(() => console.log('Successfully played video after setSinkId'))
+                      .catch(err => console.warn('Error playing video after setSinkId:', err));
+                  }
+                })
                 .catch(err => {
                   console.warn('Error applying audio output device to video after canplaythrough:', err);
                 });
@@ -217,6 +415,26 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
           }
         }, 1000); // Delay by 1 second to ensure browser is ready
       };
+      
+      // Add additional event listeners for troubleshooting
+      remoteVideo.onerror = (err) => {
+        console.error('Remote video error:', err);
+      };
+      
+      remoteVideo.onplaying = () => {
+        console.log('Remote video is now playing');
+      };
+      
+      remoteVideo.onpause = () => {
+        console.log('Remote video was paused');
+      };
+      
+      remoteVideo.onstalled = () => {
+        console.warn('Remote video playback stalled');
+      };
+      
+      // Setup initial audio state
+      setupAudioForVideo();
     }
   }, [remoteVideoRef.current, selectedAudioOutputDevice]);
   
@@ -383,12 +601,32 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
       // Select audio/video devices
       await selectMediaDevices(session);
       
+      // Explicitly bind the audio element to ensure proper audio routing
+      try {
+        if (typeof session.audioVideo.bindAudioElement === 'function' && remoteVideoRef.current) {
+          await session.audioVideo.bindAudioElement(remoteVideoRef.current);
+          console.log('Successfully bound audio element during session setup');
+        } else {
+          console.warn('No bindAudioElement method available during session setup');
+        }
+      } catch (bindErr) {
+        console.warn('Error binding audio element during session setup:', bindErr);
+      }
+      
       // Start the meeting session
       session.audioVideo.start();
       setMeetingStatus('started');
       
       // Join with audio/video
       await joinWithAudioVideo(session);
+      
+      // Attempt to apply any saved audio device selection right after joining
+      if (selectedAudioOutputDevice) {
+        // Small delay to ensure everything is initialized
+        setTimeout(() => {
+          applyAudioDeviceWhenReady(selectedAudioOutputDevice);
+        }, 2000);
+      }
       
     } catch (err) {
       console.error("Error setting up Chime meeting:", err);
@@ -788,7 +1026,70 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
     setAudioTestInProgress(true);
     
     try {
-      // Create and play a test sound
+      // Try to get and play the meeting audio for a true test
+      if (meetingSession && remoteVideoRef.current) {
+        try {
+          // Ensure video is unmuted
+          remoteVideoRef.current.muted = false;
+          remoteVideoRef.current.volume = 1.0;
+          
+          console.log('Testing with meeting audio...');
+          
+          // Apply output device if one is selected
+          if (selectedAudioOutputDevice && typeof remoteVideoRef.current.setSinkId === 'function') {
+            await remoteVideoRef.current.setSinkId(selectedAudioOutputDevice);
+            console.log('Applied audio output device for test');
+          }
+          
+          // Try to explicitly bind audio element using Chime SDK
+          if (typeof meetingSession.audioVideo.bindAudioElement === 'function') {
+            await meetingSession.audioVideo.bindAudioElement(remoteVideoRef.current);
+            console.log('Explicitly bound audio element for test');
+            
+            // Try to get the current audio stream
+            if (typeof meetingSession.audioVideo.getCurrentAudioStream === 'function') {
+              const audioStream = await meetingSession.audioVideo.getCurrentAudioStream();
+              if (audioStream) {
+                console.log('Retrieved current audio stream for test');
+                
+                // Create a temporary audio element to play the stream
+                const tempAudio = document.createElement('audio');
+                tempAudio.srcObject = audioStream;
+                tempAudio.muted = false;
+                tempAudio.volume = 1.0;
+                
+                if (selectedAudioOutputDevice && typeof tempAudio.setSinkId === 'function') {
+                  await tempAudio.setSinkId(selectedAudioOutputDevice);
+                }
+                
+                document.body.appendChild(tempAudio);
+                
+                await tempAudio.play();
+                console.log('Playing test with meeting audio stream');
+                
+                setTimeout(() => {
+                  tempAudio.pause();
+                  tempAudio.srcObject = null;
+                  document.body.removeChild(tempAudio);
+                  console.log('Removed temporary audio element');
+                }, 3000);
+              }
+            }
+          }
+          
+          // Make sure video is playing
+          if (remoteVideoRef.current.paused) {
+            await remoteVideoRef.current.play();
+            console.log('Started video playback for audio test');
+          }
+        } catch (meetingAudioErr) {
+          console.warn('Could not test with meeting audio:', meetingAudioErr);
+          // Fall back to oscillator test
+        }
+      }
+      
+      // Create and play a test sound as fallback
+      console.log('Creating test sound with oscillator...');
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
@@ -800,13 +1101,28 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
       
-      // Play for 1 second
+      // Play for 2 seconds
       oscillator.start();
+      
+      // Display additional troubleshooting info
+      console.log('Audio test active with current settings:');
+      console.log('- Selected output device:', selectedAudioOutputDevice);
+      console.log('- Audio context state:', audioContext.state);
+      if (remoteVideoRef.current) {
+        console.log('- Video element muted:', remoteVideoRef.current.muted);
+        console.log('- Video element volume:', remoteVideoRef.current.volume);
+        console.log('- Video element paused:', remoteVideoRef.current.paused);
+      }
+      
+      // Create a notification to make sure user knows test is running
+      setError('Audio test in progress - you should hear a tone. If not, check system volume and selected device.');
+      
       setTimeout(() => {
         oscillator.stop();
         audioContext.close();
         setAudioTestInProgress(false);
-      }, 1000);
+        setError(''); // Clear the message
+      }, 2000);
       
       console.log('Audio test started');
     } catch (err) {
