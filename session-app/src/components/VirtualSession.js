@@ -143,13 +143,6 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
         // Try to set volume to 100%
         remoteVideo.volume = 1.0;
         console.log('Remote video unmuted, volume set to:', remoteVideo.volume);
-        
-        // Re-apply audio output device if one was selected
-        if (selectedAudioOutputDevice && typeof remoteVideo.setSinkId === 'function') {
-          remoteVideo.setSinkId(selectedAudioOutputDevice).catch(err => {
-            console.warn('Error applying audio output device to video after load:', err);
-          });
-        }
       };
       
       // Setup canplaythrough event listener
@@ -161,6 +154,23 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
             console.error('Error auto-playing remote video:', err);
           });
         }
+        
+        // Apply audio output device after the video can play through
+        // This ensures the browser is ready to accept the setSinkId operation
+        setTimeout(() => {
+          if (selectedAudioOutputDevice && typeof remoteVideo.setSinkId === 'function') {
+            try {
+              // We wrap this in another try-catch to prevent AbortError from bubbling up
+              remoteVideo.setSinkId(selectedAudioOutputDevice)
+                .then(() => console.log('Successfully applied setSinkId to remote video after it can play through'))
+                .catch(err => {
+                  console.warn('Error applying audio output device to video after canplaythrough:', err);
+                });
+            } catch (err) {
+              console.warn('Exception when trying to set sink ID:', err);
+            }
+          }
+        }, 1000); // Delay by 1 second to ensure browser is ready
       };
     }
   }, [remoteVideoRef.current, selectedAudioOutputDevice]);
@@ -533,11 +543,40 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
       // Method 3: Browser's built-in audio output selection (if methods 1 and 2 failed)
       if (!methodUsed && typeof HTMLMediaElement.prototype.setSinkId === 'function') {
         try {
-          // Apply to remote video element
+          // Apply to remote video element with more robust error handling
           if (remoteVideoRef.current) {
-            await remoteVideoRef.current.setSinkId(deviceId);
-            console.log('Applied setSinkId to remote video element');
-            methodUsed = true;
+            try {
+              // Check if video is in a state where setSinkId may fail
+              const readyState = remoteVideoRef.current.readyState;
+              if (readyState >= 1) { // HAVE_METADATA or higher
+                await remoteVideoRef.current.setSinkId(deviceId);
+                console.log('Applied setSinkId to remote video element');
+                methodUsed = true;
+              } else {
+                console.log('Video not ready for setSinkId, state:', readyState);
+                // Schedule setSinkId to run when video is ready
+                methodUsed = true; // Still mark as handled
+                
+                // Register a one-time event handler
+                const handleVideoReady = () => {
+                  // Delay to give browser time to fully initialize
+                  setTimeout(async () => {
+                    try {
+                      await remoteVideoRef.current.setSinkId(deviceId);
+                      console.log('Applied delayed setSinkId to remote video element');
+                    } catch (delayedErr) {
+                      console.warn('Error with delayed setSinkId:', delayedErr);
+                    }
+                  }, 1000);
+                };
+                
+                // Use loadeddata as a trigger point
+                remoteVideoRef.current.addEventListener('loadeddata', handleVideoReady, { once: true });
+              }
+            } catch (videoErr) {
+              console.warn('Error applying setSinkId to video:', videoErr);
+              // Continue with other elements even if video fails
+            }
           }
           
           // Find and update all audio and video elements
@@ -545,10 +584,29 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
           for (const elem of mediaElements) {
             try {
               // Skip the local video element since it should be muted
-              if (elem === localVideoRef.current) continue;
+              if (elem === localVideoRef.current || elem === remoteVideoRef.current) continue;
               
-              await elem.setSinkId(deviceId);
-              console.log('Applied setSinkId to media element:', elem);
+              // Check if element is ready for setSinkId
+              if (elem.readyState >= 1) {
+                await elem.setSinkId(deviceId)
+                  .then(() => console.log('Applied setSinkId to media element'))
+                  .catch(err => console.warn('Failed to set sink ID on media element:', err));
+              } else {
+                // Set up event listener for when the element is ready
+                const handleElementReady = () => {
+                  setTimeout(async () => {
+                    try {
+                      await elem.setSinkId(deviceId);
+                      console.log('Applied delayed setSinkId to media element');
+                    } catch (delayedErr) {
+                      console.warn('Error with delayed setSinkId on media element:', delayedErr);
+                    }
+                  }, 1000);
+                };
+                
+                elem.addEventListener('loadeddata', handleElementReady, { once: true });
+                console.log('Set up delayed setSinkId for media element');
+              }
             } catch (mediaElemErr) {
               console.warn('Could not set sink ID for media element:', mediaElemErr);
             }
@@ -566,21 +624,61 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
                     if (node.nodeType === 1) { // ELEMENT_NODE
                       if (node.tagName === 'AUDIO' || node.tagName === 'VIDEO') {
                         try {
-                          node.setSinkId(deviceId);
-                          console.log('Applied setSinkId to dynamically added media element');
+                          // Check if element is ready for setSinkId
+                          if (node.readyState >= 1) {
+                            node.setSinkId(deviceId)
+                              .then(() => console.log('Applied setSinkId to dynamically added media element'))
+                              .catch(err => console.warn('Failed to set sink ID on dynamically added media element:', err));
+                          } else {
+                            // Set up event listener for when the element is ready
+                            const handleMediaReady = () => {
+                              setTimeout(() => {
+                                try {
+                                  node.setSinkId(deviceId)
+                                    .then(() => console.log('Applied delayed setSinkId to dynamically added media element'))
+                                    .catch(delayedErr => console.warn('Failed delayed sink ID set:', delayedErr));
+                                } catch (setupErr) {
+                                  console.warn('Exception in delayed setSinkId setup:', setupErr);
+                                }
+                              }, 1000);
+                            };
+                            
+                            node.addEventListener('loadeddata', handleMediaReady, { once: true });
+                            console.log('Set up delayed setSinkId for dynamically added media element');
+                          }
                         } catch (err) {
                           console.warn('Failed to set sink ID on dynamically added media element:', err);
                         }
                       } else {
                         // Check for audio/video elements inside the added node
                         const childMediaElements = node.querySelectorAll('audio, video');
-                        childMediaElements.forEach(async (mediaElem) => {
+                        childMediaElements.forEach((mediaElem) => {
                           try {
                             // Skip the local video element
                             if (mediaElem === localVideoRef.current) return;
                             
-                            await mediaElem.setSinkId(deviceId);
-                            console.log('Applied setSinkId to nested media element');
+                            // Check if element is ready for setSinkId
+                            if (mediaElem.readyState >= 1) {
+                              mediaElem.setSinkId(deviceId)
+                                .then(() => console.log('Applied setSinkId to nested media element'))
+                                .catch(err => console.warn('Failed to set sink ID on nested media element:', err));
+                            } else {
+                              // Set up event listener for when the element is ready
+                              const handleNestedMediaReady = () => {
+                                setTimeout(() => {
+                                  try {
+                                    mediaElem.setSinkId(deviceId)
+                                      .then(() => console.log('Applied delayed setSinkId to nested media element'))
+                                      .catch(delayedErr => console.warn('Failed delayed sink ID set for nested element:', delayedErr));
+                                  } catch (setupErr) {
+                                    console.warn('Exception in delayed setSinkId setup for nested element:', setupErr);
+                                  }
+                                }, 1000);
+                              };
+                              
+                              mediaElem.addEventListener('loadeddata', handleNestedMediaReady, { once: true });
+                              console.log('Set up delayed setSinkId for nested media element');
+                            }
                           } catch (err) {
                             console.warn('Failed to set sink ID on nested media element:', err);
                           }
