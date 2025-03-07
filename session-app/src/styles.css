@@ -2203,6 +2203,45 @@ textarea {
   cursor: not-allowed;
 }
 
+/* Microphone level visualizer */
+.mic-level-container {
+  margin-top: 15px;
+  padding: 12px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mic-level-label {
+  font-size: 14px;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.mic-level-bar-container {
+  height: 20px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mic-level-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #2ecc71, #27ae60);
+  border-radius: 10px;
+  transition: width 0.1s ease-out;
+}
+
+.mic-level-text {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  font-style: italic;
+}
+
 .troubleshooting-section h4 {
   margin: 0 0 12px 0;
   font-size: 16px;

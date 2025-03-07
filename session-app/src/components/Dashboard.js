@@ -32,6 +32,12 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
       fetchDashboardData();
     }
   }, [profile]);
+  
+  useEffect(() => {
+    if (showCompletedSessions) {
+      fetchCompletedSessions();
+    }
+  }, [showCompletedSessions, auth.user, profile]);
 
   const fetchDashboardData = async () => {
     try {
@@ -193,12 +199,6 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
   if (loading) {
     return <div className="loading">Loading dashboard data...</div>;
   }
-
-  useEffect(() => {
-    if (showCompletedSessions) {
-      fetchCompletedSessions();
-    }
-  }, [showCompletedSessions, auth.user, profile]);
   
   // Fetch completed sessions
   const fetchCompletedSessions = async () => {

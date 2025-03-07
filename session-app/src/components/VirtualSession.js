@@ -33,8 +33,12 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
   
   // Audio settings
   const [audioOutputDevices, setAudioOutputDevices] = useState([]);
+  const [audioInputDevices, setAudioInputDevices] = useState([]);
   const [selectedAudioOutputDevice, setSelectedAudioOutputDevice] = useState('');
+  const [selectedAudioInputDevice, setSelectedAudioInputDevice] = useState('');
   const [audioTestInProgress, setAudioTestInProgress] = useState(false);
+  const [micTestInProgress, setMicTestInProgress] = useState(false);
+  const [micAudioLevel, setMicAudioLevel] = useState(0);
   
   // Amazon Chime SDK related state
   const [meetingSession, setMeetingSession] = useState(null);
@@ -329,18 +333,23 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
         // List audio input devices (microphones)
         const audioInputDevices = await audioVideo.listAudioInputDevices();
         console.log('Available audio input devices:', audioInputDevices);
+        setAudioInputDevices(audioInputDevices);
         
         if (audioInputDevices.length > 0) {
+          // Set default audio input device
+          const defaultDevice = audioInputDevices[0].deviceId;
+          setSelectedAudioInputDevice(defaultDevice);
+          
           // Try various potential method names for microphone selection
           if (typeof audioVideo.chooseAudioInputDevice === 'function') {
             console.log('Using chooseAudioInputDevice method');
-            await audioVideo.chooseAudioInputDevice(audioInputDevices[0].deviceId);
+            await audioVideo.chooseAudioInputDevice(defaultDevice);
           } else if (typeof audioVideo.setAudioInputDevice === 'function') {
             console.log('Using setAudioInputDevice method');
-            await audioVideo.setAudioInputDevice(audioInputDevices[0].deviceId);
+            await audioVideo.setAudioInputDevice(defaultDevice);
           } else if (typeof audioVideo.startAudioInput === 'function') {
             console.log('Using startAudioInput method');
-            await audioVideo.startAudioInput(audioInputDevices[0].deviceId);
+            await audioVideo.startAudioInput(defaultDevice);
           } else {
             console.warn('No compatible audio input selection method found');
           }
@@ -478,6 +487,106 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
     } catch (err) {
       console.error('Error testing audio output:', err);
       setAudioTestInProgress(false);
+    }
+  };
+  
+  // Function to change audio input device
+  const changeAudioInputDevice = async (deviceId) => {
+    if (!meetingSession) return;
+    
+    try {
+      console.log(`Changing audio input device to: ${deviceId}`);
+      setSelectedAudioInputDevice(deviceId);
+      
+      // Try various methods to set the audio input device
+      const audioVideo = meetingSession.audioVideo;
+      
+      if (typeof audioVideo.chooseAudioInputDevice === 'function') {
+        await audioVideo.chooseAudioInputDevice(deviceId);
+        console.log('Successfully changed audio input using chooseAudioInputDevice');
+      } else {
+        console.warn('No method available to change audio input device');
+      }
+    } catch (err) {
+      console.error('Error changing audio input device:', err);
+      setError('Failed to change audio input device. Please check browser permissions.');
+    }
+  };
+  
+  // Function to test microphone input
+  const testMicrophoneInput = async () => {
+    setMicTestInProgress(true);
+    setMicAudioLevel(0);
+    
+    let micStream = null;
+    let audioContext = null;
+    let analyzer = null;
+    let dataArray = null;
+    let updateInterval = null;
+    
+    try {
+      // Request access to the microphone
+      const constraints = { audio: true };
+      if (selectedAudioInputDevice) {
+        constraints.audio = { deviceId: { exact: selectedAudioInputDevice } };
+      }
+      
+      micStream = await navigator.mediaDevices.getUserMedia(constraints);
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioContext.createMediaStreamSource(micStream);
+      analyzer = audioContext.createAnalyser();
+      analyzer.fftSize = 256;
+      source.connect(analyzer);
+      
+      // Create an array to store audio data
+      const bufferLength = analyzer.frequencyBinCount;
+      dataArray = new Uint8Array(bufferLength);
+      
+      // Update the audio level visualization every 100ms
+      updateInterval = setInterval(() => {
+        if (analyzer) {
+          analyzer.getByteFrequencyData(dataArray);
+          // Calculate average volume level
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+          }
+          const avg = sum / dataArray.length;
+          // Scale from 0-255 to 0-100
+          const level = Math.min(100, Math.round((avg / 255) * 100));
+          setMicAudioLevel(level);
+        }
+      }, 100);
+      
+      // Continue mic test for 5 seconds
+      setTimeout(() => {
+        // Clean up
+        clearInterval(updateInterval);
+        if (micStream) {
+          micStream.getTracks().forEach(track => track.stop());
+        }
+        if (audioContext) {
+          audioContext.close();
+        }
+        setMicTestInProgress(false);
+        setMicAudioLevel(0);
+      }, 5000);
+      
+      console.log('Microphone test started');
+    } catch (err) {
+      console.error('Error testing microphone input:', err);
+      // Clean up
+      if (updateInterval) {
+        clearInterval(updateInterval);
+      }
+      if (micStream) {
+        micStream.getTracks().forEach(track => track.stop());
+      }
+      if (audioContext) {
+        audioContext.close();
+      }
+      setMicTestInProgress(false);
+      setMicAudioLevel(0);
     }
   };
   
@@ -1057,6 +1166,7 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
             </div>
             
             <div className="audio-settings-content">
+              {/* Speaker Settings */}
               <div className="settings-section">
                 <h4>Speaker/Headphone Selection</h4>
                 <p className="settings-description">
@@ -1084,21 +1194,63 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
                 </button>
               </div>
               
+              {/* Microphone Settings */}
+              <div className="settings-section">
+                <h4>Microphone Selection</h4>
+                <p className="settings-description">
+                  If others can't hear you, try selecting a different microphone.
+                </p>
+                
+                <select 
+                  value={selectedAudioInputDevice}
+                  onChange={(e) => changeAudioInputDevice(e.target.value)}
+                  className="device-select"
+                >
+                  {audioInputDevices.map((device, index) => (
+                    <option key={index} value={device.deviceId}>
+                      {device.label || `Microphone ${index + 1}`}
+                    </option>
+                  ))}
+                </select>
+                
+                <button 
+                  className="audio-test-btn"
+                  onClick={testMicrophoneInput}
+                  disabled={micTestInProgress}
+                >
+                  {micTestInProgress ? 'Testing...' : 'Test Microphone'}
+                </button>
+                
+                {/* Microphone level visualization */}
+                {micTestInProgress && (
+                  <div className="mic-level-container">
+                    <div className="mic-level-label">Microphone Level:</div>
+                    <div className="mic-level-bar-container">
+                      <div 
+                        className="mic-level-bar" 
+                        style={{width: `${micAudioLevel}%`}}
+                      ></div>
+                    </div>
+                    <div className="mic-level-text">Speak into your microphone...</div>
+                  </div>
+                )}
+              </div>
+              
               <div className="troubleshooting-section">
                 <h4>Audio Troubleshooting</h4>
                 <ul className="troubleshooting-tips">
-                  <li>Make sure your speakers/headphones are connected and turned on.</li>
-                  <li>Check that your device is not muted or volume is not too low.</li>
+                  <li>Make sure your speakers/headphones and microphone are connected.</li>
+                  <li>Check that your devices are not muted or volumes are not too low.</li>
                   <li>Try refreshing the page if audio issues persist.</li>
-                  <li>Some browsers require explicit permission for audio output selection.</li>
-                  <li>If using headphones, try unplugging and reconnecting them.</li>
+                  <li>Check your browser permissions for microphone access.</li>
+                  <li>If using headphones or external mic, try unplugging and reconnecting them.</li>
                 </ul>
               </div>
               
               <div className="browser-support-note">
                 <p>
-                  <strong>Note:</strong> Audio output device selection is not supported in all browsers. 
-                  If you can't select a different speaker, try using Chrome or Edge for better compatibility.
+                  <strong>Note:</strong> Audio device selection is not supported in all browsers. 
+                  If you're having issues, try using Chrome or Edge for better compatibility.
                 </p>
               </div>
             </div>
