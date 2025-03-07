@@ -964,15 +964,19 @@ def end_chime_meeting(event):
 
 # ========== Search ==========
 def search_teachers(event):
-    """Searches for teachers based on topic/subject."""
+    """Searches for teachers based on topic/subject or teacher name."""
     try:
         query_params = event.get('queryStringParameters', {})
-        topic = query_params.get('topic', '').lower()
+        search_query = query_params.get('topic', '').lower()  # Keeping parameter name as 'topic' for backward compatibility
+        search_type = query_params.get('type', 'both').lower()  # 'topic', 'name', or 'both'
 
-        if not topic:
-            return response_with_cors(400, {"message": "Missing search topic"})
+        if not search_query:
+            return response_with_cors(400, {"message": "Missing search query"})
 
-        # Search for teachers who offer this topic
+        # Log search parameters
+        print(f"Searching for teachers with query: '{search_query}', type: '{search_type}'")
+        
+        # Search for teachers who offer this topic or match the name
         profile_table = dynamodb.Table(PROFILE_TABLE)
         response = profile_table.scan(
             FilterExpression=Attr('role').eq('teacher')
@@ -980,14 +984,31 @@ def search_teachers(event):
 
         teachers = []
         for teacher in response['Items']:
-            # Check if any of the teacher's topics match the search
-            if 'topics' in teacher:
-                teacher_topics = [t.lower() for t in teacher['topics']]
-                if any(topic in t for t in teacher_topics):
-                    teachers.append(teacher)
+            match_found = False
+            
+            # For debugging
+            teacher_name = teacher.get('name', '').lower()
+            teacher_topics = [t.lower() for t in teacher.get('topics', [])]
+            
+            # Search by topic
+            if search_type in ['topic', 'both'] and 'topics' in teacher:
+                if any(search_query in topic.lower() for topic in teacher['topics']):
+                    match_found = True
+                    print(f"Teacher matched by topic: {teacher.get('name', 'Unknown')}, topics: {teacher_topics}")
+            
+            # Search by name
+            if search_type in ['name', 'both'] and 'name' in teacher:
+                if search_query in teacher['name'].lower():
+                    match_found = True
+                    print(f"Teacher matched by name: {teacher_name}")
+            
+            if match_found:
+                teachers.append(teacher)
 
+        print(f"Found {len(teachers)} matching teachers")
         return response_with_cors(200, convert_decimal(teachers))
     except ClientError as e:
+        print(f"Error in search_teachers: {str(e)}")
         return response_with_cors(500, {"message": "Error searching for teachers.", "error": str(e)})
 
 # ========== Lambda Handler ==========

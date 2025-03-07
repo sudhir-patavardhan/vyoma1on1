@@ -7,6 +7,7 @@ import "../styles.css";
 const TeacherSearch = () => {
   const auth = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchType, setSearchType] = useState("both"); // "topic", "name", or "both"
   const [searchResults, setSearchResults] = useState([]);
   const [availabilities, setAvailabilities] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -25,9 +26,11 @@ const TeacherSearch = () => {
       setLoading(true);
       setError("");
       
-      // Search for teachers based on topic
+      console.log(`Searching for "${searchTerm}" with search type: ${searchType}`);
+      
+      // Search for teachers based on topic and/or name
       const response = await axios.get(
-        `${API_BASE_URL}/search/teachers?topic=${encodeURIComponent(searchTerm)}`,
+        `${API_BASE_URL}/search/teachers?topic=${encodeURIComponent(searchTerm)}&type=${searchType}`,
         {
           headers: {
             Authorization: `Bearer ${auth.user.access_token}`,
@@ -38,7 +41,13 @@ const TeacherSearch = () => {
       setSearchResults(response.data || []);
       
       if (response.data.length === 0) {
-        setError("No teachers found for this topic");
+        if (searchType === "topic") {
+          setError("No teachers found for this topic");
+        } else if (searchType === "name") {
+          setError("No teachers found with this name");
+        } else {
+          setError("No teachers found matching your search");
+        }
       }
     } catch (err) {
       console.error("Error searching for teachers:", err);
@@ -141,15 +150,55 @@ const TeacherSearch = () => {
       
       <form className="search-form" onSubmit={handleSearch}>
         <div className="form-group">
-          <label htmlFor="searchTerm">What do you want to learn?</label>
+          <label htmlFor="searchTerm">Search for Teachers</label>
           <input
             type="text"
             id="searchTerm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="e.g. Math, Science, Programming"
+            placeholder={searchType === "name" ? "e.g. John Smith, Jane Doe" : 
+                         searchType === "topic" ? "e.g. Math, Science, Programming" : 
+                         "Search by topic or teacher name"}
             required
           />
+        </div>
+        
+        <div className="form-group">
+          <label>Search by</label>
+          <div className="search-type-selector">
+            <div className="search-type-option">
+              <input
+                type="radio"
+                id="search-type-both"
+                name="search-type"
+                checked={searchType === "both"}
+                onChange={() => setSearchType("both")}
+              />
+              <label htmlFor="search-type-both">Both</label>
+            </div>
+            
+            <div className="search-type-option">
+              <input
+                type="radio"
+                id="search-type-topic"
+                name="search-type"
+                checked={searchType === "topic"}
+                onChange={() => setSearchType("topic")}
+              />
+              <label htmlFor="search-type-topic">Topic</label>
+            </div>
+            
+            <div className="search-type-option">
+              <input
+                type="radio"
+                id="search-type-name"
+                name="search-type"
+                checked={searchType === "name"}
+                onChange={() => setSearchType("name")}
+              />
+              <label htmlFor="search-type-name">Teacher Name</label>
+            </div>
+          </div>
         </div>
         
         <button type="submit" className="btn btn-primary" disabled={loading}>

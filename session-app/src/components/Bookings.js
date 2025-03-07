@@ -274,6 +274,12 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
     // Completed or cancelled sessions
     const completed = bookings.filter(booking => {
       const endTime = new Date(booking.end_time);
+      
+      // For teachers, hide unbooked availability slots that have ended
+      if (userRole === "teacher" && booking.status === "available" && endTime < now) {
+        return false;
+      }
+      
       return endTime < now || booking.status === 'cancelled';
     });
     
