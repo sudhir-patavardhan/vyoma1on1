@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "react-oidc-context";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
@@ -128,6 +128,19 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
       isEdge: browserName === "Edge"
     };
   };
+
+  // Effect to apply audio output device selection when meeting session becomes available
+  useEffect(() => {
+    if (meetingSession && selectedAudioOutputDevice) {
+      console.log('Meeting session now available, applying saved audio output device selection');
+      
+      // Small delay to ensure everything is properly initialized
+      setTimeout(() => {
+        changeAudioOutputDevice(selectedAudioOutputDevice)
+          .catch(err => console.warn('Error applying audio output device after session init:', err));
+      }, 1000);
+    }
+  }, [meetingSession, selectedAudioOutputDevice, changeAudioOutputDevice]);
 
   // Effect to ensure remote video element has audio enabled
   useEffect(() => {
@@ -476,10 +489,17 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
           // Select default audio output device
           if (audioOutputDevices.length > 0) {
             const defaultDevice = audioOutputDevices[0].deviceId;
+            
+            // Store the default device for later use
             setSelectedAudioOutputDevice(defaultDevice);
             
-            // Use the enhanced changeAudioOutputDevice function for consistent behavior
-            await changeAudioOutputDevice(defaultDevice);
+            // Only try to change device if meeting session is ready
+            if (meetingSession) {
+              // Use the enhanced changeAudioOutputDevice function for consistent behavior
+              await changeAudioOutputDevice(defaultDevice);
+            } else {
+              console.log('Meeting session not ready yet, audio device selection will be applied when session is ready');
+            }
           }
         } catch (audioOutputError) {
           console.error('Error listing audio output devices:', audioOutputError);
@@ -498,7 +518,8 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
   };
   
   // Function to change audio output device - enhanced with fallbacks and error handling
-  const changeAudioOutputDevice = async (deviceId) => {
+  // Wrap in useCallback to memoize and prevent recreation on each render
+  const changeAudioOutputDevice = useCallback(async (deviceId) => {
     if (!meetingSession) {
       console.log('No active meeting session available for audio output selection');
       return;
@@ -728,7 +749,7 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
       console.error('Error in audio output device change process:', err);
       setError('Failed to change audio output device. Please check browser permissions or try a different browser.');
     }
-  };
+  }, [meetingSession]);
   
   // Function to test audio output
   const testAudioOutput = async () => {
