@@ -1983,6 +1983,94 @@ textarea {
   font-style: italic;
 }
 
+/* Audio Settings Panel */
+.audio-settings-panel {
+  width: 400px !important;
+  max-width: 90vw;
+}
+
+.audio-settings-content {
+  padding: 16px;
+}
+
+.settings-section {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: white;
+}
+
+.settings-description {
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.device-select {
+  width: 100%;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.audio-test-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.audio-test-btn:hover {
+  background-color: var(--primary-light);
+}
+
+.audio-test-btn:disabled {
+  background-color: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+}
+
+.troubleshooting-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: white;
+}
+
+.troubleshooting-tips {
+  padding-left: 20px;
+  margin: 0 0 20px 0;
+}
+
+.troubleshooting-tips li {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.browser-support-note {
+  padding: 12px;
+  background-color: rgba(255, 255, 0, 0.1);
+  border-radius: 4px;
+  margin-top: 16px;
+}
+
+.browser-support-note p {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .loading {
   display: flex;
   flex-direction: column;

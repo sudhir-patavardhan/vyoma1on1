@@ -29,6 +29,12 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
   // UI visibility states
   const [showNotes, setShowNotes] = useState(false);
   const [showFiles, setShowFiles] = useState(false);
+  const [showAudioSettings, setShowAudioSettings] = useState(false);
+  
+  // Audio settings
+  const [audioOutputDevices, setAudioOutputDevices] = useState([]);
+  const [selectedAudioOutputDevice, setSelectedAudioOutputDevice] = useState('');
+  const [audioTestInProgress, setAudioTestInProgress] = useState(false);
   
   // Amazon Chime SDK related state
   const [meetingSession, setMeetingSession] = useState(null);
@@ -50,6 +56,35 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const screenShareStreamRef = useRef(null);
+  
+  // Effect to ensure remote video element has audio enabled
+  useEffect(() => {
+    if (remoteVideoRef.current) {
+      // Set up event listeners for the remote video element
+      const remoteVideo = remoteVideoRef.current;
+      
+      // Log when video is loaded
+      remoteVideo.onloadedmetadata = () => {
+        console.log('Remote video metadata loaded');
+        // Ensure it's not muted
+        remoteVideo.muted = false;
+        // Try to set volume to 100%
+        remoteVideo.volume = 1.0;
+        console.log('Remote video unmuted, volume set to:', remoteVideo.volume);
+      };
+      
+      // Setup canplaythrough event listener
+      remoteVideo.oncanplaythrough = () => {
+        console.log('Remote video can play through');
+        // Try to play automatically if not already playing
+        if (remoteVideo.paused) {
+          remoteVideo.play().catch(err => {
+            console.error('Error auto-playing remote video:', err);
+          });
+        }
+      };
+    }
+  }, [remoteVideoRef.current]);
   
   useEffect(() => {
     // Fetch session details and set up the meeting
@@ -291,12 +326,12 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
       const audioVideo = session.audioVideo;
       
       try {
-        // Try different method names based on SDK version compatibility
+        // List audio input devices (microphones)
         const audioInputDevices = await audioVideo.listAudioInputDevices();
         console.log('Available audio input devices:', audioInputDevices);
         
         if (audioInputDevices.length > 0) {
-          // Try various potential method names
+          // Try various potential method names for microphone selection
           if (typeof audioVideo.chooseAudioInputDevice === 'function') {
             console.log('Using chooseAudioInputDevice method');
             await audioVideo.chooseAudioInputDevice(audioInputDevices[0].deviceId);
@@ -311,11 +346,12 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
           }
         }
         
+        // List video input devices (cameras)
         const videoInputDevices = await audioVideo.listVideoInputDevices();
         console.log('Available video input devices:', videoInputDevices);
         
         if (videoInputDevices.length > 0) {
-          // Try various potential method names
+          // Try various potential method names for camera selection
           if (typeof audioVideo.chooseVideoInputDevice === 'function') {
             console.log('Using chooseVideoInputDevice method');
             await audioVideo.chooseVideoInputDevice(videoInputDevices[0].deviceId);
@@ -329,6 +365,46 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
             console.warn('No compatible video input selection method found');
           }
         }
+        
+        // List audio output devices (speakers)
+        try {
+          const audioOutputDevices = await audioVideo.listAudioOutputDevices();
+          console.log('Available audio output devices:', audioOutputDevices);
+          setAudioOutputDevices(audioOutputDevices);
+          
+          // Select default audio output device
+          if (audioOutputDevices.length > 0) {
+            const defaultDevice = audioOutputDevices[0].deviceId;
+            setSelectedAudioOutputDevice(defaultDevice);
+            
+            // Try various potential method names for speaker selection
+            if (typeof audioVideo.chooseAudioOutputDevice === 'function') {
+              console.log('Using chooseAudioOutputDevice method');
+              await audioVideo.chooseAudioOutputDevice(defaultDevice);
+            } else if (typeof audioVideo.setAudioOutputDevice === 'function') {
+              console.log('Using setAudioOutputDevice method');
+              await audioVideo.setAudioOutputDevice(defaultDevice);
+            } else {
+              console.warn('No compatible audio output selection method found');
+              
+              // Try browser's built-in audio output selection if available
+              try {
+                if (typeof HTMLMediaElement.prototype.setSinkId === 'function') {
+                  console.log('Using browser setSinkId API');
+                  if (remoteVideoRef.current) {
+                    await remoteVideoRef.current.setSinkId(defaultDevice);
+                    console.log('Set sink ID for remote video');
+                  }
+                }
+              } catch (sinkIdError) {
+                console.error('Error setting sink ID:', sinkIdError);
+              }
+            }
+          }
+        } catch (audioOutputError) {
+          console.error('Error listing audio output devices:', audioOutputError);
+          // This may happen in browsers that don't support audio output device selection
+        }
       } catch (deviceError) {
         console.error('Error accessing media devices:', deviceError);
         console.log('Continuing without selecting specific devices');
@@ -338,6 +414,70 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
       console.error('Error in device selection process:', err);
       console.log('Continuing without media device selection');
       // Don't throw the error, just continue without device selection
+    }
+  };
+  
+  // Function to change audio output device
+  const changeAudioOutputDevice = async (deviceId) => {
+    if (!meetingSession) return;
+    
+    try {
+      console.log(`Changing audio output device to: ${deviceId}`);
+      setSelectedAudioOutputDevice(deviceId);
+      
+      // Try various methods to set the audio output device
+      const audioVideo = meetingSession.audioVideo;
+      
+      if (typeof audioVideo.chooseAudioOutputDevice === 'function') {
+        await audioVideo.chooseAudioOutputDevice(deviceId);
+        console.log('Successfully changed audio output using chooseAudioOutputDevice');
+      } else if (typeof audioVideo.setAudioOutputDevice === 'function') {
+        await audioVideo.setAudioOutputDevice(deviceId);
+        console.log('Successfully changed audio output using setAudioOutputDevice');
+      } else if (typeof HTMLMediaElement.prototype.setSinkId === 'function') {
+        // Use browser's built-in audio output selection
+        if (remoteVideoRef.current) {
+          await remoteVideoRef.current.setSinkId(deviceId);
+          console.log('Successfully changed audio output using setSinkId');
+        }
+      } else {
+        console.warn('No method available to change audio output device');
+      }
+    } catch (err) {
+      console.error('Error changing audio output device:', err);
+      setError('Failed to change audio output device. Please check browser permissions.');
+    }
+  };
+  
+  // Function to test audio output
+  const testAudioOutput = async () => {
+    setAudioTestInProgress(true);
+    
+    try {
+      // Create and play a test sound
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // 440 Hz (A4)
+      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime); // Reduce volume
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Play for 1 second
+      oscillator.start();
+      setTimeout(() => {
+        oscillator.stop();
+        audioContext.close();
+        setAudioTestInProgress(false);
+      }, 1000);
+      
+      console.log('Audio test started');
+    } catch (err) {
+      console.error('Error testing audio output:', err);
+      setAudioTestInProgress(false);
     }
   };
   
@@ -754,6 +894,7 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
               onClick={() => {
                 setShowNotes(!showNotes);
                 setShowFiles(false);
+                setShowAudioSettings(false);
               }}
             >
               Notes
@@ -764,9 +905,21 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
               onClick={() => {
                 setShowFiles(!showFiles);
                 setShowNotes(false);
+                setShowAudioSettings(false);
               }}
             >
               Files
+            </button>
+            
+            <button 
+              className={`bottom-control-btn ${showAudioSettings ? 'active' : ''}`}
+              onClick={() => {
+                setShowAudioSettings(!showAudioSettings);
+                setShowNotes(false);
+                setShowFiles(false);
+              }}
+            >
+              Audio Settings
             </button>
           </div>
         </div>
@@ -851,6 +1004,68 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
               >
                 Upload File
               </button>
+            </div>
+          </div>
+        )}
+        
+        {/* Audio Settings Panel */}
+        {showAudioSettings && (
+          <div className="session-panel audio-settings-panel">
+            <div className="panel-header">
+              <h3>Audio Settings</h3>
+              <button 
+                className="panel-close-btn"
+                onClick={() => setShowAudioSettings(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="audio-settings-content">
+              <div className="settings-section">
+                <h4>Speaker/Headphone Selection</h4>
+                <p className="settings-description">
+                  If you can't hear others, try selecting a different speaker or headphone.
+                </p>
+                
+                <select 
+                  value={selectedAudioOutputDevice}
+                  onChange={(e) => changeAudioOutputDevice(e.target.value)}
+                  className="device-select"
+                >
+                  {audioOutputDevices.map((device, index) => (
+                    <option key={index} value={device.deviceId}>
+                      {device.label || `Speaker ${index + 1}`}
+                    </option>
+                  ))}
+                </select>
+                
+                <button 
+                  className="audio-test-btn"
+                  onClick={testAudioOutput}
+                  disabled={audioTestInProgress}
+                >
+                  {audioTestInProgress ? 'Testing...' : 'Test Speaker'}
+                </button>
+              </div>
+              
+              <div className="troubleshooting-section">
+                <h4>Audio Troubleshooting</h4>
+                <ul className="troubleshooting-tips">
+                  <li>Make sure your speakers/headphones are connected and turned on.</li>
+                  <li>Check that your device is not muted or volume is not too low.</li>
+                  <li>Try refreshing the page if audio issues persist.</li>
+                  <li>Some browsers require explicit permission for audio output selection.</li>
+                  <li>If using headphones, try unplugging and reconnecting them.</li>
+                </ul>
+              </div>
+              
+              <div className="browser-support-note">
+                <p>
+                  <strong>Note:</strong> Audio output device selection is not supported in all browsers. 
+                  If you can't select a different speaker, try using Chrome or Edge for better compatibility.
+                </p>
+              </div>
             </div>
           </div>
         )}
