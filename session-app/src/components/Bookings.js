@@ -10,6 +10,7 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeBooking, setActiveBooking] = useState(null);
+  const [cancellingBooking, setCancellingBooking] = useState(null);
 
   useEffect(() => {
     fetchBookings();
@@ -29,9 +30,24 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
         }
       );
       
-      // Sort by start time (most recent first)
+      // Sort by start time (upcoming first, then most recent first)
       const sortedBookings = response.data.sort((a, b) => {
-        return new Date(b.start_time) - new Date(a.start_time);
+        const aDate = new Date(a.start_time);
+        const bDate = new Date(b.start_time);
+        const now = new Date();
+        
+        // If both dates are in the future, sort by nearest first
+        if (aDate > now && bDate > now) {
+          return aDate - bDate;
+        }
+        
+        // If both are in the past, sort most recent first
+        if (aDate <= now && bDate <= now) {
+          return bDate - aDate;
+        }
+        
+        // Future dates come before past dates
+        return aDate > now ? -1 : 1;
       });
       
       setBookings(sortedBookings);
@@ -43,6 +59,42 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
       setError("Failed to load your bookings. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+  
+  // Add a function to cancel a booking
+  const cancelBooking = async (bookingId) => {
+    try {
+      setCancellingBooking(bookingId);
+      
+      // Call API to cancel the booking
+      await axios.put(
+        `${API_BASE_URL}/bookings/${bookingId}`,
+        {
+          status: "cancelled"
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${auth.user.access_token}`,
+            "Content-Type": "application/json",
+          }
+        }
+      );
+      
+      // Update the local state
+      setBookings(prevBookings => 
+        prevBookings.map(booking => 
+          booking.booking_id === bookingId 
+            ? {...booking, status: "cancelled"} 
+            : booking
+        )
+      );
+      
+    } catch (err) {
+      console.error("Error cancelling booking:", err);
+      setError("Failed to cancel the booking. Please try again.");
+    } finally {
+      setCancellingBooking(null);
     }
   };
   
@@ -200,6 +252,36 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
     return <div className="loading">Loading your bookings...</div>;
   }
 
+  // Function to categorize bookings into swimlanes
+  const categorizeBookings = () => {
+    const now = new Date();
+    
+    // Current sessions (live, joinable)
+    const current = bookings.filter(booking => 
+      canJoinSession(booking.start_time, booking.end_time) && 
+      booking.status !== 'cancelled'
+    );
+    
+    // Upcoming sessions (in the future, not yet joinable)
+    const upcoming = bookings.filter(booking => {
+      const startTime = new Date(booking.start_time);
+      const joinableTime = new Date(startTime);
+      joinableTime.setMinutes(joinableTime.getMinutes() - 15);
+      
+      return joinableTime > now && booking.status !== 'cancelled';
+    });
+    
+    // Completed or cancelled sessions
+    const completed = bookings.filter(booking => {
+      const endTime = new Date(booking.end_time);
+      return endTime < now || booking.status === 'cancelled';
+    });
+    
+    return { current, upcoming, completed };
+  };
+  
+  const { current, upcoming, completed } = categorizeBookings();
+  
   return (
     <div className="bookings-container">
       <h2>{userRole === "student" ? "My Classes" : "My Teaching Schedule"}</h2>
@@ -207,76 +289,183 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
       {error && <div className="error-message">{error}</div>}
       
       {bookings.length > 0 ? (
-        <div className="bookings-list">
-          {bookings.map((booking) => {
-            const isJoinable = canJoinSession(booking.start_time, booking.end_time);
-            const isPast = new Date(booking.end_time) < new Date();
-            
-            return (
-              <div 
-                key={booking.booking_id} 
-                className={`booking-card ${isPast ? 'past' : isJoinable ? 'joinable' : ''}`}
-              >
-                <div className="booking-header">
-                  <h3>{booking.topic}</h3>
-                  <span className={`status-badge ${booking.status}`}>{booking.status}</span>
-                </div>
-                
-                <div className="booking-details">
-                  <p>
-                    <strong>Date:</strong> {formatDate(booking.start_time)}
-                  </p>
-                  <p>
-                    <strong>Time:</strong> {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-                  </p>
-                  
-                  {userRole === "student" && (
-                    <p>
-                      <strong>Teacher:</strong> {booking.teacherInfo ? booking.teacherInfo.name : (
-                        <button 
-                          className="link-button"
-                          onClick={() => getTeacherInfo(booking.booking_id)}
-                          disabled={activeBooking === booking.booking_id}
-                        >
-                          {activeBooking === booking.booking_id ? "Loading..." : "Show teacher info"}
-                        </button>
+        <>
+          {/* Current Sessions Swimlane */}
+          {current.length > 0 && (
+            <div className="swimlane">
+              <h3 className="swimlane-title">Current Sessions</h3>
+              <div className="bookings-list">
+                {current.map((booking) => (
+                  <div 
+                    key={booking.booking_id} 
+                    className="booking-card joinable"
+                  >
+                    <div className="booking-header">
+                      <h3>{booking.topic}</h3>
+                      <span className={`status-badge ${booking.status}`}>{booking.status}</span>
+                    </div>
+                    
+                    <div className="booking-details">
+                      <p>
+                        <strong>Date:</strong> {formatDate(booking.start_time)}
+                      </p>
+                      <p>
+                        <strong>Time:</strong> {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+                      </p>
+                      
+                      {userRole === "student" && (
+                        <p>
+                          <strong>Teacher:</strong> {booking.teacherInfo ? booking.teacherInfo.name : (
+                            <button 
+                              className="link-button"
+                              onClick={() => getTeacherInfo(booking.booking_id)}
+                              disabled={activeBooking === booking.booking_id}
+                            >
+                              {activeBooking === booking.booking_id ? "Loading..." : "Show teacher info"}
+                            </button>
+                          )}
+                        </p>
                       )}
-                    </p>
-                  )}
-                  
-                  {userRole === "teacher" && (
-                    <p>
-                      <strong>Student:</strong> {booking.student_name || "Student"}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="booking-actions">
-                  {isJoinable && (
-                    <button 
-                      className="btn btn-primary"
-                      onClick={() => joinSession(booking.booking_id)}
-                    >
-                      Join Session
-                    </button>
-                  )}
-                  
-                  {!isJoinable && !isPast && (
-                    <div className="session-countdown">
-                      Session will be available 15 minutes before start time
+                      
+                      {userRole === "teacher" && (
+                        <p>
+                          <strong>Student:</strong> {booking.student_name || "Student"}
+                        </p>
+                      )}
                     </div>
-                  )}
-                  
-                  {isPast && (
-                    <div className="session-past">
-                      This session has ended
+                    
+                    <div className="booking-actions">
+                      <button 
+                        className="btn btn-primary"
+                        onClick={() => joinSession(booking.booking_id)}
+                      >
+                        Join Session
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ))}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          )}
+          
+          {/* Upcoming Sessions Swimlane */}
+          {upcoming.length > 0 && (
+            <div className="swimlane">
+              <h3 className="swimlane-title">Upcoming Sessions</h3>
+              <div className="bookings-list">
+                {upcoming.map((booking) => (
+                  <div 
+                    key={booking.booking_id} 
+                    className="booking-card upcoming"
+                  >
+                    <div className="booking-header">
+                      <h3>{booking.topic}</h3>
+                      <span className={`status-badge ${booking.status}`}>{booking.status}</span>
+                    </div>
+                    
+                    <div className="booking-details">
+                      <p>
+                        <strong>Date:</strong> {formatDate(booking.start_time)}
+                      </p>
+                      <p>
+                        <strong>Time:</strong> {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+                      </p>
+                      
+                      {userRole === "student" && (
+                        <p>
+                          <strong>Teacher:</strong> {booking.teacherInfo ? booking.teacherInfo.name : (
+                            <button 
+                              className="link-button"
+                              onClick={() => getTeacherInfo(booking.booking_id)}
+                              disabled={activeBooking === booking.booking_id}
+                            >
+                              {activeBooking === booking.booking_id ? "Loading..." : "Show teacher info"}
+                            </button>
+                          )}
+                        </p>
+                      )}
+                      
+                      {userRole === "teacher" && (
+                        <p>
+                          <strong>Student:</strong> {booking.student_name || "Student"}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="booking-actions">
+                      <div className="session-countdown">
+                        Session will be available 15 minutes before start time
+                      </div>
+                      
+                      <button 
+                        className="btn btn-danger"
+                        onClick={() => cancelBooking(booking.booking_id)}
+                        disabled={cancellingBooking === booking.booking_id}
+                      >
+                        {cancellingBooking === booking.booking_id ? "Cancelling..." : "Cancel Session"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Completed Sessions Swimlane */}
+          {completed.length > 0 && (
+            <div className="swimlane">
+              <h3 className="swimlane-title">Completed Sessions</h3>
+              <div className="bookings-list">
+                {completed.map((booking) => (
+                  <div 
+                    key={booking.booking_id} 
+                    className={`booking-card ${booking.status === 'cancelled' ? 'cancelled' : 'past'}`}
+                  >
+                    <div className="booking-header">
+                      <h3>{booking.topic}</h3>
+                      <span className={`status-badge ${booking.status}`}>{booking.status}</span>
+                    </div>
+                    
+                    <div className="booking-details">
+                      <p>
+                        <strong>Date:</strong> {formatDate(booking.start_time)}
+                      </p>
+                      <p>
+                        <strong>Time:</strong> {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+                      </p>
+                      
+                      {userRole === "student" && (
+                        <p>
+                          <strong>Teacher:</strong> {booking.teacherInfo ? booking.teacherInfo.name : (
+                            <button 
+                              className="link-button"
+                              onClick={() => getTeacherInfo(booking.booking_id)}
+                              disabled={activeBooking === booking.booking_id}
+                            >
+                              {activeBooking === booking.booking_id ? "Loading..." : "Show teacher info"}
+                            </button>
+                          )}
+                        </p>
+                      )}
+                      
+                      {userRole === "teacher" && (
+                        <p>
+                          <strong>Student:</strong> {booking.student_name || "Student"}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="booking-actions">
+                      <div className="session-past">
+                        {booking.status === 'cancelled' ? 'This session was cancelled' : 'This session has ended'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         <div className="no-bookings">
           <p>You don't have any bookings yet.</p>

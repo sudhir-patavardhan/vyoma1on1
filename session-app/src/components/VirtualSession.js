@@ -26,6 +26,10 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
   const [newNote, setNewNote] = useState("");
   const [fileUpload, setFileUpload] = useState(null);
   
+  // UI visibility states
+  const [showNotes, setShowNotes] = useState(false);
+  const [showFiles, setShowFiles] = useState(false);
+  
   // Amazon Chime SDK related state
   const [meetingSession, setMeetingSession] = useState(null);
   const [meetingId, setMeetingId] = useState(null);
@@ -717,92 +721,139 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
         </div>
       </div>
       
-      <div className="video-container">
-        <div className="video-box remote">
-          <video 
-            ref={remoteVideoRef} 
-            autoPlay 
-            playsInline
-            className="remote-video"
-          />
-          <div className="video-label">Remote</div>
-        </div>
-        
-        <div className="video-box local">
-          <video 
-            ref={localVideoRef} 
-            autoPlay 
-            playsInline 
-            muted 
-            className="local-video"
-          />
-          <div className="video-label">You</div>
-        </div>
-      </div>
-      
-      <div className="session-sidebar">
-        <div className="notes-section">
-          <h3>Session Notes</h3>
-          
-          <div className="notes-list">
-            {notes.length > 0 ? (
-              notes.map((note, index) => (
-                <div key={index} className="note-item">
-                  <p className="note-text">{note.text}</p>
-                  <p className="note-timestamp">
-                    {new Date(note.timestamp).toLocaleTimeString()}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="no-notes">No notes yet</p>
-            )}
+      <div className="main-session-content">
+        {/* Main Video Container - Takes full width */}
+        <div className="video-container fullscreen">
+          <div className="video-box remote">
+            <video 
+              ref={remoteVideoRef} 
+              autoPlay 
+              playsInline
+              className="remote-video"
+            />
+            <div className="video-label">Remote</div>
           </div>
           
-          <div className="add-note">
-            <textarea
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              placeholder="Add a note..."
-              rows="3"
+          <div className="video-box local">
+            <video 
+              ref={localVideoRef} 
+              autoPlay 
+              playsInline 
+              muted 
+              className="local-video"
             />
-            <button onClick={addNote}>Add Note</button>
+            <div className="video-label">You</div>
           </div>
         </div>
         
-        <div className="files-section">
-          <h3>Shared Files</h3>
-          
-          <div className="files-list">
-            {sharedFiles.length > 0 ? (
-              sharedFiles.map((file, index) => (
-                <div key={index} className="file-item">
-                  <a href={file.url} target="_blank" rel="noopener noreferrer">
-                    {file.name}
-                  </a>
-                  <span className="file-timestamp">
-                    {new Date(file.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="no-files">No shared files</p>
-            )}
-          </div>
-          
-          <div className="upload-file">
-            <input
-              type="file"
-              onChange={(e) => setFileUpload(e.target.files[0])}
-            />
+        {/* Bottom Control Bar */}
+        <div className="session-bottom-controls">
+          <div className="bottom-control-buttons">
             <button 
-              onClick={uploadFile}
-              disabled={!fileUpload}
+              className={`bottom-control-btn ${showNotes ? 'active' : ''}`}
+              onClick={() => {
+                setShowNotes(!showNotes);
+                setShowFiles(false);
+              }}
             >
-              Upload File
+              Notes
+            </button>
+            
+            <button 
+              className={`bottom-control-btn ${showFiles ? 'active' : ''}`}
+              onClick={() => {
+                setShowFiles(!showFiles);
+                setShowNotes(false);
+              }}
+            >
+              Files
             </button>
           </div>
         </div>
+        
+        {/* Collapsible Sidebar Panels */}
+        {showNotes && (
+          <div className="session-panel notes-panel">
+            <div className="panel-header">
+              <h3>Session Notes</h3>
+              <button 
+                className="panel-close-btn"
+                onClick={() => setShowNotes(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="notes-list">
+              {notes.length > 0 ? (
+                notes.map((note, index) => (
+                  <div key={index} className="note-item">
+                    <p className="note-text">{note.text}</p>
+                    <p className="note-timestamp">
+                      {new Date(note.timestamp).toLocaleTimeString()}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="no-notes">No notes yet</p>
+              )}
+            </div>
+            
+            <div className="add-note">
+              <textarea
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder="Add a note..."
+                rows="3"
+              />
+              <button onClick={addNote}>Add Note</button>
+            </div>
+          </div>
+        )}
+        
+        {showFiles && (
+          <div className="session-panel files-panel">
+            <div className="panel-header">
+              <h3>Shared Files</h3>
+              <button 
+                className="panel-close-btn"
+                onClick={() => setShowFiles(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="files-list">
+              {sharedFiles.length > 0 ? (
+                sharedFiles.map((file, index) => (
+                  <div key={index} className="file-item">
+                    <a href={file.url} target="_blank" rel="noopener noreferrer">
+                      {file.name}
+                    </a>
+                    <span className="file-timestamp">
+                      {new Date(file.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="no-files">No shared files</p>
+              )}
+            </div>
+            
+            <div className="upload-file">
+              <input
+                type="file"
+                onChange={(e) => setFileUpload(e.target.files[0])}
+              />
+              <button 
+                onClick={uploadFile}
+                disabled={!fileUpload}
+              >
+                Upload File
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
