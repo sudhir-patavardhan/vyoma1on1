@@ -1560,6 +1560,30 @@ textarea {
   }
 }
 
+/* Payment System styles */
+.session-price {
+  display: flex;
+  align-items: center;
+}
+
+.price-tag {
+  background-color: var(--primary);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.price {
+  font-weight: 600;
+  color: var(--primary-dark);
+  font-size: 15px;
+}
+
 /* Teacher Search */
 .teacher-search {
   width: 100%;
