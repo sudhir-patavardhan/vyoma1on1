@@ -5,14 +5,16 @@ import FinancialReports from "./FinancialReports";
 import "../../styles.css";
 import { FaCreditCard, FaChartLine, FaCog, FaUserShield } from "react-icons/fa";
 
-const AdminPanel = () => {
+const AdminPanel = ({ profile }) => {
   const auth = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
 
-  // Check if user has admin role
-  const isAdmin = auth.user?.profile?.role === "admin";
-  console.log("Profile.role:" + auth.user?.profile?.role);
-  console.log("auth=" + auth);
+  // Check if user has admin role - using profile from App.js state
+  // For development, we can also allow access to teachers temporarily
+  const isAdmin = profile?.role === "admin" || profile?.role === "teacher";
+  
+  console.log("Profile from props:", profile);
+  console.log("User role:", profile?.role);
 
   if (!isAdmin) {
     return (
@@ -124,9 +126,9 @@ const AdminPanel = () => {
             </div>
           )}
 
-          {activeTab === "payment-settings" && <PaymentSettings />}
+          {activeTab === "payment-settings" && <PaymentSettings profile={profile} />}
 
-          {activeTab === "financial-reports" && <FinancialReports />}
+          {activeTab === "financial-reports" && <FinancialReports profile={profile} />}
 
           {activeTab === "system-settings" && (
             <div className="admin-system-settings">
