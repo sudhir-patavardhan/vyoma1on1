@@ -14,6 +14,8 @@ const TeacherCalendarSchedule = () => {
   const [weekDates, setWeekDates] = useState([]);
   const [timeSlots, setTimeSlots] = useState([]);
   const [selectedSlots, setSelectedSlots] = useState([]);
+  const [defaultPrice, setDefaultPrice] = useState(500); // Default price in INR
+  const [slotPrices, setSlotPrices] = useState({}); // Map of slot keys to custom prices
 
   // Initialize week dates and time slots
   useEffect(() => {
@@ -248,11 +250,17 @@ const TeacherCalendarSchedule = () => {
       
       // Note: The API no longer requires topic or description
       // since availabilities are general and not topic-specific
+      // Get price for this slot (either custom or default)
+      const slotKey = `${date.toDateString()}-${timeSlot.hour}-${timeSlot.minute}`;
+      const price = slotPrices[slotKey] || defaultPrice;
+      
       const slotData = {
         teacher_id: auth.user.profile.sub,
         start_time: startDateTime.toISOString(),
         end_time: endDateTime.toISOString(),
-        status: "available"
+        status: "available",
+        price: price, // Add price to slot data
+        currency: "INR" // Default currency
       };
       
       await axios.post(
@@ -294,6 +302,13 @@ const TeacherCalendarSchedule = () => {
         // Create and save each slot
         await saveAvailabilitySlot(date, timeSlot);
       }
+      
+      // Clear slot prices for the saved slots
+      const updatedSlotPrices = { ...slotPrices };
+      for (const slotKey of selectedSlots) {
+        delete updatedSlotPrices[slotKey];
+      }
+      setSlotPrices(updatedSlotPrices);
       
       // Clear selections after saving
       setSelectedSlots([]);
@@ -352,9 +367,57 @@ const TeacherCalendarSchedule = () => {
       </div>
       
       <div className="calendar-actions">
+        {/* Default price setting */}
+        <div className="price-settings-panel">
+          <h4>Set Your Session Prices</h4>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="defaultPrice">Default Price (₹) for 30-minute Session</label>
+              <input 
+                type="number" 
+                id="defaultPrice" 
+                value={defaultPrice} 
+                onChange={(e) => setDefaultPrice(parseInt(e.target.value) || 0)}
+                min="0"
+                step="50"
+                className="form-control"
+                placeholder="Enter default price in INR"
+              />
+              <small className="form-text">This price will apply to all new sessions unless customized.</small>
+            </div>
+          </div>
+        </div>
+
+        {/* Selected slots panel */}
         {selectedSlots.length > 0 && (
           <div className="bulk-action-panel">
             <span>{selectedSlots.length} time slots selected</span>
+            
+            {/* Custom price for selected slots */}
+            <div className="price-input-group">
+              <label htmlFor="customPrice">Price for selected slots (₹)</label>
+              <input 
+                type="number" 
+                id="customPrice" 
+                defaultValue={defaultPrice}
+                onChange={(e) => {
+                  const price = parseInt(e.target.value) || 0;
+                  const updatedPrices = { ...slotPrices };
+                  
+                  // Apply custom price to all selected slots
+                  selectedSlots.forEach(slotKey => {
+                    updatedPrices[slotKey] = price;
+                  });
+                  
+                  setSlotPrices(updatedPrices);
+                }}
+                min="0"
+                step="50"
+                className="form-control"
+                placeholder="Custom price"
+              />
+            </div>
+            
             <button 
               className="btn btn-primary"
               onClick={saveSelectedSlots}
@@ -363,7 +426,15 @@ const TeacherCalendarSchedule = () => {
             </button>
             <button 
               className="btn btn-secondary"
-              onClick={() => setSelectedSlots([])}
+              onClick={() => {
+                // Clear selected slots and their custom prices
+                const updatedPrices = { ...slotPrices };
+                selectedSlots.forEach(slotKey => {
+                  delete updatedPrices[slotKey];
+                });
+                setSlotPrices(updatedPrices);
+                setSelectedSlots([]);
+              }}
             >
               Clear Selection
             </button>
@@ -452,8 +523,10 @@ const TeacherCalendarSchedule = () => {
           <li>Click multiple slots to select them, then save them all at once</li>
           <li>Click on an available slot to remove it</li>
           <li>Each slot is 30 minutes long</li>
-          <li>Students can book your available slots for any topics you teach</li>
-          <li>Time slots are general availability and not tied to specific topics</li>
+          <li>Set your default price for all sessions (recommended ₹500-2000 for 30 minutes)</li>
+          <li>For special times or topics, you can customize prices for specific slots</li>
+          <li>Students will see your price and pay via RazorPay when booking</li>
+          <li>Payment is only collected when a student books your slot</li>
         </ul>
       </div>
     </div>
