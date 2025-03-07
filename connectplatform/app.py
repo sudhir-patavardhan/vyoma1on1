@@ -2,6 +2,10 @@ import json
 import boto3
 import uuid
 import os
+import hmac
+import hashlib
+import razorpay
+import requests
 from datetime import datetime
 from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
@@ -22,6 +26,8 @@ BOOKINGS_TABLE = f'Bookings-{stage}'
 PROFILE_TABLE = f'UserProfiles-{stage}'
 AVAILABILITY_TABLE = f'TeacherAvailability-{stage}'
 SESSION_TABLE = f'Sessions-{stage}'
+PAYMENTS_TABLE = f'Payments-{stage}'
+RAZORPAY_CONFIG_TABLE = f'RazorPayConfig-{stage}'
 
 # ========== Utility Functions ==========
 def convert_decimal(obj):
@@ -288,6 +294,10 @@ def create_booking(event):
             'status': 'booked',
             'created_at': timestamp,
         }
+        
+        # Add payment ID if provided
+        if 'payment_id' in body:
+            new_booking['payment_id'] = body['payment_id']
 
         # Add any additional booking data
         for key, value in body.items():
@@ -384,6 +394,8 @@ def create_availability(event):
             'description': body.get('description', ''),
             'status': 'available',
             'created_at': timestamp,
+            'price': body.get('price', 500),  # Default price is 500 (INR)
+            'currency': body.get('currency', 'INR'),  # Default currency is INR
         }
         
         print(f"[TRACE] Created base availability record: {json.dumps(new_availability, default=str)}")
@@ -1011,6 +1023,436 @@ def search_teachers(event):
         print(f"Error in search_teachers: {str(e)}")
         return response_with_cors(500, {"message": "Error searching for teachers.", "error": str(e)})
 
+# ========== Payment Management ==========
+def get_razorpay_client():
+    """Initialize and return a RazorPay client using stored credentials."""
+    try:
+        # Fetch RazorPay API credentials from the config table
+        config_table = dynamodb.Table(RAZORPAY_CONFIG_TABLE)
+        response = config_table.get_item(
+            Key={'config_id': 'razorpay_api_keys'}
+        )
+        
+        # Check if credentials exist
+        if 'Item' not in response:
+            print("RazorPay API credentials not found")
+            # Return a default client for development (will fail in production)
+            return razorpay.Client(auth=("rzp_test_default", "default_secret"))
+        
+        # Get the API keys
+        config = response['Item']
+        key_id = config.get('key_id')
+        key_secret = config.get('key_secret')
+        
+        # Create and return the client
+        return razorpay.Client(auth=(key_id, key_secret))
+    except Exception as e:
+        print(f"Error getting RazorPay client: {str(e)}")
+        # Return a default client as fallback
+        return razorpay.Client(auth=("rzp_test_default", "default_secret"))
+
+def initialize_payment(event):
+    """Initialize a payment with RazorPay."""
+    try:
+        # Parse request body
+        body = json.loads(event['body'])
+        
+        # Validate required fields
+        required_fields = ['amount', 'currency', 'student_id', 'teacher_id', 'availability_id']
+        for field in required_fields:
+            if field not in body:
+                return response_with_cors(400, {"message": f"Missing required field: {field}"})
+        
+        # Additional validation
+        amount = int(float(body['amount']) * 100)  # Convert to lowest currency unit (paise)
+        if amount <= 0:
+            return response_with_cors(400, {"message": "Amount must be greater than 0"})
+        
+        # Get RazorPay client
+        client = get_razorpay_client()
+        
+        # Generate a unique receipt ID
+        receipt_id = f"receipt-{uuid.uuid4()}"
+        
+        # Create RazorPay order
+        try:
+            order_data = {
+                'amount': amount,
+                'currency': body['currency'],
+                'receipt': receipt_id,
+                'notes': {
+                    'student_id': body['student_id'],
+                    'teacher_id': body['teacher_id'],
+                    'availability_id': body['availability_id'],
+                    'topic': body.get('topic', 'General session')
+                }
+            }
+            
+            order = client.order.create(data=order_data)
+            
+            # Get config for key_id to return to frontend
+            config_table = dynamodb.Table(RAZORPAY_CONFIG_TABLE)
+            response = config_table.get_item(
+                Key={'config_id': 'razorpay_api_keys'}
+            )
+            
+            key_id = "rzp_test_default"
+            if 'Item' in response:
+                key_id = response['Item'].get('key_id', "rzp_test_default")
+            
+            # Store payment record in the database
+            payment_id = f"payment-{uuid.uuid4()}"
+            timestamp = datetime.utcnow().isoformat()
+            
+            payment_record = {
+                'payment_id': payment_id,
+                'order_id': order['id'],
+                'amount': body['amount'],
+                'currency': body['currency'],
+                'student_id': body['student_id'],
+                'teacher_id': body['teacher_id'],
+                'availability_id': body['availability_id'],
+                'topic': body.get('topic', 'General session'),
+                'status': 'initiated',
+                'created_at': timestamp
+            }
+            
+            payments_table = dynamodb.Table(PAYMENTS_TABLE)
+            payments_table.put_item(Item=payment_record)
+            
+            # Return the order details to the frontend
+            return response_with_cors(200, {
+                'message': 'Payment initiated successfully',
+                'order_id': order['id'],
+                'amount': amount,
+                'currency': body['currency'],
+                'razorpay_key_id': key_id,
+                'payment_id': payment_id
+            })
+            
+        except razorpay.errors.BadRequestError as e:
+            print(f"RazorPay BadRequestError: {str(e)}")
+            return response_with_cors(400, {
+                'message': 'Error initializing payment',
+                'error': str(e)
+            })
+    
+    except Exception as e:
+        print(f"Error initializing payment: {str(e)}")
+        return response_with_cors(500, {
+            'message': 'Error initializing payment',
+            'error': str(e)
+        })
+
+def verify_payment(event):
+    """Verify a RazorPay payment signature."""
+    try:
+        # Parse request body
+        body = json.loads(event['body'])
+        
+        # Validate required fields
+        required_fields = ['razorpay_payment_id', 'razorpay_order_id', 'razorpay_signature', 
+                          'student_id', 'teacher_id', 'availability_id']
+        for field in required_fields:
+            if field not in body:
+                return response_with_cors(400, {"message": f"Missing required field: {field}"})
+        
+        # Get RazorPay client and config
+        config_table = dynamodb.Table(RAZORPAY_CONFIG_TABLE)
+        response = config_table.get_item(
+            Key={'config_id': 'razorpay_api_keys'}
+        )
+        
+        key_secret = None
+        if 'Item' in response:
+            key_secret = response['Item'].get('key_secret')
+        
+        if not key_secret:
+            return response_with_cors(500, {"message": "RazorPay configuration not found"})
+        
+        # Verify the signature
+        try:
+            # Data to verify
+            data = f"{body['razorpay_order_id']}|{body['razorpay_payment_id']}"
+            
+            # Generate a signature
+            expected_signature = hmac.new(
+                key_secret.encode(),
+                data.encode(),
+                hashlib.sha256
+            ).hexdigest()
+            
+            # Compare with the received signature
+            if expected_signature != body['razorpay_signature']:
+                return response_with_cors(400, {"message": "Invalid payment signature"})
+            
+            # Update payment status in database
+            timestamp = datetime.utcnow().isoformat()
+            
+            # Query payment by order_id using GSI
+            payments_table = dynamodb.Table(PAYMENTS_TABLE)
+            response = payments_table.query(
+                IndexName='OrderIdIndex',
+                KeyConditionExpression=Key('order_id').eq(body['razorpay_order_id'])
+            )
+            
+            if not response.get('Items'):
+                # Create a new payment record if not found
+                payment_id = f"payment-{uuid.uuid4()}"
+                
+                payment_record = {
+                    'payment_id': payment_id,
+                    'order_id': body['razorpay_order_id'],
+                    'payment_id_razorpay': body['razorpay_payment_id'],
+                    'signature': body['razorpay_signature'],
+                    'student_id': body['student_id'],
+                    'teacher_id': body['teacher_id'],
+                    'availability_id': body['availability_id'],
+                    'status': 'completed',
+                    'created_at': timestamp,
+                    'updated_at': timestamp
+                }
+                
+                payments_table.put_item(Item=payment_record)
+                
+                return response_with_cors(200, {
+                    'message': 'Payment verified successfully',
+                    'payment_id': payment_id,
+                    'status': 'completed'
+                })
+            else:
+                # Update existing payment record
+                payment = response['Items'][0]
+                payment_id = payment['payment_id']
+                
+                payments_table.update_item(
+                    Key={'payment_id': payment_id},
+                    UpdateExpression="SET #status = :status, payment_id_razorpay = :rpid, signature = :sig, updated_at = :upd",
+                    ExpressionAttributeNames={
+                        '#status': 'status'
+                    },
+                    ExpressionAttributeValues={
+                        ':status': 'completed',
+                        ':rpid': body['razorpay_payment_id'],
+                        ':sig': body['razorpay_signature'],
+                        ':upd': timestamp
+                    }
+                )
+                
+                return response_with_cors(200, {
+                    'message': 'Payment verified successfully',
+                    'payment_id': payment_id,
+                    'status': 'completed'
+                })
+                
+        except Exception as e:
+            print(f"Error verifying payment signature: {str(e)}")
+            return response_with_cors(400, {
+                'message': 'Error verifying payment',
+                'error': str(e)
+            })
+    
+    except Exception as e:
+        print(f"Error verifying payment: {str(e)}")
+        return response_with_cors(500, {
+            'message': 'Error verifying payment',
+            'error': str(e)
+        })
+
+def get_payments(event):
+    """Get payment history based on filters."""
+    try:
+        # Get query parameters
+        params = event.get('queryStringParameters', {})
+        student_id = params.get('student_id')
+        teacher_id = params.get('teacher_id')
+        
+        payments_table = dynamodb.Table(PAYMENTS_TABLE)
+        
+        # Different queries based on parameters
+        if student_id:
+            # Get student's payment history
+            response = payments_table.query(
+                IndexName='StudentPaymentsIndex',
+                KeyConditionExpression=Key('student_id').eq(student_id)
+            )
+            payments = response['Items']
+            
+            # Paginate if needed
+            while 'LastEvaluatedKey' in response:
+                response = payments_table.query(
+                    IndexName='StudentPaymentsIndex',
+                    KeyConditionExpression=Key('student_id').eq(student_id),
+                    ExclusiveStartKey=response['LastEvaluatedKey']
+                )
+                payments.extend(response['Items'])
+                
+        elif teacher_id:
+            # Get teacher's payment history
+            response = payments_table.query(
+                IndexName='TeacherPaymentsIndex',
+                KeyConditionExpression=Key('teacher_id').eq(teacher_id)
+            )
+            payments = response['Items']
+            
+            # Paginate if needed
+            while 'LastEvaluatedKey' in response:
+                response = payments_table.query(
+                    IndexName='TeacherPaymentsIndex',
+                    KeyConditionExpression=Key('teacher_id').eq(teacher_id),
+                    ExclusiveStartKey=response['LastEvaluatedKey']
+                )
+                payments.extend(response['Items'])
+                
+        else:
+            # If no specific ID, return 400 - require filter
+            return response_with_cors(400, {"message": "Either student_id or teacher_id parameter is required"})
+        
+        # Convert Decimal to float for serialization
+        payments = convert_decimal(payments)
+        
+        return response_with_cors(200, payments)
+        
+    except Exception as e:
+        print(f"Error getting payments: {str(e)}")
+        return response_with_cors(500, {
+            'message': 'Error getting payment history',
+            'error': str(e)
+        })
+
+def get_financial_reports(event):
+    """Get financial reports for admin users."""
+    try:
+        # This would normally include admin auth checks
+        params = event.get('queryStringParameters', {})
+        start_date = params.get('start_date')
+        end_date = params.get('end_date')
+        
+        # Scan all payments for reporting
+        payments_table = dynamodb.Table(PAYMENTS_TABLE)
+        
+        # Basic filter for completed payments
+        filter_expression = Attr('status').eq('completed')
+        
+        # Add date filters if provided
+        if start_date:
+            filter_expression = filter_expression & Attr('created_at').gte(start_date)
+        if end_date:
+            filter_expression = filter_expression & Attr('created_at').lte(end_date)
+        
+        response = payments_table.scan(
+            FilterExpression=filter_expression
+        )
+        
+        payments = response['Items']
+        
+        # Paginate if needed
+        while 'LastEvaluatedKey' in response:
+            response = payments_table.scan(
+                FilterExpression=filter_expression,
+                ExclusiveStartKey=response['LastEvaluatedKey']
+            )
+            payments.extend(response['Items'])
+        
+        # Calculate summary statistics
+        total_amount = sum(float(payment.get('amount', 0)) for payment in payments)
+        payment_count = len(payments)
+        
+        # Group by teacher for teacher-wise summary
+        teacher_summary = {}
+        for payment in payments:
+            teacher_id = payment.get('teacher_id')
+            if teacher_id:
+                if teacher_id not in teacher_summary:
+                    teacher_summary[teacher_id] = {
+                        'total': 0,
+                        'count': 0
+                    }
+                teacher_summary[teacher_id]['total'] += float(payment.get('amount', 0))
+                teacher_summary[teacher_id]['count'] += 1
+        
+        # Convert Decimal to float for serialization
+        payments = convert_decimal(payments)
+        
+        return response_with_cors(200, {
+            'summary': {
+                'total_amount': total_amount,
+                'payment_count': payment_count
+            },
+            'teacher_summary': teacher_summary,
+            'payments': payments
+        })
+        
+    except Exception as e:
+        print(f"Error generating financial report: {str(e)}")
+        return response_with_cors(500, {
+            'message': 'Error generating financial report',
+            'error': str(e)
+        })
+
+def save_razorpay_config(event):
+    """Save RazorPay API key configuration."""
+    try:
+        # This would normally include admin auth checks
+        body = json.loads(event['body'])
+        
+        if 'key_id' not in body or 'key_secret' not in body:
+            return response_with_cors(400, {"message": "RazorPay key_id and key_secret are required"})
+        
+        # Store in the config table
+        config_table = dynamodb.Table(RAZORPAY_CONFIG_TABLE)
+        
+        timestamp = datetime.utcnow().isoformat()
+        
+        config_record = {
+            'config_id': 'razorpay_api_keys',
+            'key_id': body['key_id'],
+            'key_secret': body['key_secret'],
+            'updated_at': timestamp
+        }
+        
+        config_table.put_item(Item=config_record)
+        
+        return response_with_cors(200, {
+            'message': 'RazorPay configuration saved successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error saving RazorPay config: {str(e)}")
+        return response_with_cors(500, {
+            'message': 'Error saving RazorPay configuration',
+            'error': str(e)
+        })
+
+def get_razorpay_config(event):
+    """Get RazorPay API key configuration."""
+    try:
+        # This would normally include admin auth checks
+        config_table = dynamodb.Table(RAZORPAY_CONFIG_TABLE)
+        
+        response = config_table.get_item(
+            Key={'config_id': 'razorpay_api_keys'}
+        )
+        
+        if 'Item' not in response:
+            return response_with_cors(404, {"message": "RazorPay configuration not found"})
+        
+        config = response['Item']
+        
+        # Remove secret key from the response for security
+        if 'key_secret' in config:
+            # Mask the secret key
+            config['key_secret'] = '••••••••' + config['key_secret'][-4:]
+        
+        return response_with_cors(200, config)
+        
+    except Exception as e:
+        print(f"Error getting RazorPay config: {str(e)}")
+        return response_with_cors(500, {
+            'message': 'Error getting RazorPay configuration',
+            'error': str(e)
+        })
+
 # ========== Lambda Handler ==========
 def get_booking_session(event):
     """Retrieves the session associated with a booking."""
@@ -1227,6 +1669,19 @@ def lambda_handler(event, context):
                 return update_session(event)
             elif resource == "/search/teachers" and method == "GET":
                 return search_teachers(event)
+            # Payment routes
+            elif resource == "/payments/initialize" and method == "POST":
+                return initialize_payment(event)
+            elif resource == "/payments/verify" and method == "POST":
+                return verify_payment(event)
+            elif resource == "/payments" and method == "GET":
+                return get_payments(event)
+            elif resource == "/admin/financial-reports" and method == "GET":
+                return get_financial_reports(event)
+            elif resource == "/admin/razorpay-config" and method == "POST":
+                return save_razorpay_config(event)
+            elif resource == "/admin/razorpay-config" and method == "GET":
+                return get_razorpay_config(event)
             elif resource == "/presigned-url" and method == "POST":
                 return generate_presigned_url(event)
             elif resource == "/meetings" and method == "POST":
