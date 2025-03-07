@@ -11,6 +11,7 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
   const [error, setError] = useState("");
   const [activeBooking, setActiveBooking] = useState(null);
   const [cancellingBooking, setCancellingBooking] = useState(null);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   useEffect(() => {
     fetchBookings();
@@ -62,9 +63,14 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
     }
   };
   
-  // Add a function to cancel a booking
+  // Function to cancel a booking
   const cancelBooking = async (bookingId) => {
     try {
+      // Ask for confirmation before cancelling
+      if (!window.confirm("Are you sure you want to cancel this booking? This action cannot be undone.")) {
+        return;
+      }
+      
       setCancellingBooking(bookingId);
       
       // Call API to cancel the booking
@@ -89,6 +95,10 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
             : booking
         )
       );
+      
+      // Show success message
+      setError(""); // Clear any existing errors
+      // You could add a success message state here if desired
       
     } catch (err) {
       console.error("Error cancelling booking:", err);
@@ -271,6 +281,9 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
       return joinableTime > now && booking.status !== 'cancelled';
     });
     
+    // Sort upcoming sessions by date (earliest first)
+    upcoming.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+    
     // Completed or cancelled sessions
     const completed = bookings.filter(booking => {
       const endTime = new Date(booking.end_time);
@@ -283,11 +296,14 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
       return endTime < now || booking.status === 'cancelled';
     });
     
+    // Sort completed sessions by date (most recent first)
+    completed.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+    
     return { current, upcoming, completed };
   };
   
   const { current, upcoming, completed } = categorizeBookings();
-  
+
   return (
     <div className="bookings-container">
       <h2>{userRole === "student" ? "My Classes" : "My Teaching Schedule"}</h2>
@@ -296,7 +312,7 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
       
       {bookings.length > 0 ? (
         <>
-          {/* Current Sessions Swimlane */}
+          {/* Current Sessions Swimlane - Always shown first when available */}
           {current.length > 0 && (
             <div className="swimlane">
               <h3 className="swimlane-title">Current Sessions</h3>
@@ -345,7 +361,7 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
                         className="btn btn-primary"
                         onClick={() => joinSession(booking.booking_id)}
                       >
-                        Join Session
+                        <span role="img" aria-label="video">🎥</span> Join Session
                       </button>
                     </div>
                   </div>
@@ -354,7 +370,7 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
             </div>
           )}
           
-          {/* Upcoming Sessions Swimlane */}
+          {/* Upcoming Sessions Swimlane - Always shown */}
           {upcoming.length > 0 && (
             <div className="swimlane">
               <h3 className="swimlane-title">Upcoming Sessions</h3>
@@ -408,7 +424,7 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
                         onClick={() => cancelBooking(booking.booking_id)}
                         disabled={cancellingBooking === booking.booking_id}
                       >
-                        {cancellingBooking === booking.booking_id ? "Cancelling..." : "Cancel Session"}
+                        <span role="img" aria-label="cancel">❌</span> {cancellingBooking === booking.booking_id ? "Cancelling..." : "Cancel Session"}
                       </button>
                     </div>
                   </div>
@@ -417,8 +433,22 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
             </div>
           )}
           
-          {/* Completed Sessions Swimlane */}
+          {/* Toggle Button for Completed Sessions */}
           {completed.length > 0 && (
+            <div className="completed-sessions-toggle">
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setShowCompleted(!showCompleted)}
+              >
+                {showCompleted ? 
+                  <><span role="img" aria-label="hide">🔼</span> Hide Completed Sessions</> : 
+                  <><span role="img" aria-label="view">🔽</span> View Completed Sessions ({completed.length})</>}
+              </button>
+            </div>
+          )}
+          
+          {/* Completed Sessions Swimlane - Only shown when toggled */}
+          {showCompleted && completed.length > 0 && (
             <div className="swimlane">
               <h3 className="swimlane-title">Completed Sessions</h3>
               <div className="bookings-list">
@@ -478,7 +508,7 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
           {userRole === "student" && (
             <p>
               <button 
-                className="btn btn-secondary"
+                className="btn btn-primary"
                 onClick={() => window.location.href = "#search"}
               >
                 Find Teachers

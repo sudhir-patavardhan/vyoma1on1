@@ -76,12 +76,24 @@ const TeacherSearch = () => {
         }
       );
       
-      // Filter only available slots
-      const availableSlots = response.data.filter(slot => slot.status === 'available');
+      // Filter only available future slots
+      const now = new Date();
+      const availableSlots = response.data.filter(slot => {
+        // Check if the slot is available
+        if (slot.status !== 'available') return false;
+        
+        // Check if the slot is in the future
+        const slotStartTime = new Date(slot.start_time);
+        return slotStartTime > now;
+      });
+      
+      // Sort slots by start time (nearest first)
+      availableSlots.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+      
       setAvailabilities(availableSlots);
       
       if (availableSlots.length === 0) {
-        setError("This teacher has no available time slots");
+        setError("This teacher has no available future time slots");
       }
     } catch (err) {
       console.error("Error fetching teacher availability:", err);
