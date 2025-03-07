@@ -15,11 +15,11 @@ phases:
       - echo "Creating S3 buckets if they don't exist"
       - aws s3 mb s3://sessions-red-lambda-deployments --region us-east-1 || true
       - aws s3 mb s3://sessions-red-react-app-deployments --region us-east-1 || true
-      
+
       # Install dependencies for both frontend and backend
       - echo "Installing frontend dependencies"
       - cd session-app
-      - npm install
+      - npm ci
       - cd ..
       - echo "Installing backend dependencies"
       - cd connectplatform
@@ -49,9 +49,9 @@ phases:
         if [ -d "session-app/build" ]; then
           echo "Syncing frontend build artifacts to S3"
           aws s3 sync session-app/build/ s3://sessions-red-react-app-deployments/ --delete --exact-timestamps
-        else 
+        else
           echo "ERROR: Build directory does not exist. Build may have failed."
-          ls -la session-app/ 
+          ls -la session-app/
         fi
       - echo "Deploying backend Lambda functions"
       - cd connectplatform
@@ -64,5 +64,5 @@ artifacts:
     - "session-app/build/**/*"
     - "connectplatform/deployment-template.yml"
     - "connectplatform/lambda-deployment.zip"
-  base-directory: '.'
+  base-directory: "."
   discard-paths: no
