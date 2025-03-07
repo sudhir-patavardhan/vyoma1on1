@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "react-oidc-context";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
 import "../styles.css";
+import PaymentService from "../services/PaymentService";
 
 const TeacherSearch = () => {
   const auth = useAuth();
@@ -13,6 +14,35 @@ const TeacherSearch = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+  // Load Razorpay script
+  useEffect(() => {
+    const loadRazorpayScript = () => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => {
+        setRazorpayLoaded(true);
+        console.log('Razorpay script loaded successfully');
+      };
+      script.onerror = () => {
+        console.error('Failed to load Razorpay script');
+      };
+      document.body.appendChild(script);
+    };
+
+    loadRazorpayScript();
+    
+    return () => {
+      // Clean up script when component unmounts
+      const script = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+      if (script) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -103,9 +133,13 @@ const TeacherSearch = () => {
     }
   };
 
-  const bookSession = async (availabilityId) => {
+  const handlePayment = async (availabilityId) => {
     try {
-      setLoading(true);
+      if (!razorpayLoaded) {
+        throw new Error("Payment gateway is still loading. Please try again in a moment.");
+      }
+
+      setPaymentProcessing(true);
       setError("");
       
       // Find the selected slot
@@ -113,6 +147,84 @@ const TeacherSearch = () => {
       if (!selectedSlot) {
         throw new Error("Selected time slot not found");
       }
+
+      // Initialize payment
+      const paymentDetails = {
+        amount: selectedSlot.price || 500, // Default to 500 if price not set
+        currency: selectedSlot.currency || 'INR',
+        availabilityId: availabilityId,
+        teacherId: selectedTeacher.user_id,
+        topic: searchTerm
+      };
+
+      // Call backend to create RazorPay order
+      const orderData = await PaymentService.initializePayment(
+        paymentDetails,
+        auth.user,
+        auth.user.access_token
+      );
+
+      if (!orderData || !orderData.order_id) {
+        throw new Error("Failed to initialize payment");
+      }
+
+      // Configure RazorPay options
+      const options = {
+        key: orderData.razorpay_key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Sessions Red",
+        description: `Session with ${selectedTeacher.name} on ${searchTerm}`,
+        order_id: orderData.order_id,
+        handler: function(response) {
+          // This function is called when payment is successful
+          completeBooking(availabilityId, response);
+        },
+        prefill: {
+          name: auth.user.profile.name,
+          email: auth.user.profile.email,
+          contact: auth.user.profile.phone_number || ""
+        },
+        notes: {
+          student_id: auth.user.profile.sub,
+          teacher_id: selectedTeacher.user_id,
+          availability_id: availabilityId,
+          topic: searchTerm
+        },
+        theme: {
+          color: "#0972D3"
+        },
+        modal: {
+          ondismiss: function() {
+            setPaymentProcessing(false);
+          }
+        }
+      };
+
+      // Open RazorPay checkout
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+      
+    } catch (err) {
+      console.error("Error processing payment:", err);
+      setError(err.message || "Failed to process payment. Please try again.");
+      setPaymentProcessing(false);
+    }
+  };
+
+  const completeBooking = async (availabilityId, paymentResponse) => {
+    try {
+      setLoading(true);
+      
+      // Verify payment with backend
+      await PaymentService.verifyPayment({
+        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+        razorpay_order_id: paymentResponse.razorpay_order_id,
+        razorpay_signature: paymentResponse.razorpay_signature,
+        availability_id: availabilityId,
+        student_id: auth.user.profile.sub,
+        teacher_id: selectedTeacher.user_id
+      }, auth.user.access_token);
       
       // Create a booking with the topic from search
       await axios.post(
@@ -121,7 +233,8 @@ const TeacherSearch = () => {
           student_id: auth.user.profile.sub,
           availability_id: availabilityId,
           topic: searchTerm, // Using the searched topic for this booking
-          teacher_id: selectedTeacher.user_id
+          teacher_id: selectedTeacher.user_id,
+          payment_id: paymentResponse.razorpay_payment_id
         },
         {
           headers: {
@@ -137,10 +250,11 @@ const TeacherSearch = () => {
       // Show success message
       alert("Session booked successfully! Check 'My Classes' to view your booking.");
     } catch (err) {
-      console.error("Error booking session:", err);
-      setError("Failed to book the session. Please try again.");
+      console.error("Error completing booking:", err);
+      setError("Payment was processed but booking failed. Please contact support.");
     } finally {
       setLoading(false);
+      setPaymentProcessing(false);
     }
   };
 
@@ -281,20 +395,26 @@ const TeacherSearch = () => {
                 <div key={slot.availability_id} className="slot-card">
                   <div className="slot-header">
                     <h4>Available Session with {selectedTeacher.name}</h4>
+                    <div className="session-price">
+                      <span className="price-tag">₹{slot.price || 500}</span>
+                    </div>
                   </div>
                   
                   <div className="slot-details">
                     <p><strong>Date:</strong> {formatDate(slot.start_time)}</p>
                     <p><strong>Time:</strong> {formatTime(slot.start_time)} - {formatTime(slot.end_time)}</p>
                     <p><strong>Topics:</strong> {selectedTeacher.topics.join(", ")}</p>
+                    <p><strong>Duration:</strong> 30 minutes</p>
+                    <p><strong>Fee:</strong> <span className="price">₹{slot.price || 500}</span></p>
                   </div>
                   
                   <button
                     className="btn btn-primary"
-                    onClick={() => bookSession(slot.availability_id)}
-                    disabled={loading}
+                    onClick={() => handlePayment(slot.availability_id)}
+                    disabled={loading || paymentProcessing}
                   >
-                    {loading ? "Booking..." : "Book This Session"}
+                    {paymentProcessing ? "Processing Payment..." : 
+                     loading ? "Booking..." : "Pay & Book This Session"}
                   </button>
                 </div>
               ))}
