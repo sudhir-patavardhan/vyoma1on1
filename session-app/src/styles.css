@@ -2149,10 +2149,35 @@ textarea {
 .audio-settings-panel {
   width: 400px !important;
   max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh; /* Ensure it doesn't exceed viewport height */
 }
 
 .audio-settings-content {
   padding: 16px;
+  overflow-y: auto;
+  max-height: calc(60vh - 50px); /* Account for header height */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Customize scrollbar for webkit browsers */
+.audio-settings-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.audio-settings-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.audio-settings-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.audio-settings-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .settings-section {
@@ -2533,6 +2558,17 @@ textarea {
     right: 5%;
     left: 5%;
     margin: 0 auto;
+  }
+  
+  .audio-settings-panel {
+    width: 95% !important;
+    max-width: 95vw;
+    max-height: 85vh; /* Larger height on mobile */
+    bottom: 50px; /* Position closer to bottom control bar */
+  }
+  
+  .audio-settings-content {
+    max-height: calc(85vh - 50px);
   }
 }
 
