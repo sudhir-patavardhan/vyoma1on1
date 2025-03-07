@@ -77,13 +77,18 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - "chime:CreateMeeting"
-                  - "chime:GetMeeting"
-                  - "chime:ListMeetings"
-                  - "chime:DeleteMeeting"
-                  - "chime:CreateAttendee" 
-                  - "chime:GetAttendee"
-                  - "chime:DeleteAttendee"
+                  - "chime:*"
+                  - "chime-sdk-meetings:CreateMeeting"
+                  - "chime-sdk-meetings:GetMeeting"
+                  - "chime-sdk-meetings:ListMeetings"
+                  - "chime-sdk-meetings:DeleteMeeting"
+                  - "chime-sdk-meetings:CreateAttendee" 
+                  - "chime-sdk-meetings:GetAttendee"
+                  - "chime-sdk-meetings:DeleteAttendee"
+                  - "chime-sdk-meetings:BatchCreateAttendee"
+                  - "chime-sdk-meetings:TagResource"
+                  - "chime-sdk-meetings:UntagResource"
+                  - "chime-sdk-meetings:ListTagsForResource"
                 Resource: "*"
 
   # API Gateway deployment

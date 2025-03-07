@@ -10,7 +10,8 @@ from decimal import Decimal
 # Initialize AWS clients
 dynamodb = boto3.resource('dynamodb')
 dynamodb_client = boto3.client('dynamodb')
-chime_client = boto3.client('chime')
+# Use chime-sdk-meetings instead of the legacy chime service
+chime_client = boto3.client('chime-sdk-meetings')
 
 # Get environment stage, default to prod
 stage = os.environ.get('STAGE', 'prod')
@@ -698,21 +699,43 @@ def create_chime_meeting(event):
                 "meeting": existing_meeting['Meeting'],
                 "session_id": session_id
             })
-        except chime_client.exceptions.NotFoundException:
-            # Meeting doesn't exist, create a new one
+        except (chime_client.exceptions.NotFoundException, chime_client.exceptions.BadRequestException, chime_client.exceptions.ForbiddenException):
+            # Meeting doesn't exist or invalid ID, create a new one
+            print(f"Meeting not found or not valid, creating a new one")
             pass
         except Exception as e:
             # Some other error occurred, likely the meeting_id is invalid
             # We'll create a new meeting
             print(f"Error getting existing meeting: {str(e)}")
 
-        # Create a new Chime meeting
-        meeting_response = chime_client.create_meeting(
-            ClientRequestToken=str(uuid.uuid4()),
-            ExternalMeetingId=external_meeting_id,
-            MediaRegion='us-east-1'  # Specify your preferred region
-            # MeetingFeatures parameter is not supported in the current SDK version
-        )
+        # Create a new Chime meeting with meeting features
+        try:
+            meeting_response = chime_client.create_meeting(
+                ClientRequestToken=str(uuid.uuid4()),
+                ExternalMeetingId=external_meeting_id,
+                MediaRegion='us-east-1',  # Specify your preferred region
+                MeetingFeatures={
+                    'Audio': {
+                        'EchoReduction': 'AVAILABLE'
+                    },
+                    'Video': {
+                        'MaxResolution': 'HD'
+                    },
+                    'Content': {
+                        'MaxResolution': 'FHD'
+                    }
+                }
+            )
+            print(f"Successfully created meeting with features: {json.dumps(meeting_response, default=str)}")
+        except Exception as e:
+            print(f"Error creating meeting with features: {str(e)}")
+            # Fallback to basic meeting if features are not supported
+            meeting_response = chime_client.create_meeting(
+                ClientRequestToken=str(uuid.uuid4()),
+                ExternalMeetingId=external_meeting_id,
+                MediaRegion='us-east-1'  # Specify your preferred region
+            )
+            print(f"Created basic meeting without features: {json.dumps(meeting_response, default=str)}")
 
         # Update the session with the Chime meeting ID
         sessions_table.update_item(
@@ -768,16 +791,24 @@ def create_chime_attendee(event):
         else:
             user_name = 'Participant'
 
-        # Create an attendee
-        attendee_response = chime_client.create_attendee(
-            MeetingId=meeting_id,
-            ExternalUserId=user_id,
-            Capabilities={
-                'Audio': 'SendReceive',
-                'Video': 'SendReceive',
-                'Content': 'SendReceive'
-            }
-        )
+        # Create an attendee with the new SDK
+        try:
+            attendee_response = chime_client.create_attendee(
+                MeetingId=meeting_id,
+                ExternalUserId=user_id,
+                Capabilities={
+                    'Audio': 'SendReceive',
+                    'Video': 'SendReceive',
+                    'Content': 'SendReceive'
+                }
+            )
+        except Exception as e:
+            print(f"Error creating attendee with capabilities: {str(e)}")
+            # Fallback to basic attendee creation without capabilities if needed
+            attendee_response = chime_client.create_attendee(
+                MeetingId=meeting_id,
+                ExternalUserId=user_id
+            )
 
         return response_with_cors(201, {
             "attendee": attendee_response['Attendee'],
@@ -843,7 +874,7 @@ def get_chime_meeting(event):
                     "session_id": session_id,
                     "has_active_meeting": True
                 })
-            except chime_client.exceptions.NotFoundException:
+            except (chime_client.exceptions.NotFoundException, chime_client.exceptions.BadRequestException, chime_client.exceptions.ForbiddenException):
                 # Meeting doesn't exist anymore
                 return response_with_cors(200, {
                     "session_id": session_id,
@@ -893,7 +924,7 @@ def end_chime_meeting(event):
 
         meeting_id = session['chime_meeting_id']
 
-        # End the meeting
+        # End the meeting with the new SDK
         try:
             chime_client.delete_meeting(
                 MeetingId=meeting_id
@@ -909,8 +940,9 @@ def end_chime_meeting(event):
                 "message": "Meeting ended successfully",
                 "session_id": session_id
             })
-        except chime_client.exceptions.NotFoundException:
-            # Meeting doesn't exist anymore, just update the session
+        except (chime_client.exceptions.NotFoundException, chime_client.exceptions.BadRequestException, chime_client.exceptions.ForbiddenException):
+            # Meeting doesn't exist anymore or is invalid, just update the session
+            print(f"Meeting not found or already ended, cleaning up session data")
             sessions_table.update_item(
                 Key={'session_id': session_id},
                 UpdateExpression="REMOVE chime_meeting_id, chime_meeting_data"
