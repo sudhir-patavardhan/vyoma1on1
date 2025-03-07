@@ -26,20 +26,22 @@ const TeacherCalendarSchedule = () => {
   // Fetch teacher's availabilities
   const fetchAvailabilities = useCallback(async () => {
     if (!auth.isAuthenticated || weekDates.length === 0) return;
-    
+
     try {
       setLoading(true);
-      console.log('Fetching availability slots for teacher...');
-      
+      console.log("Fetching availability slots for teacher...");
+
       // Get start and end of week for filtering
       const weekStart = new Date(weekDates[0]);
       weekStart.setHours(0, 0, 0, 0);
-      
+
       const weekEnd = new Date(weekDates[6]);
       weekEnd.setHours(23, 59, 59, 999);
-      
-      console.log(`Filtering slots between ${weekStart.toISOString()} and ${weekEnd.toISOString()}`);
-      
+
+      console.log(
+        `Filtering slots between ${weekStart.toISOString()} and ${weekEnd.toISOString()}`
+      );
+
       const response = await axios.get(
         `${API_BASE_URL}/availability?teacher_id=${auth.user.profile.sub}`,
         {
@@ -48,21 +50,25 @@ const TeacherCalendarSchedule = () => {
           },
         }
       );
-      
+
       if (response.data && Array.isArray(response.data)) {
-        console.log(`Received ${response.data.length} availability slots from API`);
-        
+        console.log(
+          `Received ${response.data.length} availability slots from API`
+        );
+
         // Filter for slots in current week view
-        const slotsInWeek = response.data.filter(slot => {
+        const slotsInWeek = response.data.filter((slot) => {
           if (!slot.start_time) return false;
           const slotStart = new Date(slot.start_time);
           return slotStart >= weekStart && slotStart <= weekEnd;
         });
-        
-        console.log(`Filtered to ${slotsInWeek.length} slots in current week view`);
+
+        console.log(
+          `Filtered to ${slotsInWeek.length} slots in current week view`
+        );
         setAvailabilities(slotsInWeek);
       } else {
-        console.warn('Unexpected response format:', response.data);
+        console.warn("Unexpected response format:", response.data);
         setAvailabilities([]);
       }
     } catch (err) {
@@ -71,7 +77,14 @@ const TeacherCalendarSchedule = () => {
     } finally {
       setLoading(false);
     }
-  }, [auth.isAuthenticated, auth.user, weekDates, setAvailabilities, setLoading, setError]);
+  }, [
+    auth.isAuthenticated,
+    auth.user,
+    weekDates,
+    setAvailabilities,
+    setLoading,
+    setError,
+  ]);
 
   // Fetch availabilities when activeDate or weekDates change
   useEffect(() => {
@@ -84,48 +97,48 @@ const TeacherCalendarSchedule = () => {
   const generateWeekDates = (currentDate) => {
     const dates = [];
     const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
-    
+
     // Calculate the start of the week (Sunday)
     const startDate = new Date(currentDate);
     startDate.setDate(currentDate.getDate() - dayOfWeek);
-    
+
     // Generate dates for 7 days (Sunday through Saturday)
     for (let i = 0; i < 7; i++) {
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
       dates.push(date);
     }
-    
+
     setWeekDates(dates);
   };
 
   // Generate time slots for the day (30-minute intervals from 6 AM to 9 PM)
   const generateTimeSlots = () => {
     const slots = [];
-    const startHour = 6; // 6 AM
-    const endHour = 21; // 9 PM
-    
+    const startHour = 4; // 4 AM
+    const endHour = 23; // 11 PM
+
     for (let hour = startHour; hour < endHour; hour++) {
       // Add both :00 and :30 slots
       slots.push({ hour, minute: 0 });
       slots.push({ hour, minute: 30 });
     }
-    
+
     setTimeSlots(slots);
   };
 
   // Format date for display
   const formatDate = (date) => {
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
     });
   };
 
   // Format day of week
   const formatDayOfWeek = (date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short'
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
     });
   };
 
@@ -135,7 +148,7 @@ const TeacherCalendarSchedule = () => {
     let hour = slot.hour;
     const suffix = hour >= 12 ? "PM" : "AM";
     hour = hour % 12 || 12; // Convert 0 to 12 for 12 AM
-    return `${hour}:${slot.minute === 0 ? '00' : slot.minute} ${suffix}`;
+    return `${hour}:${slot.minute === 0 ? "00" : slot.minute} ${suffix}`;
   };
 
   // Navigate to previous week
@@ -166,12 +179,12 @@ const TeacherCalendarSchedule = () => {
     // Create date object for this slot
     const slotDate = new Date(date);
     slotDate.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
-    
+
     // Check if this slot exists in availabilities
-    return availabilities.some(avail => {
+    return availabilities.some((avail) => {
       const availStart = new Date(avail.start_time);
       const availEnd = new Date(avail.end_time);
-      
+
       // Check if slot start time matches availability start time
       return availStart.getTime() === slotDate.getTime();
     });
@@ -180,24 +193,28 @@ const TeacherCalendarSchedule = () => {
   // Check if a slot is selected (for bulk operations)
   const isSlotSelected = (date, timeSlot) => {
     // Create a unique key for this slot
-    const slotKey = `${date.toDateString()}-${timeSlot.hour}-${timeSlot.minute}`;
+    const slotKey = `${date.toDateString()}-${timeSlot.hour}-${
+      timeSlot.minute
+    }`;
     return selectedSlots.includes(slotKey);
   };
 
   // Toggle selection status of a slot
   const toggleSlotSelection = (date, timeSlot) => {
     // Create a unique key for this slot
-    const slotKey = `${date.toDateString()}-${timeSlot.hour}-${timeSlot.minute}`;
-    
+    const slotKey = `${date.toDateString()}-${timeSlot.hour}-${
+      timeSlot.minute
+    }`;
+
     // If already available, we don't allow selecting
     if (isSlotAvailable(date, timeSlot)) {
       return;
     }
-    
+
     // Toggle selection
-    setSelectedSlots(prevSelected => {
+    setSelectedSlots((prevSelected) => {
       if (prevSelected.includes(slotKey)) {
-        return prevSelected.filter(key => key !== slotKey);
+        return prevSelected.filter((key) => key !== slotKey);
       } else {
         return [...prevSelected, slotKey];
       }
@@ -210,17 +227,17 @@ const TeacherCalendarSchedule = () => {
       // Find the availability ID for this slot
       const slotDate = new Date(date);
       slotDate.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
-      
-      const slotToDelete = availabilities.find(avail => {
+
+      const slotToDelete = availabilities.find((avail) => {
         const availStart = new Date(avail.start_time);
         return availStart.getTime() === slotDate.getTime();
       });
-      
+
       if (!slotToDelete) {
         console.error("Could not find availability to delete");
         return;
       }
-      
+
       await axios.delete(
         `${API_BASE_URL}/availability/${slotToDelete.availability_id}`,
         {
@@ -229,7 +246,7 @@ const TeacherCalendarSchedule = () => {
           },
         }
       );
-      
+
       // Refresh availabilities after deletion
       fetchAvailabilities();
     } catch (err) {
@@ -244,36 +261,34 @@ const TeacherCalendarSchedule = () => {
       // Create start and end times (30 minutes apart)
       const startDateTime = new Date(date);
       startDateTime.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
-      
+
       const endDateTime = new Date(startDateTime);
       endDateTime.setMinutes(startDateTime.getMinutes() + 30);
-      
+
       // Note: The API no longer requires topic or description
       // since availabilities are general and not topic-specific
       // Get price for this slot (either custom or default)
-      const slotKey = `${date.toDateString()}-${timeSlot.hour}-${timeSlot.minute}`;
+      const slotKey = `${date.toDateString()}-${timeSlot.hour}-${
+        timeSlot.minute
+      }`;
       const price = slotPrices[slotKey] || defaultPrice;
-      
+
       const slotData = {
         teacher_id: auth.user.profile.sub,
         start_time: startDateTime.toISOString(),
         end_time: endDateTime.toISOString(),
         status: "available",
         price: price, // Add price to slot data
-        currency: "INR" // Default currency
+        currency: "INR", // Default currency
       };
-      
-      await axios.post(
-        `${API_BASE_URL}/availability`,
-        slotData,
-        {
-          headers: {
-            Authorization: `Bearer ${auth.user.access_token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      
+
+      await axios.post(`${API_BASE_URL}/availability`, slotData, {
+        headers: {
+          Authorization: `Bearer ${auth.user.access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
       // Refresh availabilities
       fetchAvailabilities();
     } catch (err) {
@@ -288,28 +303,28 @@ const TeacherCalendarSchedule = () => {
       setError("No slots selected");
       return;
     }
-    
+
     try {
       setLoading(true);
-      
+
       // Process each selected slot
       for (const slotKey of selectedSlots) {
         // Parse date and time from slot key
-        const [dateStr, hour, minute] = slotKey.split('-');
+        const [dateStr, hour, minute] = slotKey.split("-");
         const date = new Date(dateStr);
         const timeSlot = { hour: parseInt(hour), minute: parseInt(minute) };
-        
+
         // Create and save each slot
         await saveAvailabilitySlot(date, timeSlot);
       }
-      
+
       // Clear slot prices for the saved slots
       const updatedSlotPrices = { ...slotPrices };
       for (const slotKey of selectedSlots) {
         delete updatedSlotPrices[slotKey];
       }
       setSlotPrices(updatedSlotPrices);
-      
+
       // Clear selections after saving
       setSelectedSlots([]);
       setError("");
@@ -327,11 +342,11 @@ const TeacherCalendarSchedule = () => {
     const now = new Date();
     const slotDate = new Date(date);
     slotDate.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
-    
+
     if (slotDate < now) {
       return; // Can't modify slots in the past
     }
-    
+
     // If slot is available, clicking will delete it
     if (isSlotAvailable(date, timeSlot)) {
       deleteAvailability(date, timeSlot);
@@ -348,12 +363,12 @@ const TeacherCalendarSchedule = () => {
   return (
     <div className="teacher-calendar">
       <h2>
-        <FaCalendarAlt className="calendar-icon" /> 
+        <FaCalendarAlt className="calendar-icon" />
         Your Teaching Schedule
       </h2>
-      
+
       {error && <div className="alert alert-danger">{error}</div>}
-      
+
       <div className="calendar-controls">
         <button onClick={goToPreviousWeek} className="btn btn-secondary">
           &laquo; Previous Week
@@ -365,25 +380,29 @@ const TeacherCalendarSchedule = () => {
           Next Week &raquo;
         </button>
       </div>
-      
+
       <div className="calendar-actions">
         {/* Default price setting */}
         <div className="price-settings-panel">
           <h4>Set Your Session Prices</h4>
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="defaultPrice">Default Price (₹) for 30-minute Session</label>
-              <input 
-                type="number" 
-                id="defaultPrice" 
-                value={defaultPrice} 
+              <label htmlFor="defaultPrice">
+                Default Price (₹) for 30-minute Session
+              </label>
+              <input
+                type="number"
+                id="defaultPrice"
+                value={defaultPrice}
                 onChange={(e) => setDefaultPrice(parseInt(e.target.value) || 0)}
                 min="0"
                 step="50"
                 className="form-control"
                 placeholder="Enter default price in INR"
               />
-              <small className="form-text">This price will apply to all new sessions unless customized.</small>
+              <small className="form-text">
+                This price will apply to all new sessions unless customized.
+              </small>
             </div>
           </div>
         </div>
@@ -392,23 +411,23 @@ const TeacherCalendarSchedule = () => {
         {selectedSlots.length > 0 && (
           <div className="bulk-action-panel">
             <span>{selectedSlots.length} time slots selected</span>
-            
+
             {/* Custom price for selected slots */}
             <div className="price-input-group">
               <label htmlFor="customPrice">Price for selected slots (₹)</label>
-              <input 
-                type="number" 
-                id="customPrice" 
+              <input
+                type="number"
+                id="customPrice"
                 defaultValue={defaultPrice}
                 onChange={(e) => {
                   const price = parseInt(e.target.value) || 0;
                   const updatedPrices = { ...slotPrices };
-                  
+
                   // Apply custom price to all selected slots
-                  selectedSlots.forEach(slotKey => {
+                  selectedSlots.forEach((slotKey) => {
                     updatedPrices[slotKey] = price;
                   });
-                  
+
                   setSlotPrices(updatedPrices);
                 }}
                 min="0"
@@ -417,19 +436,16 @@ const TeacherCalendarSchedule = () => {
                 placeholder="Custom price"
               />
             </div>
-            
-            <button 
-              className="btn btn-primary"
-              onClick={saveSelectedSlots}
-            >
+
+            <button className="btn btn-primary" onClick={saveSelectedSlots}>
               <FaCheck /> Save Selected Slots
             </button>
-            <button 
+            <button
               className="btn btn-secondary"
               onClick={() => {
                 // Clear selected slots and their custom prices
                 const updatedPrices = { ...slotPrices };
-                selectedSlots.forEach(slotKey => {
+                selectedSlots.forEach((slotKey) => {
                   delete updatedPrices[slotKey];
                 });
                 setSlotPrices(updatedPrices);
@@ -441,47 +457,55 @@ const TeacherCalendarSchedule = () => {
           </div>
         )}
       </div>
-      
+
       <div className="availability-calendar">
         <div className="calendar-header">
           <div className="time-column-header"></div>
           {weekDates.map((date, index) => (
-            <div 
-              key={index} 
-              className={`day-column-header ${date.toDateString() === new Date().toDateString() ? 'today' : ''}`}
+            <div
+              key={index}
+              className={`day-column-header ${
+                date.toDateString() === new Date().toDateString() ? "today" : ""
+              }`}
             >
               <div className="day-name">{formatDayOfWeek(date)}</div>
               <div className="day-date">{formatDate(date)}</div>
             </div>
           ))}
         </div>
-        
+
         <div className="calendar-body">
           {timeSlots.map((timeSlot, timeIndex) => (
             <div key={timeIndex} className="time-row">
               <div className="time-label">{formatTimeSlot(timeSlot)}</div>
-              
+
               {weekDates.map((date, dateIndex) => {
                 // Determine if this slot is in the past
                 const slotDate = new Date(date);
                 slotDate.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
                 const isPast = slotDate < new Date();
-                
+
                 // Determine slot status
                 const isAvailable = isSlotAvailable(date, timeSlot);
                 const isSelected = isSlotSelected(date, timeSlot);
-                
+
                 return (
-                  <div 
+                  <div
                     key={dateIndex}
                     className={`
-                      time-slot 
-                      ${isPast ? 'past' : ''} 
-                      ${isAvailable ? 'available' : ''} 
-                      ${isSelected ? 'selected' : ''}
+                      time-slot
+                      ${isPast ? "past" : ""}
+                      ${isAvailable ? "available" : ""}
+                      ${isSelected ? "selected" : ""}
                     `}
                     onClick={() => !isPast && handleSlotClick(date, timeSlot)}
-                    title={isPast ? "Cannot modify past slots" : (isAvailable ? "Click to remove availability" : "Click to mark as available")}
+                    title={
+                      isPast
+                        ? "Cannot modify past slots"
+                        : isAvailable
+                        ? "Click to remove availability"
+                        : "Click to mark as available"
+                    }
                   >
                     {isAvailable && (
                       <span className="slot-icon available">
@@ -500,7 +524,7 @@ const TeacherCalendarSchedule = () => {
           ))}
         </div>
       </div>
-      
+
       <div className="schedule-legend">
         <div className="legend-item">
           <div className="legend-color available"></div>
@@ -515,17 +539,27 @@ const TeacherCalendarSchedule = () => {
           <span>Past (Cannot modify)</span>
         </div>
       </div>
-      
+
       <div className="schedule-instructions">
         <h3>How to Use:</h3>
         <ul>
           <li>Click on any time slot to mark it as available</li>
-          <li>Click multiple slots to select them, then save them all at once</li>
+          <li>
+            Click multiple slots to select them, then save them all at once
+          </li>
           <li>Click on an available slot to remove it</li>
           <li>Each slot is 30 minutes long</li>
-          <li>Set your default price for all sessions (recommended ₹500-2000 for 30 minutes)</li>
-          <li>For special times or topics, you can customize prices for specific slots</li>
-          <li>Students will see your price and pay via RazorPay when booking</li>
+          <li>
+            Set your default price for all sessions (recommended ₹500-2000 for
+            30 minutes)
+          </li>
+          <li>
+            For special times or topics, you can customize prices for specific
+            slots
+          </li>
+          <li>
+            Students will see your price and pay via RazorPay when booking
+          </li>
           <li>Payment is only collected when a student books your slot</li>
         </ul>
       </div>
