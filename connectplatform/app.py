@@ -643,19 +643,22 @@ def generate_presigned_url(event):
         key = f"profile-photos/{file_name}"
 
         # Generate pre-signed URL for PUT operation
+        # Remove ACL parameter which can cause 400 Bad Request if bucket doesn't allow ACL settings
         presigned_url = s3_client.generate_presigned_url(
             'put_object',
             Params={
                 'Bucket': bucket_name,
                 'Key': key,
-                'ContentType': file_type,
-                'ACL': 'public-read'
+                'ContentType': file_type
+                # 'ACL': 'public-read' - Removed to prevent 400 Bad Request
             },
             ExpiresIn=300  # URL expires in 5 minutes
         )
 
         # Construct the public URL that will be accessible after upload
-        public_url = f"https://{bucket_name}.s3.amazonaws.com/{key}"
+        # Use the S3 URL format with region - this is more reliable
+        region = boto3.session.Session().region_name or 'us-east-1'
+        public_url = f"https://{bucket_name}.s3.{region}.amazonaws.com/{key}"
 
         return response_with_cors(200, {
             'upload_url': presigned_url,

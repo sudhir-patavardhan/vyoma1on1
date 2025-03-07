@@ -177,18 +177,32 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
 
       // Step 2: Upload the file directly to S3 using the pre-signed URL
       console.log("Uploading file to S3...");
-      const uploadResponse = await fetch(upload_url, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-      });
+      try {
+        // Add more detailed logging
+        console.log("Upload URL:", upload_url);
+        console.log("File type:", file.type);
+        console.log("File size:", file.size);
+        
+        const uploadResponse = await fetch(upload_url, {
+          method: "PUT",
+          body: file,
+          headers: {
+            "Content-Type": file.type,
+          },
+        });
 
-      if (!uploadResponse.ok) {
-        throw new Error(
-          `Failed to upload file: ${uploadResponse.status} ${uploadResponse.statusText}`
-        );
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text().catch(() => '');
+          console.error("S3 upload error response:", errorText);
+          throw new Error(
+            `Failed to upload file: ${uploadResponse.status} ${uploadResponse.statusText}${errorText ? ` - ${errorText}` : ''}`
+          );
+        }
+        
+        console.log("S3 upload response status:", uploadResponse.status);
+      } catch (uploadError) {
+        console.error("Error during file upload:", uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
       console.log("Upload successful");
