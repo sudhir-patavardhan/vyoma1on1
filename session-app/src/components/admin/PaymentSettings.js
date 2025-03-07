@@ -3,7 +3,7 @@ import { useAuth } from 'react-oidc-context';
 import PaymentService from '../../services/PaymentService';
 import { FaKey, FaCheck, FaExclamationTriangle, FaSync } from 'react-icons/fa';
 
-const PaymentSettings = () => {
+const PaymentSettings = ({ profile }) => {
   const auth = useAuth();
   const [razorpayConfig, setRazorpayConfig] = useState({
     key_id: '',

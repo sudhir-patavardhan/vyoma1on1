@@ -10,7 +10,7 @@ import {
   FaChartLine
 } from 'react-icons/fa';
 
-const FinancialReports = () => {
+const FinancialReports = ({ profile }) => {
   const auth = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

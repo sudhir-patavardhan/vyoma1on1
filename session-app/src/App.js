@@ -147,13 +147,15 @@ function App() {
               </button>
             )}
             
-            {/* Admin Panel button - can be conditional based on user role */}
-            <button
-              className={`header-link ${activeTab === "admin" ? "active" : ""}`}
-              onClick={() => setActiveTab("admin")}
-            >
-              <FaLock className="header-icon" /> Admin
-            </button>
+            {/* Admin Panel button - only visible to admin or teacher users for now */}
+            {profile && (profile.role === "admin" || profile.role === "teacher") && (
+              <button
+                className={`header-link ${activeTab === "admin" ? "active" : ""}`}
+                onClick={() => setActiveTab("admin")}
+              >
+                <FaLock className="header-icon" /> Admin
+              </button>
+            )}
 
             <button className="header-link" onClick={signoutRedirect}>
               <FaSignOutAlt className="header-icon" /> Sign Out
@@ -226,7 +228,7 @@ function App() {
                   
                   {/* Admin Panel */}
                   {activeTab === "admin" && (
-                    <AdminPanel />
+                    <AdminPanel profile={profile} />
                   )}
                 </div>
               </div>
@@ -295,6 +297,7 @@ function App() {
           }
 
           if (data && data.profile) {
+            console.log("Profile data loaded successfully:", data.profile);
             setProfile(data.profile);
 
             // Check for upcoming sessions
@@ -754,7 +757,7 @@ function App() {
                 
                 {/* Admin Panel */}
                 {activeTab === "admin" && (
-                  <AdminPanel />
+                  <AdminPanel profile={profile} />
                 )}
               </div>
             </div>
