@@ -11,7 +11,7 @@ const AdminPanel = () => {
 
   // Check if user has admin role
   const isAdmin = auth.user?.profile?.role === "admin";
-  print("Profile.role:" + auth.user?.profile?.role);
+  console.log("Profile.role:" + auth.user?.profile?.role);
 
   if (!isAdmin) {
     return (
