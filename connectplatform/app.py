@@ -1071,8 +1071,9 @@ def initialize_payment(event):
         # Get RazorPay client
         client = get_razorpay_client()
         
-        # Generate a unique receipt ID
-        receipt_id = f"receipt-{uuid.uuid4()}"
+        # Generate a unique receipt ID (max 40 chars for RazorPay)
+        short_uuid = str(uuid.uuid4())[:8]  # Use just the first 8 chars of UUID
+        receipt_id = f"rcpt-{short_uuid}"
         
         # Create RazorPay order
         try:
