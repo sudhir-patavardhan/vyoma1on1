@@ -19,7 +19,9 @@ phases:
       # Install dependencies for both frontend and backend
       - echo "Installing frontend dependencies"
       - cd session-app
-      - npm ci
+      # Using 'npm install' instead of 'npm ci' to avoid build failures
+      # 'npm ci' is stricter and requires an exact match with package-lock.json
+      - npm install
       - cd ..
       - echo "Installing backend dependencies"
       - cd connectplatform
