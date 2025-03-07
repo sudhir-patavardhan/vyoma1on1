@@ -264,6 +264,58 @@ Resources:
         - AttributeName: session_id
           KeyType: HASH
 
+  # Payment System Tables
+  PaymentsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Sub "Payments-${Stage}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: payment_id
+          AttributeType: S
+        - AttributeName: order_id
+          AttributeType: S
+        - AttributeName: student_id
+          AttributeType: S
+        - AttributeName: teacher_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: payment_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: OrderIdIndex
+          KeySchema:
+            - AttributeName: order_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: StudentPaymentsIndex
+          KeySchema:
+            - AttributeName: student_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: TeacherPaymentsIndex
+          KeySchema:
+            - AttributeName: teacher_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  RazorPayConfigTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Sub "RazorPayConfig-${Stage}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: config_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: config_id
+          KeyType: HASH
+
   # S3 bucket for user uploads
   UploadsBucket:
     Type: AWS::S3::Bucket
