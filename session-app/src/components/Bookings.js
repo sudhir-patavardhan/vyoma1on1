@@ -320,11 +320,16 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
                 {current.map((booking) => (
                   <div 
                     key={booking.booking_id} 
-                    className="booking-card joinable"
+                    className="booking-card joinable live"
                   >
                     <div className="booking-header">
                       <h3>{booking.topic}</h3>
-                      <span className={`status-badge ${booking.status}`}>{booking.status}</span>
+                      <div className="booking-status-container">
+                        <span className="status-badge live">
+                          <span className="live-indicator"></span> Live Now
+                        </span>
+                        <span className={`status-badge ${booking.status}`}>{booking.status}</span>
+                      </div>
                     </div>
                     
                     <div className="booking-details">
@@ -358,10 +363,10 @@ const Bookings = ({ userId, userRole, onJoinSession, onUpcomingSession }) => {
                     
                     <div className="booking-actions">
                       <button 
-                        className="btn btn-primary"
+                        className="btn btn-primary join-live"
                         onClick={() => joinSession(booking.booking_id)}
                       >
-                        <span role="img" aria-label="video">🎥</span> Join Session
+                        <span role="img" aria-label="live">🔴</span> Join Live Session
                       </button>
                     </div>
                   </div>

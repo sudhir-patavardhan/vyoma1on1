@@ -56,17 +56,33 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
       
       const now = new Date();
       
-      // Filter out past bookings and sort by date (closest upcoming first)
-      const upcomingBookings = bookingsResponse.data
-        .filter(booking => new Date(booking.start_time) > now && booking.status !== 'cancelled')
-        .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+      // Filter for current and upcoming bookings
+      const currentAndUpcomingBookings = bookingsResponse.data
+        .filter(booking => {
+          // Check if booking is not cancelled
+          if (booking.status === 'cancelled') return false;
+          
+          // Check if booking is either:
+          // 1. Current (joinable now) or
+          // 2. Upcoming (start time in the future)
+          const endTime = new Date(booking.end_time);
+          if (endTime < now) return false; // Skip past bookings
+          
+          return true; // Include both current and upcoming
+        })
+        .sort((a, b) => new Date(a.start_time) - new Date(b.start_time)); // Sort by start time
       
       // Get the current and upcoming bookings for the dashboard
-      setRecentBookings(upcomingBookings.slice(0, 3));
+      setRecentBookings(currentAndUpcomingBookings.slice(0, 3));
       
       // Calculate stats
       const completedBookings = bookingsResponse.data.filter(booking => 
         new Date(booking.end_time) < now || booking.status === 'cancelled'
+      );
+      
+      // For backwards compatibility
+      const upcomingBookings = currentAndUpcomingBookings.filter(booking => 
+        new Date(booking.start_time) > now
       );
       
       setStats({
@@ -253,15 +269,25 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
                 <div className="recent-bookings">
                   {recentBookings.map((booking) => {
                     const isJoinable = canJoinSession(booking.start_time, booking.end_time);
+                    const now = new Date();
+                    const startTime = new Date(booking.start_time);
+                    const isLive = now >= startTime;
                     
                     return (
                       <div 
                         key={booking.booking_id} 
-                        className={`booking-card ${isJoinable ? 'joinable' : 'upcoming'}`}
+                        className={`booking-card ${isJoinable ? 'joinable' : 'upcoming'} ${isLive ? 'live' : ''}`}
                       >
                         <div className="booking-header">
                           <h3>{booking.topic}</h3>
-                          <span className={`status-badge ${booking.status}`}>{booking.status}</span>
+                          <div className="booking-status-container">
+                            {isLive && (
+                              <span className="status-badge live">
+                                <span className="live-indicator"></span> Live Now
+                              </span>
+                            )}
+                            <span className={`status-badge ${booking.status}`}>{booking.status}</span>
+                          </div>
                         </div>
                         
                         <div className="booking-details">
@@ -291,7 +317,7 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
                               className="btn btn-primary"
                               onClick={() => joinSession(booking.booking_id)}
                             >
-                              Join Session
+                              {isLive ? '🔴 Join Live Session' : 'Join Session'}
                             </button>
                           )}
                           
