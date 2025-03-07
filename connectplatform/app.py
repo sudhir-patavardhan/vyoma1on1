@@ -710,18 +710,8 @@ def create_chime_meeting(event):
         meeting_response = chime_client.create_meeting(
             ClientRequestToken=str(uuid.uuid4()),
             ExternalMeetingId=external_meeting_id,
-            MediaRegion='us-east-1',  # Specify your preferred region
-            MeetingFeatures={
-                'Audio': {
-                    'EchoReduction': 'AVAILABLE'
-                },
-                'Video': {
-                    'MaxResolution': 'HD'
-                },
-                'Content': {
-                    'MaxResolution': 'FHD'
-                }
-            }
+            MediaRegion='us-east-1'  # Specify your preferred region
+            # MeetingFeatures parameter is not supported in the current SDK version
         )
 
         # Update the session with the Chime meeting ID
