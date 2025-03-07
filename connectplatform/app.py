@@ -1023,7 +1023,7 @@ def search_teachers(event):
         print(f"Error in search_teachers: {str(e)}")
         return response_with_cors(500, {"message": "Error searching for teachers.", "error": str(e)})
 
-# ========== Payment Management ==========
+# ========== Payment Management System ==========
 def get_razorpay_client():
     """Initialize and return a RazorPay client using stored credentials."""
     try:
@@ -1323,7 +1323,7 @@ def get_payments(event):
 def get_financial_reports(event):
     """Get financial reports for admin users."""
     try:
-        # This would normally include admin auth checks
+        # TODO: Add proper admin authentication checks here
         params = event.get('queryStringParameters', {})
         start_date = params.get('start_date')
         end_date = params.get('end_date')
