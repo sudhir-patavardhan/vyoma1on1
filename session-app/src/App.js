@@ -7,6 +7,7 @@ import TeacherCalendarSchedule from "./components/TeacherCalendarSchedule";
 import VirtualSession from "./components/VirtualSession";
 import Bookings from "./components/Bookings";
 import Dashboard from "./components/Dashboard";
+import AdminPanel from "./components/admin/AdminPanel";
 import { API_BASE_URL } from "./config";
 import "./styles.css";
 import {
@@ -18,6 +19,7 @@ import {
   FaCalendarAlt,
   FaVideo,
   FaHome,
+  FaLock,
 } from "react-icons/fa"; // Import icons
 
 function App() {
@@ -144,6 +146,14 @@ function App() {
                 <FaVideo className="header-icon" /> Join Session
               </button>
             )}
+            
+            {/* Admin Panel button - can be conditional based on user role */}
+            <button
+              className={`header-link ${activeTab === "admin" ? "active" : ""}`}
+              onClick={() => setActiveTab("admin")}
+            >
+              <FaLock className="header-icon" /> Admin
+            </button>
 
             <button className="header-link" onClick={signoutRedirect}>
               <FaSignOutAlt className="header-icon" /> Sign Out
@@ -212,6 +222,11 @@ function App() {
 
                   {profile?.role === "teacher" && activeTab === "schedule" && (
                     <TeacherCalendarSchedule />
+                  )}
+                  
+                  {/* Admin Panel */}
+                  {activeTab === "admin" && (
+                    <AdminPanel />
                   )}
                 </div>
               </div>
@@ -735,6 +750,11 @@ function App() {
                 
                 {profile?.role === "teacher" && activeTab === 'schedule' && (
                   <TeacherCalendarSchedule />
+                )}
+                
+                {/* Admin Panel */}
+                {activeTab === "admin" && (
+                  <AdminPanel />
                 )}
               </div>
             </div>
