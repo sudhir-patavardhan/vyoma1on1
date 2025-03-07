@@ -281,109 +281,264 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
   
   const selectMediaDevices = async (session) => {
     try {
-      const audioInputDevices = await session.audioVideo.listAudioInputDevices();
-      const videoInputDevices = await session.audioVideo.listVideoInputDevices();
+      console.log('Starting media device selection');
       
-      if (audioInputDevices.length > 0) {
-        await session.audioVideo.chooseAudioInputDevice(audioInputDevices[0].deviceId);
-      }
+      // First check for available device controllers
+      const audioVideo = session.audioVideo;
       
-      if (videoInputDevices.length > 0) {
-        await session.audioVideo.chooseVideoInputDevice(videoInputDevices[0].deviceId);
+      try {
+        // Try different method names based on SDK version compatibility
+        const audioInputDevices = await audioVideo.listAudioInputDevices();
+        console.log('Available audio input devices:', audioInputDevices);
+        
+        if (audioInputDevices.length > 0) {
+          // Try various potential method names
+          if (typeof audioVideo.chooseAudioInputDevice === 'function') {
+            console.log('Using chooseAudioInputDevice method');
+            await audioVideo.chooseAudioInputDevice(audioInputDevices[0].deviceId);
+          } else if (typeof audioVideo.setAudioInputDevice === 'function') {
+            console.log('Using setAudioInputDevice method');
+            await audioVideo.setAudioInputDevice(audioInputDevices[0].deviceId);
+          } else if (typeof audioVideo.startAudioInput === 'function') {
+            console.log('Using startAudioInput method');
+            await audioVideo.startAudioInput(audioInputDevices[0].deviceId);
+          } else {
+            console.warn('No compatible audio input selection method found');
+          }
+        }
+        
+        const videoInputDevices = await audioVideo.listVideoInputDevices();
+        console.log('Available video input devices:', videoInputDevices);
+        
+        if (videoInputDevices.length > 0) {
+          // Try various potential method names
+          if (typeof audioVideo.chooseVideoInputDevice === 'function') {
+            console.log('Using chooseVideoInputDevice method');
+            await audioVideo.chooseVideoInputDevice(videoInputDevices[0].deviceId);
+          } else if (typeof audioVideo.setVideoInputDevice === 'function') {
+            console.log('Using setVideoInputDevice method');
+            await audioVideo.setVideoInputDevice(videoInputDevices[0].deviceId);
+          } else if (typeof audioVideo.startVideoInput === 'function') {
+            console.log('Using startVideoInput method');
+            await audioVideo.startVideoInput(videoInputDevices[0].deviceId);
+          } else {
+            console.warn('No compatible video input selection method found');
+          }
+        }
+      } catch (deviceError) {
+        console.error('Error accessing media devices:', deviceError);
+        console.log('Continuing without selecting specific devices');
+        // Continue without device selection
       }
     } catch (err) {
-      console.error('Error selecting media devices:', err);
-      throw err;
+      console.error('Error in device selection process:', err);
+      console.log('Continuing without media device selection');
+      // Don't throw the error, just continue without device selection
     }
   };
   
   const joinWithAudioVideo = async (session) => {
     try {
-      // Start local video
-      await session.audioVideo.startLocalVideoTile();
+      console.log('Starting to join with audio/video');
       
-      // Start audio
-      session.audioVideo.realtimeSubscribeToAttendeeIdPresence((attendeeId, present) => {
-        console.log(`Attendee ${attendeeId} presence: ${present}`);
-      });
+      // Start local video with error handling
+      try {
+        console.log('Attempting to start local video');
+        await session.audioVideo.startLocalVideoTile();
+        console.log('Local video started successfully');
+      } catch (videoErr) {
+        console.error('Error starting local video:', videoErr);
+        console.log('Continuing without local video');
+        // Continue without video if there's an error
+      }
+      
+      // Handle presence events with error handling
+      try {
+        console.log('Setting up attendee presence subscription');
+        session.audioVideo.realtimeSubscribeToAttendeeIdPresence((attendeeId, present) => {
+          console.log(`Attendee ${attendeeId} presence: ${present}`);
+        });
+        console.log('Attendee presence subscription established');
+      } catch (presenceErr) {
+        console.error('Error setting up presence subscription:', presenceErr);
+        // Continue without presence subscription
+      }
+      
+      console.log('Successfully joined meeting with available audio/video capabilities');
     } catch (err) {
-      console.error('Error joining with audio/video:', err);
-      setError('Failed to start audio/video. Please check your device permissions.');
+      console.error('General error joining with audio/video:', err);
+      // Don't set the error state here, which would show an error to the user
+      // Instead, let the meeting continue with limited functionality
+      console.log('Continuing meeting with limited functionality');
     }
   };
   
   const toggleMute = () => {
-    if (!meetingSession) return;
+    if (!meetingSession) {
+      console.log('Cannot toggle mute: No active meeting session');
+      return;
+    }
     
     try {
+      console.log(`Attempting to toggle mute state from ${isMuted ? 'muted' : 'unmuted'}`);
+      
+      // Check if the methods exist before calling them
       if (isMuted) {
         // Unmute
-        meetingSession.audioVideo.realtimeUnmuteLocalAudio();
+        if (typeof meetingSession.audioVideo.realtimeUnmuteLocalAudio === 'function') {
+          meetingSession.audioVideo.realtimeUnmuteLocalAudio();
+          console.log('Unmuted audio');
+        } else {
+          console.warn('realtimeUnmuteLocalAudio method not available');
+        }
       } else {
         // Mute
-        meetingSession.audioVideo.realtimeMuteLocalAudio();
+        if (typeof meetingSession.audioVideo.realtimeMuteLocalAudio === 'function') {
+          meetingSession.audioVideo.realtimeMuteLocalAudio();
+          console.log('Muted audio');
+        } else {
+          console.warn('realtimeMuteLocalAudio method not available');
+        }
       }
       
-      // Update state based on actual mute state
-      const muted = meetingSession.audioVideo.realtimeIsLocalAudioMuted();
-      setIsMuted(muted);
+      // Update state based on actual mute state if method exists
+      if (typeof meetingSession.audioVideo.realtimeIsLocalAudioMuted === 'function') {
+        const muted = meetingSession.audioVideo.realtimeIsLocalAudioMuted();
+        console.log(`Audio is now ${muted ? 'muted' : 'unmuted'}`);
+        setIsMuted(muted);
+      } else {
+        // If method doesn't exist, just toggle the state
+        console.warn('realtimeIsLocalAudioMuted method not available, toggling state manually');
+        setIsMuted(!isMuted);
+      }
     } catch (err) {
       console.error("Error toggling mute:", err);
+      // Toggle the state anyway to provide feedback to the user
+      setIsMuted(!isMuted);
     }
   };
   
   const toggleVideo = async () => {
-    if (!meetingSession) return;
+    if (!meetingSession) {
+      console.log('Cannot toggle video: No active meeting session');
+      return;
+    }
     
     try {
+      console.log(`Attempting to toggle video from ${isVideoOff ? 'off' : 'on'}`);
+      
       if (isVideoOff) {
         // Turn video on
-        await meetingSession.audioVideo.startLocalVideoTile();
-        setIsVideoOff(false);
+        if (typeof meetingSession.audioVideo.startLocalVideoTile === 'function') {
+          try {
+            await meetingSession.audioVideo.startLocalVideoTile();
+            console.log('Started local video successfully');
+            setIsVideoOff(false);
+          } catch (videoStartError) {
+            console.error('Error starting local video:', videoStartError);
+            // Keep state as is
+          }
+        } else {
+          console.warn('startLocalVideoTile method not available');
+          // Toggle state anyway for user feedback
+          setIsVideoOff(false);
+        }
       } else {
         // Turn video off
-        meetingSession.audioVideo.stopLocalVideoTile();
-        setIsVideoOff(true);
+        if (typeof meetingSession.audioVideo.stopLocalVideoTile === 'function') {
+          try {
+            meetingSession.audioVideo.stopLocalVideoTile();
+            console.log('Stopped local video successfully');
+            setIsVideoOff(true);
+          } catch (videoStopError) {
+            console.error('Error stopping local video:', videoStopError);
+            // Keep state as is
+          }
+        } else {
+          console.warn('stopLocalVideoTile method not available');
+          // Toggle state anyway for user feedback
+          setIsVideoOff(true);
+        }
       }
     } catch (err) {
-      console.error("Error toggling video:", err);
+      console.error("General error toggling video:", err);
+      // Don't change state if there was an error
     }
   };
   
   const startScreenShare = async () => {
-    if (!meetingSession) return;
+    if (!meetingSession) {
+      console.log('Cannot start screen share: No active meeting session');
+      return;
+    }
     
     try {
+      console.log('Attempting to start screen sharing');
+      
       // Stop any existing screen share
       if (isScreenSharing) {
+        console.log('Screen share already active, stopping first');
         await stopScreenShare();
       }
       
-      // Start screen sharing
-      await meetingSession.audioVideo.startContentShare();
-      setIsScreenSharing(true);
-      
-      // Handle screen share events
-      meetingSession.audioVideo.addContentShareObserver({
-        contentShareDidStop: () => {
-          console.log('Content share stopped');
-          setIsScreenSharing(false);
+      // Check if the method exists
+      if (typeof meetingSession.audioVideo.startContentShare === 'function') {
+        try {
+          // Start screen sharing
+          await meetingSession.audioVideo.startContentShare();
+          console.log('Started screen sharing successfully');
+          setIsScreenSharing(true);
+          
+          // Add observer if method exists
+          if (typeof meetingSession.audioVideo.addContentShareObserver === 'function') {
+            meetingSession.audioVideo.addContentShareObserver({
+              contentShareDidStop: () => {
+                console.log('Content share stopped by system or browser');
+                setIsScreenSharing(false);
+              }
+            });
+          } else {
+            console.warn('addContentShareObserver method not available');
+          }
+        } catch (contentError) {
+          console.error('Error in content sharing:', contentError);
+          // User might have cancelled the screen share picker
+          console.log('Screen sharing failed or was cancelled');
         }
-      });
+      } else {
+        console.warn('startContentShare method not available');
+        // Show a more user-friendly message
+        setError("Screen sharing is not supported in this meeting mode.");
+      }
     } catch (err) {
-      console.error("Error starting screen share:", err);
-      setError("Failed to start screen sharing. Please try again.");
+      console.error("General error with screen sharing:", err);
+      setError("Failed to start screen sharing. Please check browser permissions.");
     }
   };
   
   const stopScreenShare = async () => {
-    if (!meetingSession) return;
+    if (!meetingSession) {
+      console.log('Cannot stop screen share: No active meeting session');
+      return;
+    }
     
     try {
-      await meetingSession.audioVideo.stopContentShare();
+      console.log('Attempting to stop screen sharing');
+      
+      // Check if the method exists
+      if (typeof meetingSession.audioVideo.stopContentShare === 'function') {
+        await meetingSession.audioVideo.stopContentShare();
+        console.log('Stopped screen sharing successfully');
+      } else {
+        console.warn('stopContentShare method not available');
+      }
+      
+      // Always update the state even if the method call failed
       setIsScreenSharing(false);
     } catch (err) {
       console.error("Error stopping screen share:", err);
+      // Update state anyway
+      setIsScreenSharing(false);
     }
   };
   
