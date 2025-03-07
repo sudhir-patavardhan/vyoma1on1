@@ -16,13 +16,17 @@ phases:
   build:
     commands:
       - echo "Processing CloudFormation template"
-      - cp template.yml deployment-template.yml || true
+      - rm -f deployment-template.yml  # Force removal of existing file
+      - cp template.yml deployment-template.yml
       - echo "Using create-deployment.sh to package and deploy"
       - chmod +x ./create-deployment.sh
       - ./create-deployment.sh
 
   post_build:
     commands:
+      - echo "Verifying template contains payment system tables"
+      - grep -q "PaymentsTable" deployment-template.yml || (echo "ERROR: PaymentsTable not found in template" && exit 1)
+      - grep -q "RazorPayConfigTable" deployment-template.yml || (echo "ERROR: RazorPayConfigTable not found in template" && exit 1)
       - echo "Deploying backend Lambda functions"
       - echo "Creating/updating CloudFormation stack"
       - aws cloudformation deploy --template-file deployment-template.yml --stack-name sessions-red-api --parameter-overrides Stage=prod --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1
