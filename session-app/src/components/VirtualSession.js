@@ -75,6 +75,7 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
         }
         
         // 2. Create or get a Chime meeting for this session
+        console.log('Creating/getting Chime meeting for session:', sessionId);
         const meetingResponse = await axios.post(
           `${API_BASE_URL}/meetings`,
           { session_id: sessionId },
@@ -86,11 +87,15 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
           }
         );
         
+        console.log('Meeting response:', meetingResponse.data);
+        
         // Store the meeting details
         const meetingData = meetingResponse.data.meeting;
+        console.log('Meeting data:', meetingData);
         setMeetingId(meetingData.MeetingId);
         
         // 3. Join the meeting as an attendee
+        console.log('Joining meeting as attendee, user ID:', auth.user.profile.sub);
         const attendeeResponse = await axios.post(
           `${API_BASE_URL}/attendees`,
           { 
@@ -105,7 +110,9 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
           }
         );
         
+        console.log('Attendee response:', attendeeResponse.data);
         const attendeeData = attendeeResponse.data.attendee;
+        console.log('Attendee data:', attendeeData);
         setAttendeeId(attendeeData.AttendeeId);
         
         // 4. Set up the Chime meeting session
@@ -137,11 +144,45 @@ const VirtualSession = ({ sessionId, onEndSession }) => {
   
   const setupChimeMeeting = async (meetingData, attendeeData) => {
     try {
+      console.log('Setting up Chime meeting with:', { meetingData, attendeeData });
+      
       // Create configuration objects
-      const configuration = new MeetingSessionConfiguration(
-        meetingData,
-        attendeeData
-      );
+      // Adding a try-catch block to handle potential format differences
+      let configuration;
+      try {
+        configuration = new MeetingSessionConfiguration(
+          meetingData,
+          attendeeData
+        );
+      } catch (configError) {
+        console.error('Error creating meeting configuration with provided data:', configError);
+        console.log('Attempting alternative configuration format...');
+        
+        // Fallback in case the data structure doesn't match expectations
+        const formattedMeetingData = {
+          MeetingId: meetingData.MeetingId,
+          MediaPlacement: {
+            AudioHostUrl: meetingData.MediaPlacement?.AudioHostUrl,
+            AudioFallbackUrl: meetingData.MediaPlacement?.AudioFallbackUrl,
+            ScreenDataUrl: meetingData.MediaPlacement?.ScreenDataUrl,
+            ScreenSharingUrl: meetingData.MediaPlacement?.ScreenSharingUrl,
+            ScreenViewingUrl: meetingData.MediaPlacement?.ScreenViewingUrl,
+            SignalingUrl: meetingData.MediaPlacement?.SignalingUrl,
+            TurnControlUrl: meetingData.MediaPlacement?.TurnControlUrl
+          }
+        };
+        
+        const formattedAttendeeData = {
+          AttendeeId: attendeeData.AttendeeId,
+          ExternalUserId: attendeeData.ExternalUserId,
+          JoinToken: attendeeData.JoinToken
+        };
+        
+        configuration = new MeetingSessionConfiguration(
+          formattedMeetingData,
+          formattedAttendeeData
+        );
+      }
       
       // Create device controller if not already created
       if (!deviceController.current) {
