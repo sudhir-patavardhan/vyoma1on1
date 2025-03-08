@@ -20,6 +20,7 @@ import {
   FaVideo,
   FaHome,
   FaLock,
+  FaExchangeAlt,
 } from "react-icons/fa"; // Import icons
 
 function App() {
@@ -32,6 +33,10 @@ function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [activeSession, setActiveSession] = useState(null);
   const [upcomingSession, setUpcomingSession] = useState(null);
+  
+  // For users with multiple roles
+  const [activeRole, setActiveRole] = useState(null);
+  const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
   const signoutRedirect = async () => {
     const clientId = "2fpemjqos4302bfaf65g06l8g0"; // Cognito App Client ID
@@ -104,8 +109,46 @@ function App() {
               {profile?.name || "Profile"}
             </button>
 
-            {/* Only show these buttons if profile is loaded and has a role */}
-            {profile && profile.role === "student" && (
+            {/* Role Switcher for multi-role users */}
+            {profile && profile.roles && profile.roles.length > 1 && (
+              <div className="role-switcher-container">
+                <button
+                  className="header-link role-switcher-btn"
+                  onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
+                >
+                  <FaExchangeAlt className="header-icon" /> 
+                  {activeRole ? `${activeRole.charAt(0).toUpperCase()}${activeRole.slice(1)} Mode` : 'Switch Role'}
+                </button>
+                
+                {showRoleSwitcher && (
+                  <div className="role-switcher-dropdown">
+                    {profile.roles.map(role => (
+                      <button
+                        key={role}
+                        className={`role-option ${activeRole === role ? 'active' : ''}`}
+                        onClick={() => {
+                          setActiveRole(role);
+                          setShowRoleSwitcher(false);
+                          // When switching roles, go to dashboard
+                          setActiveTab("dashboard");
+                        }}
+                      >
+                        {role === 'student' && <FaUser className="role-icon-small" />}
+                        {role === 'teacher' && <FaGraduationCap className="role-icon-small" />}
+                        {role === 'admin' && <FaLock className="role-icon-small" />}
+                        {role.charAt(0).toUpperCase() + role.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Only show these buttons if profile is loaded and has appropriate role */}
+            {profile && (activeRole === "student" || 
+                        (!activeRole && 
+                         ((profile.roles && profile.roles.includes("student")) || 
+                          profile.role === "student"))) && (
               <button
                 className={`header-link ${
                   activeTab === "search" ? "active" : ""
@@ -116,7 +159,10 @@ function App() {
               </button>
             )}
 
-            {profile && profile.role === "student" && (
+            {profile && (activeRole === "student" || 
+                        (!activeRole && 
+                         ((profile.roles && profile.roles.includes("student")) || 
+                          profile.role === "student"))) && (
               <button
                 className={`header-link ${
                   activeTab === "bookings" ? "active" : ""
@@ -127,7 +173,10 @@ function App() {
               </button>
             )}
 
-            {profile && profile.role === "teacher" && (
+            {profile && (activeRole === "teacher" || 
+                        (!activeRole && 
+                         ((profile.roles && profile.roles.includes("teacher")) || 
+                          profile.role === "teacher"))) && (
               <button
                 className={`header-link ${
                   activeTab === "schedule" ? "active" : ""
@@ -147,8 +196,11 @@ function App() {
               </button>
             )}
             
-            {/* Admin Panel button - only visible to admin or teacher users for now */}
-            {profile && (profile.role === "admin" || profile.role === "teacher") && (
+            {/* Admin Panel button - visible to users with admin role */}
+            {profile && (activeRole === "admin" || 
+                        (!activeRole && 
+                         ((profile.roles && profile.roles.includes("admin")) || 
+                          profile.role === "admin"))) && (
               <button
                 className={`header-link ${activeTab === "admin" ? "active" : ""}`}
                 onClick={() => setActiveTab("admin")}
@@ -209,11 +261,23 @@ function App() {
                     />
                   )}
 
-                  {profile?.role === "student" && activeTab === "search" && (
+                  {/* Show teacher search for students */}
+                  {profile && 
+                   (activeRole === "student" || 
+                    (!activeRole && 
+                     ((profile.roles && profile.roles.includes("student")) || 
+                      profile.role === "student"))) && 
+                   activeTab === "search" && (
                     <TeacherSearch />
                   )}
 
-                  {profile?.role === "student" && activeTab === "bookings" && (
+                  {/* Show bookings for students */}
+                  {profile && 
+                   (activeRole === "student" || 
+                    (!activeRole && 
+                     ((profile.roles && profile.roles.includes("student")) || 
+                      profile.role === "student"))) && 
+                   activeTab === "bookings" && (
                     <Bookings
                       userId={auth.user?.profile.sub}
                       userRole="student"
@@ -222,12 +286,23 @@ function App() {
                     />
                   )}
 
-                  {profile?.role === "teacher" && activeTab === "schedule" && (
+                  {/* Show schedule for teachers */}
+                  {profile && 
+                   (activeRole === "teacher" || 
+                    (!activeRole && 
+                     ((profile.roles && profile.roles.includes("teacher")) || 
+                      profile.role === "teacher"))) && 
+                   activeTab === "schedule" && (
                     <TeacherCalendarSchedule />
                   )}
                   
                   {/* Admin Panel */}
-                  {activeTab === "admin" && (
+                  {profile && 
+                   (activeRole === "admin" || 
+                    (!activeRole && 
+                     ((profile.roles && profile.roles.includes("admin")) || 
+                      profile.role === "admin"))) && 
+                   activeTab === "admin" && (
                     <AdminPanel profile={profile} />
                   )}
                 </div>
@@ -299,12 +374,24 @@ function App() {
           if (data && data.profile) {
             console.log("Profile data loaded successfully:", data.profile);
             setProfile(data.profile);
+            
+            // Set the active role based on the profile
+            // Use the role field for backward compatibility, or the first role in the roles array
+            // If both exist, prioritize the role field as it's the primary role
+            if (data.profile.role) {
+              setActiveRole(data.profile.role);
+            } else if (data.profile.roles && data.profile.roles.length > 0) {
+              setActiveRole(data.profile.roles[0]);
+            }
 
             // Check for upcoming sessions
+            // Still use profile.role for backward compatibility, but could be extended
+            // to check sessions for all roles a user has in the future
             checkUpcomingSessions(userId, data.profile.role);
           } else {
             console.log("No profile found, showing profile form");
             setProfile(null); // No profile found, trigger profile form
+            setActiveRole(null);
           }
         } catch (error) {
           console.error("Error fetching profile:", error);
@@ -738,11 +825,23 @@ function App() {
                   />
                 )}
                 
-                {profile?.role === "student" && activeTab === 'search' && (
+                {/* Show teacher search for students */}
+                {profile && 
+                 (activeRole === "student" || 
+                  (!activeRole && 
+                   ((profile.roles && profile.roles.includes("student")) || 
+                    profile.role === "student"))) && 
+                 activeTab === 'search' && (
                   <TeacherSearch />
                 )}
                 
-                {profile?.role === "student" && activeTab === 'bookings' && (
+                {/* Show bookings for students */}
+                {profile && 
+                 (activeRole === "student" || 
+                  (!activeRole && 
+                   ((profile.roles && profile.roles.includes("student")) || 
+                    profile.role === "student"))) && 
+                 activeTab === 'bookings' && (
                   <Bookings 
                     userId={auth.user?.profile.sub} 
                     userRole="student"
@@ -751,12 +850,23 @@ function App() {
                   />
                 )}
                 
-                {profile?.role === "teacher" && activeTab === 'schedule' && (
+                {/* Show schedule for teachers */}
+                {profile && 
+                 (activeRole === "teacher" || 
+                  (!activeRole && 
+                   ((profile.roles && profile.roles.includes("teacher")) || 
+                    profile.role === "teacher"))) && 
+                 activeTab === 'schedule' && (
                   <TeacherCalendarSchedule />
                 )}
                 
                 {/* Admin Panel */}
-                {activeTab === "admin" && (
+                {profile && 
+                 (activeRole === "admin" || 
+                  (!activeRole && 
+                   ((profile.roles && profile.roles.includes("admin")) || 
+                    profile.role === "admin"))) && 
+                 activeTab === "admin" && (
                   <AdminPanel profile={profile} />
                 )}
               </div>

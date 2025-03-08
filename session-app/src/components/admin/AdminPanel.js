@@ -10,11 +10,12 @@ const AdminPanel = ({ profile }) => {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   // Check if user has admin role - using profile from App.js state
-  // For development, we can also allow access to teachers temporarily
-  const isAdmin = profile?.role === "admin" || profile?.role === "teacher";
+  // First check the roles array, then fall back to the legacy role property
+  const isAdmin = (profile?.roles && profile?.roles.includes("admin")) || 
+                  profile?.role === "admin";
   
   console.log("Profile from props:", profile);
-  console.log("User role:", profile?.role);
+  console.log("User roles:", profile?.roles || [profile?.role]);
 
   if (!isAdmin) {
     return (

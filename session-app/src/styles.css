@@ -3096,3 +3096,65 @@ textarea {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
+
+/* Role Switcher Styles */
+.role-switcher-container {
+  position: relative;
+}
+
+.role-switcher-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #f0f8ff;
+  color: #2a6496;
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+.role-switcher-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: 200px;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.role-option:hover {
+  background-color: #f5f5f5;
+}
+
+.role-option.active {
+  background-color: #e6f3ff;
+  font-weight: 500;
+}
+
+.role-icon-small {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.active-role-selector {
+  margin-top: 20px;
+  background-color: #f0f8ff;
+  padding: 15px;
+  border-radius: 4px;
+  border: 1px solid rgba(9, 114, 211, 0.2);
+}

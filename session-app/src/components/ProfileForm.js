@@ -9,12 +9,21 @@ import {
   FaBook,
   FaPlus,
   FaTimes,
+  FaLock,
 } from "react-icons/fa";
 import { API_BASE_URL } from "../config";
 import "../styles.css";
 
 const ProfileForm = ({ saveUserProfile, profile }) => {
-  const [role, setRole] = useState(profile?.role || "");
+  // For backward compatibility with existing profiles
+  const [roles, setRoles] = useState(
+    profile?.roles || (profile?.role ? [profile.role] : [])
+  );
+  
+  // For users switching between roles in the app
+  const [activeRole, setActiveRole] = useState(
+    profile?.role || (profile?.roles?.[0] || "")
+  );
 
   // For the tag-style inputs
   const [newTopic, setNewTopic] = useState("");
@@ -52,7 +61,11 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
 
   useEffect(() => {
     if (profile) {
-      setRole(profile.role || "");
+      // Handle both new 'roles' array and legacy 'role' string
+      const profileRoles = profile.roles || (profile.role ? [profile.role] : []);
+      setRoles(profileRoles);
+      setActiveRole(profile.role || (profileRoles[0] || ""));
+      
       setFormData({
         ...profile,
         learning_interests: Array.isArray(profile.learning_interests)
@@ -229,8 +242,22 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
     setIsSaving(true);
     setSaveError(null);
 
+    // Validate that at least one role is selected
+    if (roles.length === 0) {
+      setSaveError("Please select at least one role (Student, Teacher, or Admin)");
+      setIsSaving(false);
+      return;
+    }
+
     try {
-      await saveUserProfile({ role, ...formData });
+      // Create a new profile object with the updated fields
+      const profileToSave = { 
+        ...formData,
+        roles: roles,
+        role: activeRole || roles[0] // Set the primary role as the active role or the first role
+      };
+      
+      await saveUserProfile(profileToSave);
     } catch (error) {
       console.error("Error in profile form:", error);
       setSaveError(
@@ -273,28 +300,93 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
 
         <div className="form-section">
           <h3 className="section-title">Account Type</h3>
+          <p className="section-subtitle">Select all roles that apply to you</p>
 
           <div className="role-selector">
             <button
               type="button"
-              className={`role-btn ${role === "student" ? "active" : ""}`}
-              onClick={() => setRole("student")}
+              className={`role-btn ${roles.includes("student") ? "active" : ""}`}
+              onClick={() => {
+                // Toggle student role
+                if (roles.includes("student")) {
+                  setRoles(roles.filter(r => r !== "student"));
+                } else {
+                  setRoles([...roles, "student"]);
+                }
+                
+                // Set active role if it's the only role or if no active role is set
+                if (!activeRole || roles.length === 0) {
+                  setActiveRole("student");
+                }
+              }}
             >
               <FaUser className="role-icon" />
               <span>Student</span>
             </button>
             <button
               type="button"
-              className={`role-btn ${role === "teacher" ? "active" : ""}`}
-              onClick={() => setRole("teacher")}
+              className={`role-btn ${roles.includes("teacher") ? "active" : ""}`}
+              onClick={() => {
+                // Toggle teacher role
+                if (roles.includes("teacher")) {
+                  setRoles(roles.filter(r => r !== "teacher"));
+                } else {
+                  setRoles([...roles, "teacher"]);
+                }
+                
+                // Set active role if it's the only role or if no active role is set
+                if (!activeRole || roles.length === 0) {
+                  setActiveRole("teacher");
+                }
+              }}
             >
               <FaGraduationCap className="role-icon" />
               <span>Teacher</span>
             </button>
+            <button
+              type="button"
+              className={`role-btn ${roles.includes("admin") ? "active" : ""}`}
+              onClick={() => {
+                // Toggle admin role
+                if (roles.includes("admin")) {
+                  setRoles(roles.filter(r => r !== "admin"));
+                } else {
+                  setRoles([...roles, "admin"]);
+                }
+                
+                // Set active role if it's the only role or if no active role is set
+                if (!activeRole || roles.length === 0) {
+                  setActiveRole("admin");
+                }
+              }}
+            >
+              <FaLock className="role-icon" />
+              <span>Admin</span>
+            </button>
           </div>
+          
+          {/* Display active role selector if multiple roles are selected */}
+          {roles.length > 1 && (
+            <div className="active-role-selector">
+              <label htmlFor="active-role">Primary Role:</label>
+              <select 
+                id="active-role" 
+                value={activeRole} 
+                onChange={(e) => setActiveRole(e.target.value)}
+                className="form-control"
+              >
+                {roles.map(role => (
+                  <option key={role} value={role}>
+                    {role.charAt(0).toUpperCase() + role.slice(1)}
+                  </option>
+                ))}
+              </select>
+              <p className="form-text">This will be your default view when logging in.</p>
+            </div>
+          )}
         </div>
 
-        {(role === "student" || role === "teacher") && (
+        {roles.length > 0 && (
           <div className="form-section">
             <h3 className="section-title">Basic Information</h3>
 
@@ -364,7 +456,7 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
         )}
 
         {/* Student Fields */}
-        {role === "student" && (
+        {roles.includes("student") && (
           <div className="form-section">
             <h3 className="section-title">Student Information</h3>
 
@@ -471,7 +563,7 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
         )}
 
         {/* Teacher Fields */}
-        {role === "teacher" && (
+        {roles.includes("teacher") && (
           <div className="form-section">
             <h3 className="section-title">Teacher Information</h3>
 
@@ -600,6 +692,16 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
             </div>
           </div>
         )}
+        
+        {/* Admin Fields - This is minimal for now */}
+        {roles.includes("admin") && (
+          <div className="form-section">
+            <h3 className="section-title">Admin Information</h3>
+            <div className="form-group">
+              <p>As an admin, you'll have access to the admin panel for managing system settings and viewing reports.</p>
+            </div>
+          </div>
+        )}
 
         {saveError && (
           <div className="error-message alert alert-danger">{saveError}</div>
@@ -608,9 +710,9 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
         <div className="form-actions">
           <button
             type="submit"
-            disabled={isSaving || !role}
+            disabled={isSaving || roles.length === 0}
             className={`btn btn-primary ${
-              isSaving || !role ? "btn-disabled" : ""
+              isSaving || roles.length === 0 ? "btn-disabled" : ""
             }`}
           >
             {isSaving ? "Saving Profile..." : "Save Profile"}

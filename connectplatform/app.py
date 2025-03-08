@@ -161,10 +161,24 @@ def create_user_profile(event):
             print(f"Error decoding JSON body: {str(json_error)}, Body: {event.get('body', 'None')}")
             return response_with_cors(400, {"message": "Invalid JSON in request body."})
 
-        # Get user_id and role from body
+        # Get user_id and roles from body
         user_id = body.get('user_id')
-        role = body.get('role')
-
+        
+        # Handle both single role and array of roles for backward compatibility
+        roles = body.get('roles', [])
+        legacy_role = body.get('role')
+        
+        # Convert legacy single role to array if present and roles array is empty
+        if legacy_role and not roles:
+            roles = [legacy_role]
+        # Ensure roles is always a list even if a single string is passed
+        elif legacy_role and isinstance(roles, str):
+            roles = [roles]
+        
+        # If roles is still empty but there's a role in profile_data, use that
+        if not roles and body.get('profile_data', {}).get('role'):
+            roles = [body['profile_data']['role']]
+        
         # Get profile data, which could be direct or nested
         if 'profile_data' in body:
             # Frontend sends nested profile_data
@@ -173,7 +187,7 @@ def create_user_profile(event):
             # Direct profile data without nesting
             profile_data = body
 
-        print(f"Profile creation for user_id: {user_id}, role: {role}, data: {json.dumps(profile_data, default=str)}")
+        print(f"Profile creation for user_id: {user_id}, roles: {roles}, data: {json.dumps(profile_data, default=str)}")
 
         if not user_id:
             print("Error: Missing user_id in request")
@@ -187,9 +201,12 @@ def create_user_profile(event):
             'updated_at': timestamp,
         }
 
-        # Add role if provided
-        if role:
-            profile_item['role'] = role
+        # Add roles array if provided
+        if roles:
+            profile_item['roles'] = roles
+            # Also maintain a single 'role' field for backward compatibility
+            # Use the first role in the array as the primary role
+            profile_item['role'] = roles[0]
 
         # Add all other profile data
         for key, value in profile_data.items():
@@ -205,6 +222,13 @@ def create_user_profile(event):
             if existing_profile:
                 print(f"Existing profile found for {user_id}, updating")
                 profile_item['created_at'] = existing_profile['created_at']
+                
+                # Handle migration for existing profiles without 'roles' field
+                if 'role' in existing_profile and 'roles' not in existing_profile:
+                    # If we're not explicitly setting roles in this update, but the profile
+                    # already has a legacy role, preserve it in the new roles array
+                    if not roles and existing_profile.get('role'):
+                        profile_item['roles'] = [existing_profile['role']]
             else:
                 print(f"No existing profile for {user_id}, creating new")
         except Exception as get_error:
@@ -990,9 +1014,26 @@ def search_teachers(event):
         
         # Search for teachers who offer this topic or match the name
         profile_table = dynamodb.Table(PROFILE_TABLE)
-        response = profile_table.scan(
-            FilterExpression=Attr('role').eq('teacher')
-        )
+        
+        # First try to search using the new roles array field
+        try:
+            # Build a filter expression that checks if 'teacher' is in the roles array
+            response = profile_table.scan(
+                FilterExpression=Attr('roles').contains('teacher')
+            )
+            
+            # If nothing found, fall back to the legacy 'role' field
+            if not response['Items']:
+                print("No profiles found with roles array containing 'teacher', falling back to role field")
+                response = profile_table.scan(
+                    FilterExpression=Attr('role').eq('teacher')
+                )
+        except ClientError as e:
+            # If the roles attribute doesn't exist or there's another issue, fall back to the legacy approach
+            print(f"Error searching by roles array: {str(e)}, falling back to role field")
+            response = profile_table.scan(
+                FilterExpression=Attr('role').eq('teacher')
+            )
 
         teachers = []
         for teacher in response['Items']:
