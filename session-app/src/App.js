@@ -21,6 +21,9 @@ import {
   FaHome,
   FaLock,
   FaExchangeAlt,
+  FaUserPlus,
+  FaUser,
+  FaGraduationCap,
 } from "react-icons/fa"; // Import icons
 
 function App() {
@@ -38,15 +41,16 @@ function App() {
   const [activeRole, setActiveRole] = useState(null);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
-  const signoutRedirect = async () => {
-    const clientId = "2fpemjqos4302bfaf65g06l8g0"; // Cognito App Client ID
-    const logoutUri = "https://sessions.red"; // Post-logout redirect URI
-    const cognitoDomain = "https://auth.sessions.red"; // Cognito domain
+  // Define Cognito configuration values
+  const clientId = "2fpemjqos4302bfaf65g06l8g0"; // Cognito App Client ID
+  const redirectUri = "https://sessions.red"; // Redirect URI
+  const cognitoDomain = "https://auth.sessions.red"; // Cognito domain
 
+  const signoutRedirect = async () => {
     // Construct the logout URL with the post-logout redirect URI
     const logoutURL = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
-      logoutUri
-    )}&post_logout_redirect_uri=${encodeURIComponent(logoutUri)}`;
+      redirectUri
+    )}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
 
     console.log("Logout URL:", logoutURL); // Log for debugging
 
@@ -59,6 +63,17 @@ function App() {
     } catch (error) {
       console.error("Error during signout:", error);
     }
+  };
+
+  // Function to redirect users directly to the signup page
+  const signupRedirect = () => {
+    // Construct the signup URL for Cognito
+    const signupURL = `${cognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=email+openid+phone+profile+aws.cognito.signin.user.admin&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    
+    console.log("Signup URL:", signupURL); // Log for debugging
+    
+    // Redirect directly to Cognito signup page
+    window.location.href = signupURL;
   };
 
   const renderHeader = () => (
@@ -83,9 +98,14 @@ function App() {
       </div>
       <nav className="header-nav">
         {!auth.isAuthenticated ? (
-          <button className="header-link" onClick={() => auth.signinRedirect()}>
-            <FaSignInAlt className="header-icon" /> Sign In
-          </button>
+          <>
+            <button className="header-link" onClick={() => auth.signinRedirect()}>
+              <FaSignInAlt className="header-icon" /> Sign In
+            </button>
+            <button className="header-link" onClick={signupRedirect}>
+              <FaUserPlus className="header-icon" /> Sign Up
+            </button>
+          </>
         ) : (
           <>
             {/* Dashboard button */}
@@ -340,6 +360,17 @@ function App() {
             }
           );
 
+          // Special handling for 404 status (profile not found)
+          // This is not an error for new users, just means they need to create a profile
+          if (response.status === 404) {
+            console.log("Profile not found for new user (404), showing profile form");
+            setProfile(null);
+            setActiveRole(null);
+            setLoadingProfile(false);
+            return; // Exit early, no need to process further
+          }
+          
+          // Handle other error statuses
           if (!response.ok) {
             const errorText = await response.text();
             console.error("Profile error response:", errorText);
@@ -632,12 +663,18 @@ function App() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-center">
+                  <div className="text-center landing-buttons">
                     <button
                       className="btn btn-primary btn-lg"
                       onClick={() => auth.signinRedirect()}
                     >
                       Sign In to Get Started
+                    </button>
+                    <button
+                      className="btn btn-secondary btn-lg"
+                      onClick={signupRedirect}
+                    >
+                      Create an Account
                     </button>
                   </div>
                 </div>
@@ -717,10 +754,14 @@ function App() {
   if (profileError) {
     console.error("Profile error:", profileError);
 
-    // Check if the error message indicates an HTML response
+    // Check error type to give appropriate user feedback
     const isServerDown =
       profileError.includes("HTML instead of JSON") ||
       profileError.includes("Failed to parse profile data");
+
+    // If this is a new user with no profile, we shouldn't see this error anymore
+    // But if we do, we'll handle it gracefully
+    const isProfileNotFound = profileError.includes("404");
 
     return (
       <div className="app-layout">
@@ -730,46 +771,68 @@ function App() {
             <div className="container">
               <div className="card">
                 <div className="card-body text-center">
-                  <h2 className="text-warning mb-4">
-                    {isServerDown ? "API Server Error" : "Profile Error"}
-                  </h2>
-                  <div className="error-message mb-4">
-                    {isServerDown ? (
-                      <>
-                        <p>
-                          <strong>
-                            Our API server appears to be down or misconfigured.
-                          </strong>
-                        </p>
-                        <p>
-                          We're experiencing technical difficulties connecting
-                          to our servers. Please try again later.
-                        </p>
-                        <p className="text-muted small">
-                          Technical details: {profileError}
-                        </p>
-                      </>
-                    ) : (
-                      profileError
-                    )}
-                  </div>
-
-                  {isServerDown ? (
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => window.location.reload()}
-                    >
-                      Refresh Page
-                    </button>
-                  ) : (
+                  {isProfileNotFound ? (
+                    // User just needs to create a profile - show the form without error messaging
                     <>
-                      <p>You can continue by creating a new profile</p>
+                      <h2 className="mb-4">Complete Your Profile</h2>
+                      <p className="mb-4">Welcome to Vyoma 1:1! Please complete your profile to get started.</p>
                       <div className="mt-4">
                         <ProfileForm
                           saveUserProfile={saveUserProfile}
                           profile={null}
                         />
                       </div>
+                    </>
+                  ) : (
+                    // Other types of errors
+                    <>
+                      <h2 className="text-warning mb-4">
+                        {isServerDown ? "API Server Error" : "Profile Error"}
+                      </h2>
+                      <div className="error-message mb-4">
+                        {isServerDown ? (
+                          <>
+                            <p>
+                              <strong>
+                                Our API server appears to be down or misconfigured.
+                              </strong>
+                            </p>
+                            <p>
+                              We're experiencing technical difficulties connecting
+                              to our servers. Please try again later.
+                            </p>
+                            <p className="text-muted small">
+                              Technical details: {profileError}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p>We encountered an error loading your profile.</p>
+                            <p className="text-muted small">
+                              Technical details: {profileError}
+                            </p>
+                          </>
+                        )}
+                      </div>
+
+                      {isServerDown ? (
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => window.location.reload()}
+                        >
+                          Refresh Page
+                        </button>
+                      ) : (
+                        <>
+                          <p>You can continue by creating or updating your profile</p>
+                          <div className="mt-4">
+                            <ProfileForm
+                              saveUserProfile={saveUserProfile}
+                              profile={null}
+                            />
+                          </div>
+                        </>
+                      )}
                     </>
                   )}
                 </div>
