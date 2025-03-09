@@ -31,12 +31,10 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
 
   const [formData, setFormData] = useState({
     name: profile?.name || "",
-    year_of_birth: profile?.year_of_birth || "",
     educational_qualification: profile?.educational_qualification || "",
     learning_interests: Array.isArray(profile?.learning_interests)
       ? profile?.learning_interests
       : [],
-    location: profile?.location || "",
     timezone: profile?.timezone || "IST",
     why_1_1_classes: profile?.why_1_1_classes || "",
     qualification: profile?.qualification || "",
@@ -403,35 +401,7 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
               />
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="year_of_birth">Year of Birth</label>
-                <input
-                  id="year_of_birth"
-                  type="number"
-                  name="year_of_birth"
-                  value={formData.year_of_birth}
-                  onChange={handleInputChange}
-                  min="1900"
-                  max={new Date().getFullYear()}
-                  required
-                  className="form-control"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="location">Location</label>
-                <input
-                  id="location"
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  placeholder="City, Country"
-                  onChange={handleInputChange}
-                  className="form-control"
-                />
-              </div>
-            </div>
+{/* Year of birth and location fields removed as they're captured in Cognito */}
 
             <div className="form-group">
               <label htmlFor="timezone">Timezone</label>
