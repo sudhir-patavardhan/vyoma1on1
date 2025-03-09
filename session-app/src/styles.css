@@ -1155,6 +1155,29 @@ textarea {
   font-weight: 500;
 }
 
+/* Admin Badge Styling */
+.admin-badge {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.2);
+  cursor: default;
+  position: relative;
+  overflow: visible;
+}
+
+.admin-badge:hover {
+  transform: none;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.admin-note {
+  display: block;
+  font-size: 10px;
+  font-weight: normal;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-style: italic;
+}
+
 .tags-input-container {
   border: 1px solid var(--gray-300);
   border-radius: var(--radius-md);
