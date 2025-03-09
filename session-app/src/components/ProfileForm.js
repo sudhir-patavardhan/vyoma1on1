@@ -242,17 +242,28 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
 
     // Validate that at least one role is selected
     if (roles.length === 0) {
-      setSaveError("Please select at least one role (Student, Teacher, or Admin)");
+      setSaveError("Please select at least one role (Student or Teacher)");
       setIsSaving(false);
       return;
     }
 
     try {
       // Create a new profile object with the updated fields
+      const rolesToSave = [...roles]; // Make a copy of roles array for modification
+      
+      // If the original profile had admin role, preserve it
+      // This ensures admin role can't be removed through the UI
+      if (profile?.roles?.includes("admin") || profile?.role === "admin") {
+        if (!rolesToSave.includes("admin")) {
+          rolesToSave.push("admin");
+          console.log("Preserving admin role from original profile");
+        }
+      }
+      
       const profileToSave = { 
         ...formData,
-        roles: roles,
-        role: activeRole || roles[0] // Set the primary role as the active role or the first role
+        roles: rolesToSave,
+        role: activeRole || rolesToSave[0] // Set the primary role as the active role or the first role
       };
       
       await saveUserProfile(profileToSave);
@@ -341,26 +352,15 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
               <FaGraduationCap className="role-icon" />
               <span>Teacher</span>
             </button>
-            <button
-              type="button"
-              className={`role-btn ${roles.includes("admin") ? "active" : ""}`}
-              onClick={() => {
-                // Toggle admin role
-                if (roles.includes("admin")) {
-                  setRoles(roles.filter(r => r !== "admin"));
-                } else {
-                  setRoles([...roles, "admin"]);
-                }
-                
-                // Set active role if it's the only role or if no active role is set
-                if (!activeRole || roles.length === 0) {
-                  setActiveRole("admin");
-                }
-              }}
-            >
-              <FaLock className="role-icon" />
-              <span>Admin</span>
-            </button>
+            {/* Admin role button removed - admin role can only be assigned from the backend */}
+            {/* Display admin badge if user already has admin role to show it's preserved */}
+            {roles.includes("admin") && (
+              <div className="role-btn admin-badge">
+                <FaLock className="role-icon" />
+                <span>Admin</span>
+                <small className="admin-note">Assigned by system</small>
+              </div>
+            )}
           </div>
           
           {/* Display active role selector if multiple roles are selected */}
@@ -376,6 +376,7 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
                 {roles.map(role => (
                   <option key={role} value={role}>
                     {role.charAt(0).toUpperCase() + role.slice(1)}
+                    {role === "admin" ? " (System assigned)" : ""}
                   </option>
                 ))}
               </select>
