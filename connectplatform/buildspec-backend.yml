@@ -29,7 +29,7 @@ phases:
       - grep -q "RazorPayConfigTable" deployment-template.yml || (echo "ERROR: RazorPayConfigTable not found in template" && exit 1)
       - echo "Deploying backend Lambda functions"
       - echo "Creating/updating CloudFormation stack"
-      - aws cloudformation deploy --template-file deployment-template.yml --stack-name yoursanskritteacher-api --parameter-overrides Stage=prod --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1
+      - aws cloudformation deploy --template-file deployment-template.yml --stack-name yoursanskritteacher-api --parameter-overrides Stage=prod Region=us-east-1 --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1
 
 artifacts:
   files:

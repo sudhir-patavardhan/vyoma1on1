@@ -10,6 +10,13 @@ Parameters:
       - dev
       - test
       - prod
+  Region:
+    Type: String
+    Default: us-east-1
+    Description: AWS Region for deployment
+    AllowedValues:
+      - us-east-1
+      - ap-south-1
 
 Resources:
   # Lambda function for handling API requests
@@ -19,6 +26,7 @@ Resources:
       FunctionName: !Sub "your-sanskrit-teacher-api-function-${Stage}"
       Handler: app.lambda_handler
       Runtime: python3.11
+      Region: us-east-1
       Code: 
         S3Bucket: yoursanskritteacher-lambda-deployments
         S3Key: lambda-deployment.zip
@@ -47,6 +55,7 @@ Resources:
       EndpointConfiguration:
         Types:
           - REGIONAL
+        Region: us-east-1
   
   # Lambda execution role
   LambdaExecutionRole:

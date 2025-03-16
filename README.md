@@ -69,7 +69,7 @@ You can also trigger deployments manually:
 ```bash
 cd connectplatform
 ./create-deployment.sh
-aws cloudformation deploy --template-file deployment-template.yml --stack-name yoursanskritteacher-api --parameter-overrides Stage=prod --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1
+aws cloudformation deploy --template-file deployment-template.yml --stack-name yoursanskritteacher-api --parameter-overrides Stage=prod Region=us-east-1 --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1
 ```
 
 ### Frontend:
