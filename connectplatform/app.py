@@ -675,7 +675,7 @@ def generate_presigned_url(event):
         s3_client = boto3.client('s3')
 
         # Define the bucket and key
-        bucket_name = 'sessionsred-uploads-prod'  # Production bucket name
+        bucket_name = 'yoursanskritteacher-uploads-prod'  # Production bucket name
         key = f"profile-photos/{file_name}"
 
         # Generate pre-signed URL for PUT operation
@@ -1577,7 +1577,7 @@ def get_booking_session(event):
 def lambda_handler(event, context):
     """Main Lambda entry point to handle incoming requests."""
     # Log request info and environment details for debugging
-    print(f"Sessions API request: {event.get('path', '')} [{event.get('httpMethod', 'DIRECT')}]")
+    print(f"Your Sanskrit Teacher API request: {event.get('path', '')} [{event.get('httpMethod', 'DIRECT')}]")
     print(f"Lambda v{context.function_version} [{os.environ.get('BUILD_VERSION', 'undefined')}], alias: {os.environ.get('AWS_LAMBDA_FUNCTION_ALIAS', 'undefined')}")
 
     # Only log table names during cold start to reduce noise

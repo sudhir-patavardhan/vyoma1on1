@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Sessions Red API - Connecting students with teachers'
+Description: 'Your Sanskrit Teacher API - Connecting students with Sanskrit teachers'
 
 Parameters:
   Stage:
@@ -13,14 +13,14 @@ Parameters:
 
 Resources:
   # Lambda function for handling API requests
-  SessionsRedFunction:
+  YourSanskritTeacherFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "sessions-red-api-function-${Stage}"
+      FunctionName: !Sub "your-sanskrit-teacher-api-function-${Stage}"
       Handler: app.lambda_handler
       Runtime: python3.11
       Code: 
-        S3Bucket: sessions-red-lambda-deployments
+        S3Bucket: yoursanskritteacher-lambda-deployments
         S3Key: lambda-deployment.zip
       Environment:
         Variables:
@@ -39,11 +39,11 @@ Resources:
       # 3. Description changes with each deployment
   
   # API Gateway for the Lambda function
-  SessionsRedApi:
+  YourSanskritTeacherApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: !Sub "sessions-red-api-${Stage}"
-      Description: API for Sessions Red platform
+      Name: !Sub "your-sanskrit-teacher-api-${Stage}"
+      Description: API for Your Sanskrit Teacher platform
       EndpointConfiguration:
         Types:
           - REGIONAL
@@ -90,28 +90,28 @@ Resources:
       - ApiProxyMethod
       - ApiProxyOptionsMethod
     Properties:
-      RestApiId: !Ref SessionsRedApi
+      RestApiId: !Ref YourSanskritTeacherApi
       StageName: !Ref Stage
   
   # API Gateway root resource
   ApiRootMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      RestApiId: !Ref SessionsRedApi
-      ResourceId: !GetAtt SessionsRedApi.RootResourceId
+      RestApiId: !Ref YourSanskritTeacherApi
+      ResourceId: !GetAtt YourSanskritTeacherApi.RootResourceId
       HttpMethod: ANY
       AuthorizationType: NONE
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SessionsRedFunction.Arn}/invocations"
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${YourSanskritTeacherFunction.Arn}/invocations"
         
   # API Gateway root OPTIONS method for CORS
   ApiRootOptionsMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      RestApiId: !Ref SessionsRedApi
-      ResourceId: !GetAtt SessionsRedApi.RootResourceId
+      RestApiId: !Ref YourSanskritTeacherApi
+      ResourceId: !GetAtt YourSanskritTeacherApi.RootResourceId
       HttpMethod: OPTIONS
       AuthorizationType: NONE
       Integration:
@@ -136,28 +136,28 @@ Resources:
   ApiProxyResource:
     Type: AWS::ApiGateway::Resource
     Properties:
-      RestApiId: !Ref SessionsRedApi
-      ParentId: !GetAtt SessionsRedApi.RootResourceId
+      RestApiId: !Ref YourSanskritTeacherApi
+      ParentId: !GetAtt YourSanskritTeacherApi.RootResourceId
       PathPart: '{proxy+}'
   
   # API Gateway proxy method
   ApiProxyMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      RestApiId: !Ref SessionsRedApi
+      RestApiId: !Ref YourSanskritTeacherApi
       ResourceId: !Ref ApiProxyResource
       HttpMethod: ANY
       AuthorizationType: NONE
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SessionsRedFunction.Arn}/invocations"
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${YourSanskritTeacherFunction.Arn}/invocations"
   
   # API Gateway proxy OPTIONS method for CORS
   ApiProxyOptionsMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      RestApiId: !Ref SessionsRedApi
+      RestApiId: !Ref YourSanskritTeacherApi
       ResourceId: !Ref ApiProxyResource
       HttpMethod: OPTIONS
       AuthorizationType: NONE
@@ -184,9 +184,9 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: 'lambda:InvokeFunction'
-      FunctionName: !Ref SessionsRedFunction
+      FunctionName: !Ref YourSanskritTeacherFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SessionsRedApi}/*/*/*"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${YourSanskritTeacherApi}/*/*/*"
 
   # DynamoDB Tables
   UserProfilesTable:
@@ -253,7 +253,7 @@ Resources:
   UploadsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "sessionsred-uploads-${Stage}"
+      BucketName: !Sub "yoursanskritteacher-uploads-${Stage}"
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders:
@@ -319,12 +319,12 @@ Resources:
           KeyType: HASH
 
 Outputs:
-  SessionsRedApi:
-    Description: "API Gateway endpoint URL for Sessions Red API"
-    Value: !Sub "https://${SessionsRedApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
-  SessionsRedFunction:
+  YourSanskritTeacherApi:
+    Description: "API Gateway endpoint URL for Your Sanskrit Teacher API"
+    Value: !Sub "https://${YourSanskritTeacherApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
+  YourSanskritTeacherFunction:
     Description: "Lambda Function ARN"
-    Value: !GetAtt SessionsRedFunction.Arn
+    Value: !GetAtt YourSanskritTeacherFunction.Arn
   UploadsBucketName:
     Description: "S3 bucket for user uploads"
     Value: !Ref UploadsBucket

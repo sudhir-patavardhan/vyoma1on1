@@ -43,8 +43,8 @@ function App() {
 
   // Define Cognito configuration values
   const clientId = "2fpemjqos4302bfaf65g06l8g0"; // Cognito App Client ID
-  const redirectUri = "https://sessions.red"; // Redirect URI
-  const cognitoDomain = "https://auth.sessions.red"; // Cognito domain
+  const redirectUri = "https://yoursanskritteacher.com"; // Redirect URI
+  const cognitoDomain = "https://auth.yoursanskritteacher.com"; // Cognito domain
 
   const signoutRedirect = async () => {
     // Construct the logout URL with the post-logout redirect URI
@@ -87,14 +87,14 @@ function App() {
       >
         <img
           src="/vyoma/Vyoma_Logo_Blue_500x243.png"
-          alt="Vyoma 1:1 Logo"
+          alt="Your Sanskrit Teacher Logo"
           className="header-logo-full"
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = "/vyoma/vyoma-logo.svg"; // Fallback to SVG if PNG doesn't exist
           }}
         />
-        <span className="app-name">Vyoma 1:1</span>
+        <span className="app-name">Your Sanskrit Teacher</span>
       </div>
       <nav className="header-nav">
         {!auth.isAuthenticated ? (
@@ -604,14 +604,14 @@ function App() {
           <div className="footer-logo">
             <img
               src="/vyoma/Vyoma_Logo_Blue_500x243.png"
-              alt="Vyoma 1:1"
+              alt="Your Sanskrit Teacher"
               height="30"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = "/vyoma/vyoma-logo.svg";
               }}
             />
-            <span>Vyoma 1:1</span>
+            <span>Your Sanskrit Teacher</span>
           </div>
           <div className="footer-links">
             <a href="#">Terms of Service</a>
@@ -619,7 +619,7 @@ function App() {
             <a href="#">Contact Us</a>
           </div>
           <div className="footer-copyright">
-            © {new Date().getFullYear()} Vyoma Learning, Inc. All rights
+            © {new Date().getFullYear()} Your Sanskrit Teacher, Inc. All rights
             reserved.
           </div>
         </div>
@@ -636,7 +636,7 @@ function App() {
             <div className="container">
               <div className="card">
                 <div className="card-body">
-                  <h1 className="landing-heading">Welcome to Vyoma 1:1</h1>
+                  <h1 className="landing-heading">Welcome to Your Sanskrit Teacher</h1>
                   <p className="landing-text">
                     Connect with expert Sanskrit teachers for personalized 1:1
                     learning experiences. Our platform helps students find

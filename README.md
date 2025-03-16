@@ -69,7 +69,7 @@ You can also trigger deployments manually:
 ```bash
 cd connectplatform
 ./create-deployment.sh
-aws cloudformation deploy --template-file deployment-template.yml --stack-name sessions-red-api --parameter-overrides Stage=prod --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1
+aws cloudformation deploy --template-file deployment-template.yml --stack-name yoursanskritteacher-api --parameter-overrides Stage=prod --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --region us-east-1
 ```
 
 ### Frontend:
@@ -77,7 +77,7 @@ aws cloudformation deploy --template-file deployment-template.yml --stack-name s
 cd session-app
 npm install
 npm run build
-aws s3 sync build/ s3://vyoma-learning-react-app-deployments/ --delete
+aws s3 sync build/ s3://yoursanskritteacher-react-app-deployments/ --delete
 aws cloudfront create-invalidation --distribution-id YOUR_CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
 ```
 

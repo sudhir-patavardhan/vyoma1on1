@@ -1,4 +1,4 @@
-# Sessions Red Development Guide
+# Your Sanskrit Teacher Development Guide
 
 ## Build/Test Commands
 - **Start development server:** `cd session-app && npm start`
