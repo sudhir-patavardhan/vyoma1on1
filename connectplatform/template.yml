@@ -212,6 +212,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "UserProfiles-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -226,6 +227,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "TeacherAvailability-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -240,6 +242,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "Bookings-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -254,6 +257,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "Sessions-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -268,6 +272,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "ServiceCatalog-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -283,6 +288,7 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       BucketName: !Sub "yoursanskritteacher-uploads-${Stage}"
       CorsConfiguration:
@@ -304,6 +310,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "Payments-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -343,6 +350,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "RazorPayConfig-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -362,4 +370,25 @@ Outputs:
     Value: !GetAtt YourSanskritTeacherFunction.Arn
   UploadsBucketName:
     Description: "S3 bucket for user uploads"
-    Value: !Ref UploadsBucket
+    Value: !If [ShouldCreateNewResources, !Ref UploadsBucket, !Sub "yoursanskritteacher-uploads-${Stage}"]
+  ServiceCatalogTableName:
+    Description: "ServiceCatalog table name"
+    Value: !Sub "ServiceCatalog-${Stage}"
+  UserProfilesTableName:
+    Description: "UserProfiles table name"
+    Value: !Sub "UserProfiles-${Stage}"
+  TeacherAvailabilityTableName:
+    Description: "TeacherAvailability table name"
+    Value: !Sub "TeacherAvailability-${Stage}"
+  BookingsTableName:
+    Description: "Bookings table name"
+    Value: !Sub "Bookings-${Stage}"
+  SessionsTableName:
+    Description: "Sessions table name"
+    Value: !Sub "Sessions-${Stage}"
+  PaymentsTableName:
+    Description: "Payments table name"
+    Value: !Sub "Payments-${Stage}"
+  RazorPayConfigTableName:
+    Description: "RazorPayConfig table name"
+    Value: !Sub "RazorPayConfig-${Stage}"
