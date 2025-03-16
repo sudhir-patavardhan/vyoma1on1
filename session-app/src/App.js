@@ -42,15 +42,24 @@ function App() {
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
   // Define Cognito configuration values
-  const clientId = "2fpemjqos4302bfaf65g06l8g0"; // Cognito App Client ID
-  const redirectUri = "https://yoursanskritteacher.com"; // Redirect URI
-  const cognitoDomain = "https://auth.yoursanskritteacher.com"; // Cognito domain
+  const cognitoAuthConfig = {
+    authority: "https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_WYpPDAspb",
+    client_id: "4s3reppitj9v5vbs2tifqvpmr6",
+    redirect_uri: "https://yoursanskritteacher.com",
+    response_type: "code",
+    scope: "phone openid email",
+  };
+  
+  // Backward compatibility with existing code
+  const clientId = cognitoAuthConfig.client_id; 
+  const redirectUri = cognitoAuthConfig.redirect_uri;
+  const cognitoDomain = "https://auth.yoursanskritteacher.com"; // Will derive from authority if needed
 
   const signoutRedirect = async () => {
-    // Construct the logout URL with the post-logout redirect URI
-    const logoutURL = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
-      redirectUri
-    )}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
+    // Construct the logout URL with AWS Cognito format
+    const logoutURL = `${cognitoAuthConfig.authority.replace('cognito-idp', 'cognito')}/logout?client_id=${cognitoAuthConfig.client_id}&logout_uri=${encodeURIComponent(
+      cognitoAuthConfig.redirect_uri
+    )}`;
 
     console.log("Logout URL:", logoutURL); // Log for debugging
 
@@ -67,8 +76,8 @@ function App() {
 
   // Function to redirect users directly to the signup page
   const signupRedirect = () => {
-    // Construct the signup URL for Cognito
-    const signupURL = `${cognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=email+openid+phone+profile+aws.cognito.signin.user.admin&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    // Construct the signup URL for Cognito using the new AWS format
+    const signupURL = `${cognitoAuthConfig.authority.replace('cognito-idp', 'cognito')}/signup?client_id=${cognitoAuthConfig.client_id}&response_type=${cognitoAuthConfig.response_type}&scope=${cognitoAuthConfig.scope.replace(/ /g, '+')}&redirect_uri=${encodeURIComponent(cognitoAuthConfig.redirect_uri)}`;
     
     console.log("Signup URL:", signupURL); // Log for debugging
     
