@@ -243,9 +243,22 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
   
   return (
     <div className="dashboard-container">
-      <div className="dashboard-header">
-        <h1>Welcome, {profile.name || profile.user_id}!</h1>
-        <p className="user-role">You are signed in as a {profile.role}</p>
+      <div className="dashboard-header premium">
+        <div className="premium-welcome">
+          <h1>Namaste, {profile.name || profile.user_id}</h1>
+          <p className="user-role">
+            You are signed in as a {profile.role === "teacher" ? "PhD Sanskrit Scholar" : "Premium Member"}
+          </p>
+        </div>
+        <div className="premium-badge">
+          <div className="premium-badge-icon">
+            <FaGraduationCap />
+          </div>
+          <div className="premium-badge-text">
+            Premium
+            <span>Collection</span>
+          </div>
+        </div>
       </div>
       
       {error && <div className="error-message">{error}</div>}

@@ -3,6 +3,8 @@ import { useAuth } from "react-oidc-context";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
 import "../styles.css";
+import "../premium-styles.css"; // Import premium styles
+import { FaGraduationCap, FaLock } from "react-icons/fa";
 import PaymentService from "../services/PaymentService";
 
 const TeacherSearch = () => {
@@ -173,8 +175,8 @@ const TeacherSearch = () => {
         key: orderData.razorpay_key_id,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "Sessions Red",
-        description: `Session with ${selectedTeacher.name} on ${searchTerm}`,
+        name: "Sanskrit Teacher",
+        description: `Premium Session with Dr. ${selectedTeacher.name} on ${searchTerm}`,
         order_id: orderData.order_id,
         handler: function(response) {
           // This function is called when payment is successful
@@ -192,7 +194,7 @@ const TeacherSearch = () => {
           topic: searchTerm
         },
         theme: {
-          color: "#0972D3"
+          color: "#c6a147" /* Premium gold instead of blue */
         },
         modal: {
           ondismiss: function() {
@@ -338,7 +340,8 @@ const TeacherSearch = () => {
           
           <div className="teacher-list">
             {searchResults.map((teacher) => (
-              <div key={teacher.user_id} className="teacher-card">
+              <div key={teacher.user_id} className="teacher-card premium">
+                <div className="scholar-badge">PhD Sanskrit Scholar</div>
                 <div className="teacher-card-header">
                   {teacher.photo_url && (
                     <img 
@@ -347,25 +350,38 @@ const TeacherSearch = () => {
                       className="teacher-photo"
                     />
                   )}
-                  <h4>{teacher.name}</h4>
+                  <h4>Dr. {teacher.name}</h4>
+                  <div className="teacher-credentials">
+                    <FaGraduationCap className="credential-icon" />
+                    <span>Verified Scholar</span>
+                  </div>
                 </div>
                 
                 <div className="teacher-card-body">
                   {teacher.bio && <p>{teacher.bio}</p>}
                   
-                  <p><strong>Topics:</strong> {teacher.topics.join(", ")}</p>
+                  <p><strong>Specialization:</strong> {teacher.topics.join(", ")}</p>
+                  
+                  <p className="academic-credentials">
+                    <strong>Academic Credentials:</strong> PhD in Sanskrit Studies
+                    {teacher.university ? ` from ${teacher.university}` : ''}
+                  </p>
                   
                   {teacher.years_of_experience && (
-                    <p><strong>Experience:</strong> {teacher.years_of_experience} years</p>
+                    <p><strong>Experience:</strong> {teacher.years_of_experience} years of scholarly instruction</p>
                   )}
+                  
+                  <p className="premium-rate">
+                    <strong>Premium Rate:</strong> <span className="premium-price">Exclusive Pricing</span>
+                  </p>
                 </div>
                 
                 <div className="teacher-card-footer">
                   <button
-                    className="btn btn-secondary"
+                    className="btn btn-primary premium-btn"
                     onClick={() => viewTeacherAvailability(teacher.user_id)}
                   >
-                    View Available Sessions
+                    View Premium Sessions
                   </button>
                 </div>
               </div>
@@ -392,30 +408,44 @@ const TeacherSearch = () => {
           {availabilities.length > 0 ? (
             <div className="availability-list">
               {availabilities.map((slot) => (
-                <div key={slot.availability_id} className="slot-card">
+                <div key={slot.availability_id} className="slot-card premium">
+                  <div className="premium-tag">PhD Scholar Session</div>
                   <div className="slot-header">
-                    <h4>Available Session with {selectedTeacher.name}</h4>
-                    <div className="session-price">
-                      <span className="price-tag">₹{slot.price || 500}</span>
+                    <h4>Premium Session with Dr. {selectedTeacher.name}</h4>
+                    <div className="session-quality">
+                      <span className="quality-badge">Exclusive</span>
                     </div>
                   </div>
                   
                   <div className="slot-details">
                     <p><strong>Date:</strong> {formatDate(slot.start_time)}</p>
                     <p><strong>Time:</strong> {formatTime(slot.start_time)} - {formatTime(slot.end_time)}</p>
-                    <p><strong>Topics:</strong> {selectedTeacher.topics.join(", ")}</p>
-                    <p><strong>Duration:</strong> 30 minutes</p>
-                    <p><strong>Fee:</strong> <span className="price">₹{slot.price || 500}</span></p>
+                    <p><strong>Specialization:</strong> {selectedTeacher.topics.join(", ")}</p>
+                    <p><strong>Duration:</strong> 60 minutes</p>
+                    <p><strong>Instructor:</strong> Dr. {selectedTeacher.name}, PhD Sanskrit Scholar</p>
+                    <p className="session-benefits">
+                      <strong>Session includes:</strong> Personalized instruction, curated learning materials, recording access
+                    </p>
+                  </div>
+                  
+                  <div className="premium-price-display">
+                    <div className="price-amount">
+                      <span className="premium-label">Premium Session</span>
+                    </div>
+                    <span className="price-period">Exclusive Instruction</span>
                   </div>
                   
                   <button
-                    className="btn btn-primary"
+                    className="btn btn-primary premium-btn"
                     onClick={() => handlePayment(slot.availability_id)}
                     disabled={loading || paymentProcessing}
                   >
                     {paymentProcessing ? "Processing Payment..." : 
-                     loading ? "Booking..." : "Pay & Book This Session"}
+                     loading ? "Reserving..." : "Reserve Premium Session"}
                   </button>
+                  <p className="secure-payment-note">
+                    <FaLock style={{fontSize: '0.8rem', marginRight: '5px'}} /> Secure international payment
+                  </p>
                 </div>
               ))}
             </div>

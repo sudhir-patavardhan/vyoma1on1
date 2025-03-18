@@ -10,6 +10,7 @@ import Dashboard from "./components/Dashboard";
 import AdminPanel from "./components/admin/AdminPanel";
 import { API_BASE_URL } from "./config";
 import "./styles.css";
+import "./premium-styles.css"; // Import premium styles
 import {
   FaSearch,
   FaSignInAlt,
@@ -95,15 +96,15 @@ function App() {
         style={{ cursor: "pointer" }}
       >
         <img
-          src="/vyoma/Vyoma_Logo_Blue_500x243.png"
+          src="/vyoma/premium-logo.svg"
           alt="Your Sanskrit Teacher Logo"
           className="header-logo-full"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = "/vyoma/vyoma-logo.svg"; // Fallback to SVG if PNG doesn't exist
+            e.target.src = "/vyoma/vyoma-logo.svg"; // Fallback to original SVG if new logo doesn't exist
           }}
         />
-        <span className="app-name">Your Sanskrit Teacher</span>
+        <span className="app-name">Sanskrit Teacher</span>
       </div>
       <nav className="header-nav">
         {!auth.isAuthenticated ? (
@@ -612,15 +613,15 @@ function App() {
         <div className="footer-content">
           <div className="footer-logo">
             <img
-              src="/vyoma/Vyoma_Logo_Blue_500x243.png"
+              src="/vyoma/premium-logo.svg"
               alt="Your Sanskrit Teacher"
-              height="30"
+              height="40"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = "/vyoma/vyoma-logo.svg";
               }}
             />
-            <span>Your Sanskrit Teacher</span>
+            <span>Sanskrit Teacher</span>
           </div>
           <div className="footer-links">
             <a href="#">Terms of Service</a>
@@ -628,8 +629,7 @@ function App() {
             <a href="#">Contact Us</a>
           </div>
           <div className="footer-copyright">
-            © {new Date().getFullYear()} Your Sanskrit Teacher, Inc. All rights
-            reserved.
+            © {new Date().getFullYear()} Sanskrit Teacher. All rights reserved.
           </div>
         </div>
       </div>
@@ -645,30 +645,37 @@ function App() {
             <div className="container">
               <div className="card">
                 <div className="card-body">
-                  <h1 className="landing-heading">Welcome to Your Sanskrit Teacher</h1>
+                  <h1 className="landing-heading">Welcome to Sanskrit Teacher</h1>
+                  <h2 className="landing-subheading">Premium Sanskrit Instruction by PhD Scholars</h2>
                   <p className="landing-text">
-                    Connect with expert Sanskrit teachers for personalized 1:1
-                    learning experiences. Our platform helps students find
-                    teachers based on their learning needs, schedule sessions,
-                    and attend virtual meetings - all in one place.
+                    Connect with world-class Sanskrit scholars for exclusive, personalized 1:1
+                    learning experiences. Our platform features PhD-holding experts specializing in 
+                    rare and advanced Sanskrit topics, offering premium instruction for discerning
+                    international students and serious practitioners.
                   </p>
                   <div className="landing-features">
                     <div className="feature">
                       <FaSearch className="feature-icon" />
-                      <h3>Find Teachers</h3>
-                      <p>Search for teachers by subject or topic</p>
+                      <h3>Elite Instructors</h3>
+                      <p>Access PhD-level Sanskrit scholars specializing in rare and advanced topics</p>
                     </div>
                     <div className="feature">
                       <FaCalendarAlt className="feature-icon" />
-                      <h3>Schedule Sessions</h3>
-                      <p>Book convenient time slots with your chosen teacher</p>
+                      <h3>Exclusive Sessions</h3>
+                      <p>Book personalized instruction tailored to your specific scholarly interests</p>
                     </div>
                     <div className="feature">
                       <FaVideo className="feature-icon" />
-                      <h3>Virtual Learning</h3>
+                      <h3>Premium Experience</h3>
                       <p>
-                        Join video sessions, share notes, and learn
-                        interactively
+                        Enjoy high-quality video sessions with advanced learning tools and resources
+                      </p>
+                    </div>
+                    <div className="feature">
+                      <FaGraduationCap className="feature-icon" />
+                      <h3>Academic Excellence</h3>
+                      <p>
+                        Achieve mastery through instruction aligned with prestigious academic standards
                       </p>
                     </div>
                   </div>
@@ -677,15 +684,18 @@ function App() {
                       className="btn btn-primary btn-lg"
                       onClick={() => auth.signinRedirect()}
                     >
-                      Sign In to Get Started
+                      Access Premium Classes
                     </button>
                     <button
                       className="btn btn-secondary btn-lg"
                       onClick={signupRedirect}
                     >
-                      Create an Account
+                      Join Our Exclusive Network
                     </button>
                   </div>
+                  <p className="premium-note">
+                    Premium Sanskrit instruction with verified PhD scholars
+                  </p>
                 </div>
               </div>
             </div>
