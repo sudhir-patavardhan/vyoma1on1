@@ -36,7 +36,6 @@ Resources:
       FunctionName: !Sub "your-sanskrit-teacher-api-function-${Stage}"
       Handler: app.lambda_handler
       Runtime: python3.11
-      Region: us-east-1
       Code: 
         S3Bucket: yoursanskritteacher-lambda-deployments
         S3Key: lambda-deployment.zip
@@ -65,7 +64,6 @@ Resources:
       EndpointConfiguration:
         Types:
           - REGIONAL
-        Region: us-east-1
   
   # Lambda execution role
   LambdaExecutionRole:
