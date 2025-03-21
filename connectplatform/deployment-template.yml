@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Sessions Red API - Connecting students with teachers"
+Description: "Sanskrit Teacher API - Connecting students with Sanskrit teachers"
 
 Parameters:
   Stage:
@@ -10,34 +10,56 @@ Parameters:
       - dev
       - test
       - prod
+  Region:
+    Type: String
+    Default: us-east-1
+    Description: AWS Region for deployment
+    AllowedValues:
+      - us-east-1
+      - ap-south-1
+  UseExistingResources:
+    Type: String
+    Default: 'true'
+    Description: If true, use existing DynamoDB tables and S3 buckets rather than creating new ones
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+Conditions:
+  ShouldCreateNewResources: !Equals [!Ref UseExistingResources, 'false']
 
 Resources:
   # Lambda function for handling API requests
-  SessionsRedFunction:
+  YourSanskritTeacherFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: ConnectPlatformFunctions
+      FunctionName: !Sub "your-sanskrit-teacher-api-function-${Stage}"
       Handler: app.lambda_handler
       Runtime: python3.11
+      Region: us-east-1
       Code:
-        S3Bucket: sessions-red-lambda-deployments
+        S3Bucket: yoursanskritteacher-lambda-deployments
         S3Key: lambda-deployment.zip
       Environment:
         Variables:
           STAGE: !Ref Stage
+          DEPLOY_TIMESTAMP: !Ref AWS::StackName # This forces redeployment on every CloudFormation deployment
+          BUILD_VERSION: 'will-be-replaced-during-deployment'
       MemorySize: 256
       Timeout: 30
       Role: !GetAtt LambdaExecutionRole.Arn
+      AutoPublishAlias: 'live'
 
   # API Gateway for the Lambda function
-  SessionsRedApi:
+  YourSanskritTeacherApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: !Sub "sessions-red-api-${Stage}"
-      Description: API for Sessions Red platform
+      Name: !Sub "your-sanskrit-teacher-api-${Stage}"
+      Description: API for Sanskrit Teacher platform
       EndpointConfiguration:
         Types:
           - REGIONAL
+        Region: us-east-1
 
   # Lambda execution role
   LambdaExecutionRole:
@@ -100,28 +122,28 @@ Resources:
       - ApiProxyMethod
       - ApiProxyOptionsMethod
     Properties:
-      RestApiId: !Ref SessionsRedApi
+      RestApiId: !Ref YourSanskritTeacherApi
       StageName: !Ref Stage
 
   # API Gateway root resource
   ApiRootMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      RestApiId: !Ref SessionsRedApi
-      ResourceId: !GetAtt SessionsRedApi.RootResourceId
+      RestApiId: !Ref YourSanskritTeacherApi
+      ResourceId: !GetAtt YourSanskritTeacherApi.RootResourceId
       HttpMethod: ANY
       AuthorizationType: NONE
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SessionsRedFunction.Arn}/invocations"
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${YourSanskritTeacherFunction.Arn}/invocations"
 
   # API Gateway root OPTIONS method for CORS
   ApiRootOptionsMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      RestApiId: !Ref SessionsRedApi
-      ResourceId: !GetAtt SessionsRedApi.RootResourceId
+      RestApiId: !Ref YourSanskritTeacherApi
+      ResourceId: !GetAtt YourSanskritTeacherApi.RootResourceId
       HttpMethod: OPTIONS
       AuthorizationType: NONE
       Integration:
@@ -146,28 +168,28 @@ Resources:
   ApiProxyResource:
     Type: AWS::ApiGateway::Resource
     Properties:
-      RestApiId: !Ref SessionsRedApi
-      ParentId: !GetAtt SessionsRedApi.RootResourceId
+      RestApiId: !Ref YourSanskritTeacherApi
+      ParentId: !GetAtt YourSanskritTeacherApi.RootResourceId
       PathPart: "{proxy+}"
 
   # API Gateway proxy method
   ApiProxyMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      RestApiId: !Ref SessionsRedApi
+      RestApiId: !Ref YourSanskritTeacherApi
       ResourceId: !Ref ApiProxyResource
       HttpMethod: ANY
       AuthorizationType: NONE
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SessionsRedFunction.Arn}/invocations"
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${YourSanskritTeacherFunction.Arn}/invocations"
 
   # API Gateway proxy OPTIONS method for CORS
   ApiProxyOptionsMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      RestApiId: !Ref SessionsRedApi
+      RestApiId: !Ref YourSanskritTeacherApi
       ResourceId: !Ref ApiProxyResource
       HttpMethod: OPTIONS
       AuthorizationType: NONE
@@ -194,14 +216,16 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: "lambda:InvokeFunction"
-      FunctionName: !Ref SessionsRedFunction
+      FunctionName: !Ref YourSanskritTeacherFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SessionsRedApi}/*/*/*"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${YourSanskritTeacherApi}/*/*/*"
 
   # DynamoDB Tables - Conditional creation based on parameters
   ServiceCatalogTable:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "ServiceCatalog-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -215,6 +239,8 @@ Resources:
   UserProfilesTable:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "UserProfiles-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -228,6 +254,8 @@ Resources:
   TeacherAvailabilityTable:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "TeacherAvailability-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -241,6 +269,8 @@ Resources:
   BookingsTable:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "Bookings-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -254,6 +284,8 @@ Resources:
   SessionsTable:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "Sessions-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -268,6 +300,8 @@ Resources:
   PaymentsTable:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "Payments-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -306,6 +340,8 @@ Resources:
   RazorPayConfigTable:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
       TableName: !Sub "RazorPayConfig-${Stage}"
       BillingMode: PAY_PER_REQUEST
@@ -319,8 +355,11 @@ Resources:
   # S3 bucket for user uploads
   UploadsBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Condition: ShouldCreateNewResources
     Properties:
-      BucketName: sessionsred-uploads-prod
+      BucketName: !Sub "yoursanskritteacher-uploads-${Stage}"
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders:
@@ -336,12 +375,12 @@ Resources:
             MaxAge: 3000
 
 Outputs:
-  SessionsRedApi:
-    Description: "API Gateway endpoint URL for Sessions Red API"
-    Value: !Sub "https://${SessionsRedApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
-  SessionsRedFunction:
+  SanskritTeacherApi:
+    Description: "API Gateway endpoint URL for Sanskrit Teacher API"
+    Value: !Sub "https://${YourSanskritTeacherApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
+  SanskritTeacherFunction:
     Description: "Lambda Function ARN"
-    Value: !GetAtt SessionsRedFunction.Arn
+    Value: !GetAtt YourSanskritTeacherFunction.Arn
   UploadsBucketName:
     Description: "S3 bucket for user uploads"
-    Value: !Ref UploadsBucket
+    Value: !If [ShouldCreateNewResources, !Ref UploadsBucket, !Sub "yoursanskritteacher-uploads-${Stage}"]
