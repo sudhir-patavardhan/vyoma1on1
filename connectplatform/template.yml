@@ -47,9 +47,6 @@ Resources:
       MemorySize: 256
       Timeout: 30
       Role: !GetAtt LambdaExecutionRole.Arn
-      # Always publish a new version when deployed
-      AutoPublishAlias: 'live'
-      # No need for AutoPublishCodeSha256 as it's calculated automatically
       # We're using other mechanisms to force deployment:
       # 1. Unique S3Key for each deployment
       # 2. Updated environment variables each time

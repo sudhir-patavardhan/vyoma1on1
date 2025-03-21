@@ -47,7 +47,6 @@ Resources:
       MemorySize: 256
       Timeout: 30
       Role: !GetAtt LambdaExecutionRole.Arn
-      AutoPublishAlias: 'live'
 
   # API Gateway for the Lambda function
   YourSanskritTeacherApi:
