@@ -45,8 +45,8 @@ function App() {
   // Define Cognito configuration values
   const cognitoAuthConfig = {
     authority:
-      "https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_WYpPDAspb",
-    client_id: "4s3reppitj9v5vbs2tifqvpmr6",
+      "https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_ghMdyIY2D",
+    client_id: "4rkke6o1h98p3judjga7m34lrn",
     redirect_uri: "https://yoursanskritteacher.com",
     response_type: "code",
     scope: "phone openid email",
