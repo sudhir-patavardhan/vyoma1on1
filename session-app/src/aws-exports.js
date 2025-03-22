@@ -1,13 +1,13 @@
 const awsConfig = {
     Auth: {
-      region: "us-east-1", // Replace with your AWS region
-      userPoolId: "us-east-1_MYgj1LsPS", // Your Cognito User Pool ID
-      userPoolWebClientId: "2fpemjqos4302bfaf65g06l8g0", // Your Cognito App Client ID
+      region: "ap-south-1", // AWS region
+      userPoolId: "ap-south-1_ghMdyIY2D", // Updated Cognito User Pool ID
+      userPoolWebClientId: "4rkke6o1h98p3judjga7m34lrn", // Updated Cognito App Client ID
       oauth: {
-        domain: "auth.sessions.red", // Your Cognito domain
-        scope: ["openid", "email", "profile", "phone"],
-        redirectSignIn: "http://localhost:3000/",
-        redirectSignOut: "http://localhost:3000/",
+        domain: "auth.yoursanskritteacher.com", // Cognito domain
+        scope: ["phone", "openid", "email"],
+        redirectSignIn: "https://yoursanskritteacher.com",
+        redirectSignOut: "https://yoursanskritteacher.com",
         responseType: "code", // For Authorization Code Grant
       },
     },
