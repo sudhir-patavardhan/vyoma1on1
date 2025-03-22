@@ -38,6 +38,18 @@ function App() {
   const [activeSession, setActiveSession] = useState(null);
   const [upcomingSession, setUpcomingSession] = useState(null);
 
+  // Clear any old OIDC cache on app initialization
+  useEffect(() => {
+    console.log("Clearing old OIDC cache to ensure new Cognito settings are used");
+    // Force clear any cached OIDC settings that might be causing 404 errors
+    Object.keys(localStorage)
+      .filter(key => key.startsWith('oidc.') || key.includes('WYpPDAspb'))
+      .forEach(key => {
+        console.log(`Removing old cache key: ${key}`);
+        localStorage.removeItem(key);
+      });
+  }, []);
+
   // For users with multiple roles
   const [activeRole, setActiveRole] = useState(null);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
