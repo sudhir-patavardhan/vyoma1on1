@@ -37,30 +37,31 @@ function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [activeSession, setActiveSession] = useState(null);
   const [upcomingSession, setUpcomingSession] = useState(null);
-  
+
   // For users with multiple roles
   const [activeRole, setActiveRole] = useState(null);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
   // Define Cognito configuration values
   const cognitoAuthConfig = {
-    authority: "https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_WYpPDAspb",
+    authority:
+      "https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_WYpPDAspb",
     client_id: "4s3reppitj9v5vbs2tifqvpmr6",
     redirect_uri: "https://yoursanskritteacher.com",
     response_type: "code",
     scope: "phone openid email",
   };
-  
+
   // Backward compatibility with existing code
-  const clientId = cognitoAuthConfig.client_id; 
+  const clientId = cognitoAuthConfig.client_id;
   const redirectUri = cognitoAuthConfig.redirect_uri;
   const cognitoDomain = "https://auth.yoursanskritteacher.com"; // Will derive from authority if needed
 
   const signoutRedirect = async () => {
     // Construct the logout URL with AWS Cognito format
-    const logoutURL = `${cognitoAuthConfig.authority.replace('cognito-idp', 'cognito')}/logout?client_id=${cognitoAuthConfig.client_id}&logout_uri=${encodeURIComponent(
-      cognitoAuthConfig.redirect_uri
-    )}`;
+    const logoutURL = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
+      redirectUri
+    )}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
 
     console.log("Logout URL:", logoutURL); // Log for debugging
 
@@ -78,10 +79,18 @@ function App() {
   // Function to redirect users directly to the signup page
   const signupRedirect = () => {
     // Construct the signup URL for Cognito using the new AWS format
-    const signupURL = `${cognitoAuthConfig.authority.replace('cognito-idp', 'cognito')}/signup?client_id=${cognitoAuthConfig.client_id}&response_type=${cognitoAuthConfig.response_type}&scope=${cognitoAuthConfig.scope.replace(/ /g, '+')}&redirect_uri=${encodeURIComponent(cognitoAuthConfig.redirect_uri)}`;
-    
+    const signupURL = `${cognitoAuthConfig.authority.replace(
+      "cognito-idp",
+      "cognito"
+    )}/signup?client_id=${cognitoAuthConfig.client_id}&response_type=${
+      cognitoAuthConfig.response_type
+    }&scope=${cognitoAuthConfig.scope.replace(
+      / /g,
+      "+"
+    )}&redirect_uri=${encodeURIComponent(cognitoAuthConfig.redirect_uri)}`;
+
     console.log("Signup URL:", signupURL); // Log for debugging
-    
+
     // Redirect directly to Cognito signup page
     window.location.href = signupURL;
   };
@@ -109,7 +118,10 @@ function App() {
       <nav className="header-nav">
         {!auth.isAuthenticated ? (
           <>
-            <button className="header-link" onClick={() => auth.signinRedirect()}>
+            <button
+              className="header-link"
+              onClick={() => auth.signinRedirect()}
+            >
               <FaSignInAlt className="header-icon" /> Sign In
             </button>
             <button className="header-link" onClick={signupRedirect}>
@@ -146,16 +158,22 @@ function App() {
                   className="header-link role-switcher-btn"
                   onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
                 >
-                  <FaExchangeAlt className="header-icon" /> 
-                  {activeRole ? `${activeRole.charAt(0).toUpperCase()}${activeRole.slice(1)} Mode` : 'Switch Role'}
+                  <FaExchangeAlt className="header-icon" />
+                  {activeRole
+                    ? `${activeRole.charAt(0).toUpperCase()}${activeRole.slice(
+                        1
+                      )} Mode`
+                    : "Switch Role"}
                 </button>
-                
+
                 {showRoleSwitcher && (
                   <div className="role-switcher-dropdown">
-                    {profile.roles.map(role => (
+                    {profile.roles.map((role) => (
                       <button
                         key={role}
-                        className={`role-option ${activeRole === role ? 'active' : ''}`}
+                        className={`role-option ${
+                          activeRole === role ? "active" : ""
+                        }`}
                         onClick={() => {
                           setActiveRole(role);
                           setShowRoleSwitcher(false);
@@ -163,9 +181,15 @@ function App() {
                           setActiveTab("dashboard");
                         }}
                       >
-                        {role === 'student' && <FaUser className="role-icon-small" />}
-                        {role === 'teacher' && <FaGraduationCap className="role-icon-small" />}
-                        {role === 'admin' && <FaLock className="role-icon-small" />}
+                        {role === "student" && (
+                          <FaUser className="role-icon-small" />
+                        )}
+                        {role === "teacher" && (
+                          <FaGraduationCap className="role-icon-small" />
+                        )}
+                        {role === "admin" && (
+                          <FaLock className="role-icon-small" />
+                        )}
                         {role.charAt(0).toUpperCase() + role.slice(1)}
                       </button>
                     ))}
@@ -175,47 +199,50 @@ function App() {
             )}
 
             {/* Only show these buttons if profile is loaded and has appropriate role */}
-            {profile && (activeRole === "student" || 
-                        (!activeRole && 
-                         ((profile.roles && profile.roles.includes("student")) || 
-                          profile.role === "student"))) && (
-              <button
-                className={`header-link ${
-                  activeTab === "search" ? "active" : ""
-                }`}
-                onClick={() => setActiveTab("search")}
-              >
-                <FaSearch className="header-icon" /> Find Teachers
-              </button>
-            )}
+            {profile &&
+              (activeRole === "student" ||
+                (!activeRole &&
+                  ((profile.roles && profile.roles.includes("student")) ||
+                    profile.role === "student"))) && (
+                <button
+                  className={`header-link ${
+                    activeTab === "search" ? "active" : ""
+                  }`}
+                  onClick={() => setActiveTab("search")}
+                >
+                  <FaSearch className="header-icon" /> Find Teachers
+                </button>
+              )}
 
-            {profile && (activeRole === "student" || 
-                        (!activeRole && 
-                         ((profile.roles && profile.roles.includes("student")) || 
-                          profile.role === "student"))) && (
-              <button
-                className={`header-link ${
-                  activeTab === "bookings" ? "active" : ""
-                }`}
-                onClick={() => setActiveTab("bookings")}
-              >
-                <FaBookOpen className="header-icon" /> My Classes
-              </button>
-            )}
+            {profile &&
+              (activeRole === "student" ||
+                (!activeRole &&
+                  ((profile.roles && profile.roles.includes("student")) ||
+                    profile.role === "student"))) && (
+                <button
+                  className={`header-link ${
+                    activeTab === "bookings" ? "active" : ""
+                  }`}
+                  onClick={() => setActiveTab("bookings")}
+                >
+                  <FaBookOpen className="header-icon" /> My Classes
+                </button>
+              )}
 
-            {profile && (activeRole === "teacher" || 
-                        (!activeRole && 
-                         ((profile.roles && profile.roles.includes("teacher")) || 
-                          profile.role === "teacher"))) && (
-              <button
-                className={`header-link ${
-                  activeTab === "schedule" ? "active" : ""
-                }`}
-                onClick={() => setActiveTab("schedule")}
-              >
-                <FaCalendarAlt className="header-icon" /> My Schedule
-              </button>
-            )}
+            {profile &&
+              (activeRole === "teacher" ||
+                (!activeRole &&
+                  ((profile.roles && profile.roles.includes("teacher")) ||
+                    profile.role === "teacher"))) && (
+                <button
+                  className={`header-link ${
+                    activeTab === "schedule" ? "active" : ""
+                  }`}
+                  onClick={() => setActiveTab("schedule")}
+                >
+                  <FaCalendarAlt className="header-icon" /> My Schedule
+                </button>
+              )}
 
             {profile && upcomingSession && (
               <button
@@ -225,19 +252,22 @@ function App() {
                 <FaVideo className="header-icon" /> Join Session
               </button>
             )}
-            
+
             {/* Admin Panel button - visible to users with admin role */}
-            {profile && (activeRole === "admin" || 
-                        (!activeRole && 
-                         ((profile.roles && profile.roles.includes("admin")) || 
-                          profile.role === "admin"))) && (
-              <button
-                className={`header-link ${activeTab === "admin" ? "active" : ""}`}
-                onClick={() => setActiveTab("admin")}
-              >
-                <FaLock className="header-icon" /> Admin
-              </button>
-            )}
+            {profile &&
+              (activeRole === "admin" ||
+                (!activeRole &&
+                  ((profile.roles && profile.roles.includes("admin")) ||
+                    profile.role === "admin"))) && (
+                <button
+                  className={`header-link ${
+                    activeTab === "admin" ? "active" : ""
+                  }`}
+                  onClick={() => setActiveTab("admin")}
+                >
+                  <FaLock className="header-icon" /> Admin
+                </button>
+              )}
 
             <button className="header-link" onClick={signoutRedirect}>
               <FaSignOutAlt className="header-icon" /> Sign Out
@@ -292,49 +322,43 @@ function App() {
                   )}
 
                   {/* Show teacher search for students */}
-                  {profile && 
-                   (activeRole === "student" || 
-                    (!activeRole && 
-                     ((profile.roles && profile.roles.includes("student")) || 
-                      profile.role === "student"))) && 
-                   activeTab === "search" && (
-                    <TeacherSearch />
-                  )}
+                  {profile &&
+                    (activeRole === "student" ||
+                      (!activeRole &&
+                        ((profile.roles && profile.roles.includes("student")) ||
+                          profile.role === "student"))) &&
+                    activeTab === "search" && <TeacherSearch />}
 
                   {/* Show bookings for students */}
-                  {profile && 
-                   (activeRole === "student" || 
-                    (!activeRole && 
-                     ((profile.roles && profile.roles.includes("student")) || 
-                      profile.role === "student"))) && 
-                   activeTab === "bookings" && (
-                    <Bookings
-                      userId={auth.user?.profile.sub}
-                      userRole="student"
-                      onJoinSession={setActiveSession}
-                      onUpcomingSession={setUpcomingSession}
-                    />
-                  )}
+                  {profile &&
+                    (activeRole === "student" ||
+                      (!activeRole &&
+                        ((profile.roles && profile.roles.includes("student")) ||
+                          profile.role === "student"))) &&
+                    activeTab === "bookings" && (
+                      <Bookings
+                        userId={auth.user?.profile.sub}
+                        userRole="student"
+                        onJoinSession={setActiveSession}
+                        onUpcomingSession={setUpcomingSession}
+                      />
+                    )}
 
                   {/* Show schedule for teachers */}
-                  {profile && 
-                   (activeRole === "teacher" || 
-                    (!activeRole && 
-                     ((profile.roles && profile.roles.includes("teacher")) || 
-                      profile.role === "teacher"))) && 
-                   activeTab === "schedule" && (
-                    <TeacherCalendarSchedule />
-                  )}
-                  
+                  {profile &&
+                    (activeRole === "teacher" ||
+                      (!activeRole &&
+                        ((profile.roles && profile.roles.includes("teacher")) ||
+                          profile.role === "teacher"))) &&
+                    activeTab === "schedule" && <TeacherCalendarSchedule />}
+
                   {/* Admin Panel */}
-                  {profile && 
-                   (activeRole === "admin" || 
-                    (!activeRole && 
-                     ((profile.roles && profile.roles.includes("admin")) || 
-                      profile.role === "admin"))) && 
-                   activeTab === "admin" && (
-                    <AdminPanel profile={profile} />
-                  )}
+                  {profile &&
+                    (activeRole === "admin" ||
+                      (!activeRole &&
+                        ((profile.roles && profile.roles.includes("admin")) ||
+                          profile.role === "admin"))) &&
+                    activeTab === "admin" && <AdminPanel profile={profile} />}
                 </div>
               </div>
             </div>
@@ -373,13 +397,15 @@ function App() {
           // Special handling for 404 status (profile not found)
           // This is not an error for new users, just means they need to create a profile
           if (response.status === 404) {
-            console.log("Profile not found for new user (404), showing profile form");
+            console.log(
+              "Profile not found for new user (404), showing profile form"
+            );
             setProfile(null);
             setActiveRole(null);
             setLoadingProfile(false);
             return; // Exit early, no need to process further
           }
-          
+
           // Handle other error statuses
           if (!response.ok) {
             const errorText = await response.text();
@@ -415,7 +441,7 @@ function App() {
           if (data && data.profile) {
             console.log("Profile data loaded successfully:", data.profile);
             setProfile(data.profile);
-            
+
             // Set the active role based on the profile
             // Use the role field for backward compatibility, or the first role in the roles array
             // If both exist, prioritize the role field as it's the primary role
@@ -645,37 +671,50 @@ function App() {
             <div className="container">
               <div className="card">
                 <div className="card-body">
-                  <h1 className="landing-heading">Welcome to Sanskrit Teacher</h1>
-                  <h2 className="landing-subheading">Premium Sanskrit Instruction by PhD Scholars</h2>
+                  <h1 className="landing-heading">
+                    Welcome to Sanskrit Teacher
+                  </h1>
+                  <h2 className="landing-subheading">
+                    Premium Sanskrit Instruction by PhD Scholars
+                  </h2>
                   <p className="landing-text">
-                    Connect with world-class Sanskrit scholars for exclusive, personalized 1:1
-                    learning experiences. Our platform features PhD-holding experts specializing in 
-                    rare and advanced Sanskrit topics, offering premium instruction for discerning
+                    Connect with world-class Sanskrit scholars for exclusive,
+                    personalized 1:1 learning experiences. Our platform features
+                    PhD-holding experts specializing in rare and advanced
+                    Sanskrit topics, offering premium instruction for discerning
                     international students and serious practitioners.
                   </p>
                   <div className="landing-features">
                     <div className="feature">
                       <FaSearch className="feature-icon" />
                       <h3>Elite Instructors</h3>
-                      <p>Access PhD-level Sanskrit scholars specializing in rare and advanced topics</p>
+                      <p>
+                        Access PhD-level Sanskrit scholars specializing in rare
+                        and advanced topics
+                      </p>
                     </div>
                     <div className="feature">
                       <FaCalendarAlt className="feature-icon" />
                       <h3>Exclusive Sessions</h3>
-                      <p>Book personalized instruction tailored to your specific scholarly interests</p>
+                      <p>
+                        Book personalized instruction tailored to your specific
+                        scholarly interests
+                      </p>
                     </div>
                     <div className="feature">
                       <FaVideo className="feature-icon" />
                       <h3>Premium Experience</h3>
                       <p>
-                        Enjoy high-quality video sessions with advanced learning tools and resources
+                        Enjoy high-quality video sessions with advanced learning
+                        tools and resources
                       </p>
                     </div>
                     <div className="feature">
                       <FaGraduationCap className="feature-icon" />
                       <h3>Academic Excellence</h3>
                       <p>
-                        Achieve mastery through instruction aligned with prestigious academic standards
+                        Achieve mastery through instruction aligned with
+                        prestigious academic standards
                       </p>
                     </div>
                   </div>
@@ -794,7 +833,10 @@ function App() {
                     // User just needs to create a profile - show the form without error messaging
                     <>
                       <h2 className="mb-4">Complete Your Profile</h2>
-                      <p className="mb-4">Welcome to Vyoma 1:1! Please complete your profile to get started.</p>
+                      <p className="mb-4">
+                        Welcome to Vyoma 1:1! Please complete your profile to
+                        get started.
+                      </p>
                       <div className="mt-4">
                         <ProfileForm
                           saveUserProfile={saveUserProfile}
@@ -813,12 +855,13 @@ function App() {
                           <>
                             <p>
                               <strong>
-                                Our API server appears to be down or misconfigured.
+                                Our API server appears to be down or
+                                misconfigured.
                               </strong>
                             </p>
                             <p>
-                              We're experiencing technical difficulties connecting
-                              to our servers. Please try again later.
+                              We're experiencing technical difficulties
+                              connecting to our servers. Please try again later.
                             </p>
                             <p className="text-muted small">
                               Technical details: {profileError}
@@ -843,7 +886,10 @@ function App() {
                         </button>
                       ) : (
                         <>
-                          <p>You can continue by creating or updating your profile</p>
+                          <p>
+                            You can continue by creating or updating your
+                            profile
+                          </p>
                           <div className="mt-4">
                             <ProfileForm
                               saveUserProfile={saveUserProfile}
@@ -872,9 +918,9 @@ function App() {
         {renderHeader()}
         <div className="main-content">
           <div className="content-area full-width">
-            <VirtualSession 
-              sessionId={activeSession} 
-              onEndSession={() => setActiveSession(null)} 
+            <VirtualSession
+              sessionId={activeSession}
+              onEndSession={() => setActiveSession(null)}
             />
           </div>
         </div>
@@ -891,14 +937,14 @@ function App() {
           <div className="container">
             <div className="card">
               <div className="card-body">
-                {(!profile || activeTab === 'profile') && (
+                {(!profile || activeTab === "profile") && (
                   <ProfileForm
                     saveUserProfile={saveUserProfile}
                     profile={profile}
                   />
                 )}
-                
-                {profile && activeTab === 'dashboard' && (
+
+                {profile && activeTab === "dashboard" && (
                   <Dashboard
                     profile={profile}
                     onTabChange={setActiveTab}
@@ -906,51 +952,45 @@ function App() {
                     upcomingSession={upcomingSession}
                   />
                 )}
-                
+
                 {/* Show teacher search for students */}
-                {profile && 
-                 (activeRole === "student" || 
-                  (!activeRole && 
-                   ((profile.roles && profile.roles.includes("student")) || 
-                    profile.role === "student"))) && 
-                 activeTab === 'search' && (
-                  <TeacherSearch />
-                )}
-                
+                {profile &&
+                  (activeRole === "student" ||
+                    (!activeRole &&
+                      ((profile.roles && profile.roles.includes("student")) ||
+                        profile.role === "student"))) &&
+                  activeTab === "search" && <TeacherSearch />}
+
                 {/* Show bookings for students */}
-                {profile && 
-                 (activeRole === "student" || 
-                  (!activeRole && 
-                   ((profile.roles && profile.roles.includes("student")) || 
-                    profile.role === "student"))) && 
-                 activeTab === 'bookings' && (
-                  <Bookings 
-                    userId={auth.user?.profile.sub} 
-                    userRole="student"
-                    onJoinSession={setActiveSession}
-                    onUpcomingSession={setUpcomingSession}
-                  />
-                )}
-                
+                {profile &&
+                  (activeRole === "student" ||
+                    (!activeRole &&
+                      ((profile.roles && profile.roles.includes("student")) ||
+                        profile.role === "student"))) &&
+                  activeTab === "bookings" && (
+                    <Bookings
+                      userId={auth.user?.profile.sub}
+                      userRole="student"
+                      onJoinSession={setActiveSession}
+                      onUpcomingSession={setUpcomingSession}
+                    />
+                  )}
+
                 {/* Show schedule for teachers */}
-                {profile && 
-                 (activeRole === "teacher" || 
-                  (!activeRole && 
-                   ((profile.roles && profile.roles.includes("teacher")) || 
-                    profile.role === "teacher"))) && 
-                 activeTab === 'schedule' && (
-                  <TeacherCalendarSchedule />
-                )}
-                
+                {profile &&
+                  (activeRole === "teacher" ||
+                    (!activeRole &&
+                      ((profile.roles && profile.roles.includes("teacher")) ||
+                        profile.role === "teacher"))) &&
+                  activeTab === "schedule" && <TeacherCalendarSchedule />}
+
                 {/* Admin Panel */}
-                {profile && 
-                 (activeRole === "admin" || 
-                  (!activeRole && 
-                   ((profile.roles && profile.roles.includes("admin")) || 
-                    profile.role === "admin"))) && 
-                 activeTab === "admin" && (
-                  <AdminPanel profile={profile} />
-                )}
+                {profile &&
+                  (activeRole === "admin" ||
+                    (!activeRole &&
+                      ((profile.roles && profile.roles.includes("admin")) ||
+                        profile.role === "admin"))) &&
+                  activeTab === "admin" && <AdminPanel profile={profile} />}
               </div>
             </div>
           </div>
