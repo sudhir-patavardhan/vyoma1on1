@@ -29,7 +29,7 @@ SESSION_TABLE = f'Sessions-{stage}'
 PAYMENTS_TABLE = f'Payments-{stage}'
 RAZORPAY_CONFIG_TABLE = f'RazorPayConfig-{stage}'
 
-# ========== Utility Functions ==========
+# ========== Utility Functions for Sanskrit Teacher API ==========
 def convert_decimal(obj):
     """Recursively converts DynamoDB decimal types to Python floats."""
     if isinstance(obj, list):
