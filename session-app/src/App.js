@@ -297,7 +297,7 @@ function App() {
                 </button>
               )}
 
-            <button className="header-link" onClick={signoutRedirect}>
+            <button className="header-link" onClick={signOutRedirect}>
               <FaSignOutAlt className="header-icon" /> Sign Out
             </button>
           </>
