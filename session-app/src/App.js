@@ -103,19 +103,31 @@ function App() {
   const [activeSession, setActiveSession] = useState(null);
   const [upcomingSession, setUpcomingSession] = useState(null);
 
-  // Simple effect to handle auth state changes and log for debugging
+  // Effect to handle auth state changes and logging
   useEffect(() => {
-    // Just log the current auth state for debugging
+    // Get more detailed user info for debugging
+    const userInfo = auth.user ? {
+      exists: true,
+      hasProfile: !!auth.user.profile,
+      claims: auth.user.profile ? Object.keys(auth.user.profile) : []
+    } : 'No user';
+    
+    // Enhanced logging for auth state
     console.log("Auth state changed:", { 
       isAuthenticated: auth.isAuthenticated, 
       isLoading: auth.isLoading,
-      user: auth.user ? 'User exists' : 'No user',
+      user: userInfo,
       error: auth.error ? auth.error.message : 'No error'
     });
     
+    // Handle potential errors
+    if (auth.error && !auth.isLoading) {
+      console.error("Authentication error details:", auth.error);
+    }
+    
     // If we're authenticated, make sure we're on the dashboard tab
-    if (auth.isAuthenticated && !auth.isLoading) {
-      // Set dashboard as active tab when authenticated
+    if (auth.isAuthenticated && !auth.isLoading && auth.user) {
+      // Set dashboard as active tab when authenticated and user data is loaded
       setActiveTab("dashboard");
     }
   }, [auth.isAuthenticated, auth.isLoading, auth.user, auth.error, setActiveTab]);

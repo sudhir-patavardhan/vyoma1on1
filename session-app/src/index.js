@@ -19,7 +19,8 @@ const cognitoAuthConfig = {
     issuer: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_US1m8498L",
     authorization_endpoint: "https://auth.yoursanskritteacher.com/oauth2/authorize",
     token_endpoint: "https://auth.yoursanskritteacher.com/oauth2/token",
-    end_session_endpoint: "https://auth.yoursanskritteacher.com/logout"
+    end_session_endpoint: "https://auth.yoursanskritteacher.com/logout",
+    userinfo_endpoint: "https://auth.yoursanskritteacher.com/oauth2/userInfo"
   },
   
   // Simplified authentication settings
