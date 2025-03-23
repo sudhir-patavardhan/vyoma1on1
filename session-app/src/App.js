@@ -38,7 +38,7 @@ function App() {
   const [activeSession, setActiveSession] = useState(null);
   const [upcomingSession, setUpcomingSession] = useState(null);
 
-  // Clear any old OIDC cache on app initialization
+  // Clear any old OIDC cache on app initialization and handle post-login redirect
   useEffect(() => {
     console.log("Clearing old OIDC cache to ensure new Cognito settings are used");
     // Force clear any cached OIDC settings that might be causing 404 errors
@@ -48,7 +48,16 @@ function App() {
         console.log(`Removing old cache key: ${key}`);
         localStorage.removeItem(key);
       });
-  }, []);
+      
+    // Check if we've just completed authentication
+    const authCompleted = sessionStorage.getItem('auth_completed');
+    if (authCompleted === 'true' && auth.isAuthenticated) {
+      console.log("Auth completed, redirecting to dashboard");
+      setActiveTab("dashboard");
+      // Remove the flag so we don't keep redirecting
+      sessionStorage.removeItem('auth_completed');
+    }
+  }, [auth.isAuthenticated]);
 
   // For users with multiple roles
   const [activeRole, setActiveRole] = useState(null);
@@ -674,15 +683,22 @@ function App() {
     </footer>
   );
 
+  // Check for authentication state and update UI accordingly
   if (!auth.isAuthenticated) {
-    return (
-      <div className="app-layout">
-        {renderHeader()}
-        <div className="main-content">
-          <div className="content-area">
-            <div className="container">
-              <div className="card">
-                <div className="card-body">
+    // After login, there might be a brief moment when isAuthenticated is still false but we have user details
+    // This additional check helps prevent showing the landing page incorrectly after login
+    if (auth.user) {
+      console.log("User data detected but isAuthenticated is false - treating as authenticated");
+      // If we have user data, treat as authenticated and continue to the dashboard
+    } else {
+      return (
+        <div className="app-layout">
+          {renderHeader()}
+          <div className="main-content">
+            <div className="content-area">
+              <div className="container">
+                <div className="card">
+                  <div className="card-body">
                   <h1 className="landing-heading">
                     Welcome to Sanskrit Teacher
                   </h1>
@@ -755,6 +771,7 @@ function App() {
         {renderFooter()}
       </div>
     );
+    }
   }
 
   // Both auth.isLoading and loadingProfile can be true even if auth.isAuthenticated

@@ -17,7 +17,12 @@ const cognitoAuthConfig = {
   monitorSession: true,
   loadUserInfo: true,
   onSigninCallback: () => {
+    // When sign-in completes, clean up URL and set a flag to indicate successful auth
     window.history.replaceState({}, document.title, window.location.pathname);
+    // Store a flag that we can check to force dashboard redirect
+    sessionStorage.setItem('auth_completed', 'true');
+    // Reload the app to ensure we pick up the authenticated state properly
+    window.location.reload();
   },
   // Add browser storage configuration to clear old data
   userStore: {
