@@ -150,8 +150,8 @@ function App() {
   const redirectUri = cognitoAuthConfig.redirect_uri;
   
   // Setting up Cognito hosted UI domain
-  // Using the default Cognito domain which is always available
-  const cognitoDomain = "https://us1m8498l.auth.us-east-1.amazoncognito.com";
+  // Using the custom domain configured in Cognito
+  const cognitoDomain = "https://auth.yoursanskritteacher.com";
 
   const signOutRedirect = async () => {
     // Construct the logout URL with AWS Cognito format
