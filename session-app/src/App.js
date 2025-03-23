@@ -199,7 +199,7 @@ function App() {
       >
         <img
           src="/vyoma/premium-logo.svg"
-          alt="Your Sanskrit Teacher Logo"
+          alt="Sanskrit Teacher Logo"
           className="header-logo-full"
           onError={(e) => {
             e.target.onerror = null;
@@ -750,7 +750,7 @@ function App() {
           <div className="footer-logo">
             <img
               src="/vyoma/premium-logo.svg"
-              alt="Your Sanskrit Teacher"
+              alt="Sanskrit Teacher"
               height="40"
               onError={(e) => {
                 e.target.onerror = null;
