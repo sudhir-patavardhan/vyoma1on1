@@ -1,11 +1,11 @@
 /* Global Styles - Modern Professional Theme */
 :root {
-  /* Primary brand colors - AWS blue professional palette */
-  --primary: #0972D3; /* AWS blue - primary */
-  --primary-light: #1E88E5; /* Lighter blue - for hover states */
-  --primary-dark: #0A5BBF; /* Darker blue - for active states */
-  --secondary: #f0f4f8; /* Light blue-gray - secondary color */
-  --accent: #0972D3; /* Blue accent (same as primary) */
+  /* Primary brand colors - Premium Gold palette */
+  --primary: #c6a147; /* Gold - primary */
+  --primary-light: #d9b661; /* Lighter gold - for hover states */
+  --primary-dark: #a88a39; /* Darker gold - for active states */
+  --secondary: #f7f3e9; /* Light gold-cream - secondary color */
+  --accent: #8a6d3b; /* Gold accent */
   
   /* UI colors - light, clean and professional */
   --bg-light: #ffffff; /* Pure white background */
@@ -155,7 +155,7 @@ body {
   padding: 0 24px;
   justify-content: space-between;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-bottom: 1px solid rgba(9, 114, 211, 0.2);
+  border-bottom: 1px solid rgba(198, 161, 71, 0.4);
 }
 
 .header-logo {

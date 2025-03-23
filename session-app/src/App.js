@@ -37,24 +37,24 @@ const injectCustomStyles = () => {
   }
 
   .teacher-link a {
-    color: #004d99;
+    color: #8a6d3b;
     text-decoration: underline;
   }
 
   .profile-prompt {
     margin-bottom: 20px;
     border-radius: 8px;
-    background-color: #e8f4fd;
-    border-color: #a8d2f0;
+    background-color: rgba(198, 161, 71, 0.1);
+    border-color: #c6a147;
   }
 
   .profile-prompt h4 {
-    color: #0056b3;
+    color: #8a6d3b;
     margin-bottom: 10px;
   }
 
   .profile-prompt a {
-    color: #0056b3;
+    color: #c6a147;
     font-weight: bold;
     text-decoration: underline;
   }
@@ -62,7 +62,7 @@ const injectCustomStyles = () => {
   .text-link {
     background: none;
     border: none;
-    color: #004d99;
+    color: #8a6d3b;
     text-decoration: underline;
     cursor: pointer;
     padding: 0;
