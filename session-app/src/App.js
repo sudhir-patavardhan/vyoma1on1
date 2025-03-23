@@ -148,7 +148,10 @@ function App() {
   // Backward compatibility with existing code
   const clientId = cognitoAuthConfig.client_id;
   const redirectUri = cognitoAuthConfig.redirect_uri;
-  const cognitoDomain = "https://auth.yoursanskritteacher.com"; // Will derive from authority if needed
+  
+  // Setting up the Cognito domain correctly
+  // Use the format: https://[domain-prefix].auth.[region].amazoncognito.com
+  const cognitoDomain = "https://sanskrit-teacher.auth.us-east-1.amazoncognito.com";
 
   const signOutRedirect = async () => {
     // Construct the logout URL with AWS Cognito format
@@ -171,16 +174,10 @@ function App() {
 
   // Function to redirect users directly to the signup page
   const signupRedirect = () => {
-    // Construct the signup URL for Cognito using the new AWS format
-    const signupURL = `${cognitoAuthConfig.authority.replace(
-      "cognito-idp",
-      "cognito"
-    )}/signup?client_id=${cognitoAuthConfig.client_id}&response_type=${
-      cognitoAuthConfig.response_type
-    }&scope=${cognitoAuthConfig.scope.replace(
-      / /g,
-      "+"
-    )}&redirect_uri=${encodeURIComponent(cognitoAuthConfig.redirect_uri)}`;
+    // Construct the signup URL using the Cognito Hosted UI
+    const signupURL = `${cognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=${
+      cognitoAuthConfig.scope.replace(/ /g, "+")
+    }&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
     console.log("Signup URL:", signupURL); // Log for debugging
 
