@@ -1,0 +1,37 @@
+[
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "UserProfilesTable",
+    "ResourceIdentifier": {"TableName": "UserProfiles-prod"}
+  },
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "TeacherAvailabilityTable",
+    "ResourceIdentifier": {"TableName": "TeacherAvailability-prod"}
+  },
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "BookingsTable",
+    "ResourceIdentifier": {"TableName": "Bookings-prod"}
+  },
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "SessionsTable",
+    "ResourceIdentifier": {"TableName": "Sessions-prod"}
+  },
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "ServiceCatalogTable",
+    "ResourceIdentifier": {"TableName": "ServiceCatalog-prod"}
+  },
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "PaymentsTable",
+    "ResourceIdentifier": {"TableName": "Payments-prod"}
+  },
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "RazorPayConfigTable",
+    "ResourceIdentifier": {"TableName": "RazorPayConfig-prod"}
+  }
+]

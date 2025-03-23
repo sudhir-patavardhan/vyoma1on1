@@ -1,0 +1,92 @@
+[
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "UserProfilesTable",
+    "ResourceIdentifier": {"TableName": "UserProfiles-prod"}
+  },
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "TeacherAvailabilityTable",
+    "ResourceIdentifier": {"TableName": "TeacherAvailability-prod"}
+  },
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "BookingsTable",
+    "ResourceIdentifier": {"TableName": "Bookings-prod"}
+  },
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "SessionsTable",
+    "ResourceIdentifier": {"TableName": "Sessions-prod"}
+  },
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "ServiceCatalogTable",
+    "ResourceIdentifier": {"TableName": "ServiceCatalog-prod"}
+  },
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "PaymentsTable",
+    "ResourceIdentifier": {"TableName": "Payments-prod"}
+  },
+  {
+    "ResourceType": "AWS::DynamoDB::Table",
+    "LogicalResourceId": "RazorPayConfigTable",
+    "ResourceIdentifier": {"TableName": "RazorPayConfig-prod"}
+  },
+  {
+    "ResourceType": "AWS::S3::Bucket",
+    "LogicalResourceId": "UploadsBucket",
+    "ResourceIdentifier": {"BucketName": "yoursanskritteacher-uploads-prod"}
+  },
+  {
+    "ResourceType": "AWS::ApiGateway::RestApi",
+    "LogicalResourceId": "YourSanskritTeacherApi",
+    "ResourceIdentifier": {"RestApiId": "your-api-id"}
+  },
+  {
+    "ResourceType": "AWS::ApiGateway::Resource",
+    "LogicalResourceId": "ApiProxyResource",
+    "ResourceIdentifier": {"RestApiId": "your-api-id", "ResourceId": "your-resource-id"}
+  },
+  {
+    "ResourceType": "AWS::ApiGateway::Method",
+    "LogicalResourceId": "ApiRootMethod",
+    "ResourceIdentifier": {"RestApiId": "your-api-id", "ResourceId": "your-root-resource-id", "HttpMethod": "ANY"}
+  },
+  {
+    "ResourceType": "AWS::ApiGateway::Method",
+    "LogicalResourceId": "ApiRootOptionsMethod",
+    "ResourceIdentifier": {"RestApiId": "your-api-id", "ResourceId": "your-root-resource-id", "HttpMethod": "OPTIONS"}
+  },
+  {
+    "ResourceType": "AWS::ApiGateway::Method",
+    "LogicalResourceId": "ApiProxyMethod",
+    "ResourceIdentifier": {"RestApiId": "your-api-id", "ResourceId": "your-resource-id", "HttpMethod": "ANY"}
+  },
+  {
+    "ResourceType": "AWS::ApiGateway::Method",
+    "LogicalResourceId": "ApiProxyOptionsMethod",
+    "ResourceIdentifier": {"RestApiId": "your-api-id", "ResourceId": "your-resource-id", "HttpMethod": "OPTIONS"}
+  },
+  {
+    "ResourceType": "AWS::ApiGateway::Deployment",
+    "LogicalResourceId": "ApiGatewayDeployment",
+    "ResourceIdentifier": {"RestApiId": "your-api-id", "DeploymentId": "your-deployment-id"}
+  },
+  {
+    "ResourceType": "AWS::Lambda::Function",
+    "LogicalResourceId": "YourSanskritTeacherFunction",
+    "ResourceIdentifier": {"FunctionName": "your-sanskrit-teacher-api-function-prod"}
+  },
+  {
+    "ResourceType": "AWS::IAM::Role",
+    "LogicalResourceId": "LambdaExecutionRole",
+    "ResourceIdentifier": {"RoleName": "your-lambda-execution-role-name"}
+  },
+  {
+    "ResourceType": "AWS::Lambda::Permission",
+    "LogicalResourceId": "LambdaPermission",
+    "ResourceIdentifier": {"FunctionName": "your-sanskrit-teacher-api-function-prod", "Id": "your-permission-id"}
+  }
+]

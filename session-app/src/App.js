@@ -80,9 +80,9 @@ const injectCustomStyles = () => {
   `;
 
   // Only add the styles once
-  if (!document.getElementById('sanskrit-teacher-custom-styles')) {
-    const styleElement = document.createElement('style');
-    styleElement.id = 'sanskrit-teacher-custom-styles';
+  if (!document.getElementById("sanskrit-teacher-custom-styles")) {
+    const styleElement = document.createElement("style");
+    styleElement.id = "sanskrit-teacher-custom-styles";
     styleElement.innerHTML = styles;
     document.head.appendChild(styleElement);
   }
@@ -105,22 +105,6 @@ function App() {
 
   // Clear any old OIDC cache on app initialization and handle post-login redirect
   useEffect(() => {
-    console.log(
-      "Clearing old OIDC cache to ensure new Cognito settings are used"
-    );
-    // Force clear any cached OIDC settings that might be causing 404 errors
-    Object.keys(localStorage)
-      .filter((key) => 
-        key.startsWith("oidc.") || 
-        key.includes("WYpPDAspb") || 
-        key.includes("ghMdyIY2D") ||
-        key.includes("ap-south-1")
-      )
-      .forEach((key) => {
-        console.log(`Removing old cache key: ${key}`);
-        localStorage.removeItem(key);
-      });
-
     // Check if we've just completed authentication
     const authCompleted = sessionStorage.getItem("auth_completed");
     if (authCompleted === "true" && auth.isAuthenticated) {
@@ -135,22 +119,9 @@ function App() {
   const [activeRole, setActiveRole] = useState(null);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
-  // Define Cognito configuration values
-  const cognitoAuthConfig = {
-    authority:
-      "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_US1m8498L",
-    client_id: "12s8brrk9144uq23g3951mfvhl",
-    redirect_uri: "https://yoursanskritteacher.com",
-    response_type: "code",
-    scope: "phone openid email",
-  };
-
   // Backward compatibility with existing code
-  const clientId = cognitoAuthConfig.client_id;
-  const redirectUri = cognitoAuthConfig.redirect_uri;
-  
-  // Setting up Cognito hosted UI domain
-  // Using the custom domain configured in Cognito
+  const clientId = "12s8brrk9144uq23g3951mfvhl";
+  const redirectUri = "https://yoursanskritteacher.com";
   const cognitoDomain = "https://auth.yoursanskritteacher.com";
 
   const signOutRedirect = async () => {
@@ -158,12 +129,6 @@ function App() {
     const logoutURL = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
       redirectUri
     )}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
-
-    // Log for debugging
-    console.log("Logout URL:", logoutURL);
-    console.log("Cognito domain:", cognitoDomain);
-    console.log("Client ID:", clientId);
-    console.log("Redirect URI:", redirectUri);
 
     try {
       // Clear local auth state
@@ -179,9 +144,9 @@ function App() {
   // Function to redirect users directly to the signup page
   const signupRedirect = () => {
     // Construct the signup URL using the Cognito Hosted UI
-    const signupURL = `${cognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=${
-      cognitoAuthConfig.scope.replace(/ /g, "+")
-    }&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const signupURL = `${cognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=email+openid+phone&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}`;
 
     // Log for debugging
     console.log("Signup URL:", signupURL);
@@ -409,10 +374,20 @@ function App() {
                       {!profile && (
                         <div className="alert alert-info profile-prompt">
                           <h4>Welcome to Sanskrit Teacher!</h4>
-                          <p>Please <a href="#" onClick={(e) => {
-                            e.preventDefault();
-                            setActiveTab("profile");
-                          }}>complete your profile</a> to get the most out of your Sanskrit learning experience.</p>
+                          <p>
+                            Please{" "}
+                            <a
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setActiveTab("profile");
+                              }}
+                            >
+                              complete your profile
+                            </a>{" "}
+                            to get the most out of your Sanskrit learning
+                            experience.
+                          </p>
                         </div>
                       )}
                       <Dashboard
@@ -483,7 +458,7 @@ function App() {
       // Reset states when authentication changes
       setLoadingProfile(true);
       setProfileError(null);
-      
+
       // Set dashboard as the default tab for authenticated users
       if (auth.isAuthenticated) {
         setActiveTab("dashboard");
@@ -862,10 +837,17 @@ function App() {
                     </p>
                     <p className="teacher-link">
                       <small>
-                        Are you a Sanskrit teacher? <a href="#" onClick={(e) => {
-                          e.preventDefault();
-                          signupRedirect();
-                        }}>Sign up</a> and select the teacher option in your profile.
+                        Are you a Sanskrit teacher?{" "}
+                        <a
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            signupRedirect();
+                          }}
+                        >
+                          Sign up
+                        </a>{" "}
+                        and select the teacher option in your profile.
                       </small>
                     </p>
                   </div>
