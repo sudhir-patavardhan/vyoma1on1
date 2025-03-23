@@ -34,17 +34,13 @@ const cognitoAuthConfig = {
     // Reload is not needed and can cause issues - the library handles state automatically
     // window.location.reload();
   },
-  // Add browser storage configuration to clear old data
-  userStore: {
-    store: {
-      clear: () => {
-        // Clear any existing OIDC storage that might contain old configuration
-        // This makes sure we don't keep trying to use the old User Pool ID
-        Object.keys(localStorage)
-          .filter(key => key.startsWith('oidc.'))
-          .forEach(key => localStorage.removeItem(key));
-      }
-    }
+  // Use default user store but clear any stale data
+  onSigninStart: () => {
+    // Clear any existing OIDC storage that might contain old configuration
+    // This makes sure we don't keep trying to use the old User Pool ID
+    Object.keys(localStorage)
+      .filter(key => key.startsWith('oidc.'))
+      .forEach(key => localStorage.removeItem(key));
   }
 };
 

@@ -123,13 +123,9 @@ function App() {
         console.log("Cleaned up URL after auth callback");
       }
       
-      // Only try to manually process the callback if not already authenticated or loading
-      if (!auth.isAuthenticated && !auth.isLoading) {
-        console.log("Manually processing auth callback");
-        auth.signinCallback().catch(err => {
-          console.error("Error in manual signin callback:", err);
-        });
-      }
+      // The auth library should automatically process the callback through its internal mechanism
+      // We don't need to manually call signinCallback() as it might cause issues
+      console.log("Auth library will process the callback automatically");
     }
     
     // Add debugging for auth state changes
@@ -162,11 +158,9 @@ function App() {
     
     // Cleanup function to handle component unmounting
     return () => {
-      // Only clear if authentication was in progress but not completed
-      if (sessionStorage.getItem("auth_completed") === "true" && auth.isLoading) {
-        console.log("Cleaning up incomplete auth process during unmount");
-        sessionStorage.removeItem("auth_completed");
-      }
+      // We'll no longer clear the auth_completed flag on unmount, as it might
+      // be needed for the authentication flow to complete properly after a remount.
+      // Auth errors are already handled in the main effect logic.
     };
   }, [auth, auth.isAuthenticated, auth.isLoading, auth.user, auth.error, setActiveTab]);
 
