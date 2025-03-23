@@ -11,6 +11,7 @@ const cognitoAuthConfig = {
   redirect_uri: "https://yoursanskritteacher.com", // Ensure this matches the callback URL in Cognito
   response_type: "code",
   scope: "phone openid email", // Scopes from AWS-suggested configuration
+  metadataUrl: "https://us1m8498l.auth.us-east-1.amazoncognito.com/.well-known/openid-configuration", // Explicitly set metadata URL
   
   // Force clear any cached OIDC settings to prevent 404 errors with old configuration
   automaticSilentRenew: false,
