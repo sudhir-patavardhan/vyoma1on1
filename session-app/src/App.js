@@ -103,17 +103,72 @@ function App() {
   const [activeSession, setActiveSession] = useState(null);
   const [upcomingSession, setUpcomingSession] = useState(null);
 
-  // Clear any old OIDC cache on app initialization and handle post-login redirect
+  // Handle authentication callback and state changes
   useEffect(() => {
-    // Check if we've just completed authentication
-    const authCompleted = sessionStorage.getItem("auth_completed");
-    if (authCompleted === "true" && auth.isAuthenticated) {
-      console.log("Auth completed, redirecting to dashboard");
-      setActiveTab("dashboard");
-      // Remove the flag so we don't keep redirecting
-      sessionStorage.removeItem("auth_completed");
+    // Process auth code in URL immediately if present
+    const hasAuthCode = window.location.search.includes('code=');
+    
+    if (hasAuthCode) {
+      console.log("Found auth code in URL - processing callback");
+      
+      // Store auth completion flag for post-callback processing
+      if (!sessionStorage.getItem("auth_completed")) {
+        sessionStorage.setItem("auth_completed", "true");
+        console.log("Set auth_completed flag due to auth code in URL");
+      }
+      
+      // Clean up the URL if not already done by onSigninCallback
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        console.log("Cleaned up URL after auth callback");
+      }
+      
+      // Only try to manually process the callback if not already authenticated or loading
+      if (!auth.isAuthenticated && !auth.isLoading) {
+        console.log("Manually processing auth callback");
+        auth.signinCallback().catch(err => {
+          console.error("Error in manual signin callback:", err);
+        });
+      }
     }
-  }, [auth.isAuthenticated]);
+    
+    // Add debugging for auth state changes
+    console.log("Auth state:", { 
+      isAuthenticated: auth.isAuthenticated, 
+      isLoading: auth.isLoading,
+      user: auth.user ? 'User exists' : 'No user',
+      error: auth.error ? auth.error.message : 'No error',
+      hasAuthCode: hasAuthCode
+    });
+    
+    // Check if we've completed authentication (from flag set in onSigninCallback)
+    const authCompleted = sessionStorage.getItem("auth_completed");
+    if (authCompleted === "true") {
+      console.log("Auth completed flag detected");
+      
+      // If we're authenticated, go to dashboard
+      if (auth.isAuthenticated) {
+        console.log("Auth completed and authenticated, redirecting to dashboard");
+        setActiveTab("dashboard");
+        // Remove the flag so we don't keep redirecting
+        sessionStorage.removeItem("auth_completed");
+      } 
+      // Clear flag if we're done loading but not authenticated (auth failed)
+      else if (!auth.isLoading && !auth.isAuthenticated) {
+        console.log("Auth completed but not authenticated - possible error");
+        sessionStorage.removeItem("auth_completed");
+      }
+    }
+    
+    // Cleanup function to handle component unmounting
+    return () => {
+      // Only clear if authentication was in progress but not completed
+      if (sessionStorage.getItem("auth_completed") === "true" && auth.isLoading) {
+        console.log("Cleaning up incomplete auth process during unmount");
+        sessionStorage.removeItem("auth_completed");
+      }
+    };
+  }, [auth, auth.isAuthenticated, auth.isLoading, auth.user, auth.error, setActiveTab]);
 
   // For users with multiple roles
   const [activeRole, setActiveRole] = useState(null);

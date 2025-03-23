@@ -30,8 +30,9 @@ const cognitoAuthConfig = {
     window.history.replaceState({}, document.title, window.location.pathname);
     // Store a flag that we can check to force dashboard redirect
     sessionStorage.setItem('auth_completed', 'true');
-    // Reload the app to ensure we pick up the authenticated state properly
-    window.location.reload();
+    console.log("Authentication callback executed - setting auth_completed flag");
+    // Reload is not needed and can cause issues - the library handles state automatically
+    // window.location.reload();
   },
   // Add browser storage configuration to clear old data
   userStore: {
