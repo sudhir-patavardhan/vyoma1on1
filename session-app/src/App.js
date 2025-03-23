@@ -9,6 +9,7 @@ import Bookings from "./components/Bookings";
 import Dashboard from "./components/Dashboard";
 import AdminPanel from "./components/admin/AdminPanel";
 import { API_BASE_URL } from "./config";
+import VERSION from "./version";
 import "./styles.css";
 import "./premium-styles.css"; // Import premium styles
 import {
@@ -750,34 +751,57 @@ function App() {
   };
 
   // Define the footer render function early
-  const renderFooter = () => (
-    <footer className="footer">
-      <div className="container">
-        <div className="footer-content">
-          <div className="footer-logo">
-            <img
-              src="/vyoma/premium-logo.svg"
-              alt="Sanskrit Teacher"
-              height="40"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "/vyoma/vyoma-logo.svg";
-              }}
-            />
-            <span>Sanskrit Teacher</span>
-          </div>
-          <div className="footer-links">
-            <a href="#">Terms of Service</a>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Contact Us</a>
-          </div>
-          <div className="footer-copyright">
-            © {new Date().getFullYear()} Sanskrit Teacher. All rights reserved.
+  const renderFooter = () => {
+    // Format the build date in a user-friendly format
+    const formatDate = (dateString) => {
+      if (!dateString) return 'Unknown';
+      const options = { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      return new Date(dateString).toLocaleDateString(undefined, options);
+    };
+    
+    const buildDate = formatDate(VERSION.buildDate);
+    
+    return (
+      <footer className="footer">
+        <div className="container">
+          <div className="footer-content">
+            <div className="footer-logo">
+              <img
+                src="/vyoma/premium-logo.svg"
+                alt="Sanskrit Teacher"
+                height="40"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "/vyoma/vyoma-logo.svg";
+                }}
+              />
+              <span>Sanskrit Teacher</span>
+            </div>
+            <div className="footer-links">
+              <a href="#">Terms of Service</a>
+              <a href="#">Privacy Policy</a>
+              <a href="#">Contact Us</a>
+            </div>
+            <div className="footer-copyright">
+              © {new Date().getFullYear()} Sanskrit Teacher. All rights reserved.
+              <div className="version-info">
+                Last updated: {buildDate}
+                {VERSION.buildId !== 'local' && (
+                  <span className="build-id"> • Build: {VERSION.buildId}</span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </footer>
-  );
+      </footer>
+    );
+  };
 
   // Check for authentication state and update UI accordingly
   if (!auth.isAuthenticated) {
