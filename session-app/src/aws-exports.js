@@ -1,8 +1,8 @@
 const awsConfig = {
     Auth: {
-      region: "ap-south-1", // AWS region
-      userPoolId: "ap-south-1_ghMdyIY2D", // Updated Cognito User Pool ID
-      userPoolWebClientId: "4rkke6o1h98p3judjga7m34lrn", // Updated Cognito App Client ID
+      region: "us-east-1", // AWS region
+      userPoolId: "us-east-1_US1m8498L", // Updated Cognito User Pool ID
+      userPoolWebClientId: "12s8brrk9144uq23g3951mfvhl", // Updated Cognito App Client ID
       oauth: {
         domain: "auth.yoursanskritteacher.com", // Cognito domain
         scope: ["phone", "openid", "email"],

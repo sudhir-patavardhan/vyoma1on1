@@ -40,22 +40,29 @@ function App() {
 
   // Clear any old OIDC cache on app initialization and handle post-login redirect
   useEffect(() => {
-    console.log("Clearing old OIDC cache to ensure new Cognito settings are used");
+    console.log(
+      "Clearing old OIDC cache to ensure new Cognito settings are used"
+    );
     // Force clear any cached OIDC settings that might be causing 404 errors
     Object.keys(localStorage)
-      .filter(key => key.startsWith('oidc.') || key.includes('WYpPDAspb'))
-      .forEach(key => {
+      .filter((key) => 
+        key.startsWith("oidc.") || 
+        key.includes("WYpPDAspb") || 
+        key.includes("ghMdyIY2D") ||
+        key.includes("ap-south-1")
+      )
+      .forEach((key) => {
         console.log(`Removing old cache key: ${key}`);
         localStorage.removeItem(key);
       });
-      
+
     // Check if we've just completed authentication
-    const authCompleted = sessionStorage.getItem('auth_completed');
-    if (authCompleted === 'true' && auth.isAuthenticated) {
+    const authCompleted = sessionStorage.getItem("auth_completed");
+    if (authCompleted === "true" && auth.isAuthenticated) {
       console.log("Auth completed, redirecting to dashboard");
       setActiveTab("dashboard");
       // Remove the flag so we don't keep redirecting
-      sessionStorage.removeItem('auth_completed');
+      sessionStorage.removeItem("auth_completed");
     }
   }, [auth.isAuthenticated]);
 
@@ -78,7 +85,7 @@ function App() {
   const redirectUri = cognitoAuthConfig.redirect_uri;
   const cognitoDomain = "https://auth.yoursanskritteacher.com"; // Will derive from authority if needed
 
-  const signoutRedirect = async () => {
+  const signOutRedirect = async () => {
     // Construct the logout URL with AWS Cognito format
     const logoutURL = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
       redirectUri
@@ -688,7 +695,9 @@ function App() {
     // After login, there might be a brief moment when isAuthenticated is still false but we have user details
     // This additional check helps prevent showing the landing page incorrectly after login
     if (auth.user) {
-      console.log("User data detected but isAuthenticated is false - treating as authenticated");
+      console.log(
+        "User data detected but isAuthenticated is false - treating as authenticated"
+      );
       // If we have user data, treat as authenticated and continue to the dashboard
     } else {
       return (
@@ -699,78 +708,79 @@ function App() {
               <div className="container">
                 <div className="card">
                   <div className="card-body">
-                  <h1 className="landing-heading">
-                    Welcome to Sanskrit Teacher
-                  </h1>
-                  <h2 className="landing-subheading">
-                    Premium Sanskrit Instruction by PhD Scholars
-                  </h2>
-                  <p className="landing-text">
-                    Connect with world-class Sanskrit scholars for exclusive,
-                    personalized 1:1 learning experiences. Our platform features
-                    PhD-holding experts specializing in rare and advanced
-                    Sanskrit topics, offering premium instruction for discerning
-                    international students and serious practitioners.
-                  </p>
-                  <div className="landing-features">
-                    <div className="feature">
-                      <FaSearch className="feature-icon" />
-                      <h3>Elite Instructors</h3>
-                      <p>
-                        Access PhD-level Sanskrit scholars specializing in rare
-                        and advanced topics
-                      </p>
+                    <h1 className="landing-heading">
+                      Welcome to Sanskrit Teacher
+                    </h1>
+                    <h2 className="landing-subheading">
+                      Premium Sanskrit Instruction by PhD Scholars
+                    </h2>
+                    <p className="landing-text">
+                      Connect with world-class Sanskrit scholars for exclusive,
+                      personalized 1:1 learning experiences. Our platform
+                      features PhD-holding experts specializing in rare and
+                      advanced Sanskrit topics, offering premium instruction for
+                      discerning international students and serious
+                      practitioners.
+                    </p>
+                    <div className="landing-features">
+                      <div className="feature">
+                        <FaSearch className="feature-icon" />
+                        <h3>Elite Instructors</h3>
+                        <p>
+                          Access PhD-level Sanskrit scholars specializing in
+                          rare and advanced topics
+                        </p>
+                      </div>
+                      <div className="feature">
+                        <FaCalendarAlt className="feature-icon" />
+                        <h3>Exclusive Sessions</h3>
+                        <p>
+                          Book personalized instruction tailored to your
+                          specific scholarly interests
+                        </p>
+                      </div>
+                      <div className="feature">
+                        <FaVideo className="feature-icon" />
+                        <h3>Premium Experience</h3>
+                        <p>
+                          Enjoy high-quality video sessions with advanced
+                          learning tools and resources
+                        </p>
+                      </div>
+                      <div className="feature">
+                        <FaGraduationCap className="feature-icon" />
+                        <h3>Academic Excellence</h3>
+                        <p>
+                          Achieve mastery through instruction aligned with
+                          prestigious academic standards
+                        </p>
+                      </div>
                     </div>
-                    <div className="feature">
-                      <FaCalendarAlt className="feature-icon" />
-                      <h3>Exclusive Sessions</h3>
-                      <p>
-                        Book personalized instruction tailored to your specific
-                        scholarly interests
-                      </p>
+                    <div className="text-center landing-buttons">
+                      <button
+                        className="btn btn-primary btn-lg"
+                        onClick={() => auth.signinRedirect()}
+                      >
+                        Access Premium Classes
+                      </button>
+                      <button
+                        className="btn btn-secondary btn-lg"
+                        onClick={signupRedirect}
+                      >
+                        Join Our Exclusive Network
+                      </button>
                     </div>
-                    <div className="feature">
-                      <FaVideo className="feature-icon" />
-                      <h3>Premium Experience</h3>
-                      <p>
-                        Enjoy high-quality video sessions with advanced learning
-                        tools and resources
-                      </p>
-                    </div>
-                    <div className="feature">
-                      <FaGraduationCap className="feature-icon" />
-                      <h3>Academic Excellence</h3>
-                      <p>
-                        Achieve mastery through instruction aligned with
-                        prestigious academic standards
-                      </p>
-                    </div>
+                    <p className="premium-note">
+                      Premium Sanskrit instruction with verified PhD scholars
+                    </p>
                   </div>
-                  <div className="text-center landing-buttons">
-                    <button
-                      className="btn btn-primary btn-lg"
-                      onClick={() => auth.signinRedirect()}
-                    >
-                      Access Premium Classes
-                    </button>
-                    <button
-                      className="btn btn-secondary btn-lg"
-                      onClick={signupRedirect}
-                    >
-                      Join Our Exclusive Network
-                    </button>
-                  </div>
-                  <p className="premium-note">
-                    Premium Sanskrit instruction with verified PhD scholars
-                  </p>
                 </div>
               </div>
             </div>
           </div>
+          {renderFooter()}
         </div>
-        {renderFooter()}
-      </div>
-    );
+      );
     }
   }
 
