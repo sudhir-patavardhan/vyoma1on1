@@ -11,7 +11,7 @@ const cognitoAuthConfig = {
   client_id: "12s8brrk9144uq23g3951mfvhl",
   redirect_uri: "https://yoursanskritteacher.com", // Ensure this matches the callback URL in Cognito
   response_type: "code",
-  scope: "phone openid email", // Scopes from AWS-suggested configuration
+  scope: "phone openid email", // Keep the original scopes
   loadUserInfo: true,
   
   // Disable metadata URL to prevent CORS issues - we'll manually construct auth URLs
@@ -22,22 +22,21 @@ const cognitoAuthConfig = {
     end_session_endpoint: "https://auth.yoursanskritteacher.com/logout"
   },
   
-  // Force clear any cached OIDC settings to prevent 404 errors with old configuration
+  // Simplified authentication settings
   automaticSilentRenew: false,
   monitorSession: true,
+  
+  // Simple callback that just cleans up the URL
   onSigninCallback: () => {
-    // When sign-in completes, clean up URL and set a flag to indicate successful auth
+    // When sign-in completes, just clean up URL - no flags or reloads needed
     window.history.replaceState({}, document.title, window.location.pathname);
-    // Store a flag that we can check to force dashboard redirect
-    sessionStorage.setItem('auth_completed', 'true');
-    console.log("Authentication callback executed - setting auth_completed flag");
-    // Reload is not needed and can cause issues - the library handles state automatically
-    // window.location.reload();
+    console.log("Authentication callback executed - URL cleaned up");
   },
-  // Use default user store but clear any stale data
+  
+  // Clear storage before sign-in to prevent old data issues
   onSigninStart: () => {
-    // Clear any existing OIDC storage that might contain old configuration
-    // This makes sure we don't keep trying to use the old User Pool ID
+    console.log("Starting sign-in process");
+    // Clear any existing OIDC storage 
     Object.keys(localStorage)
       .filter(key => key.startsWith('oidc.'))
       .forEach(key => localStorage.removeItem(key));

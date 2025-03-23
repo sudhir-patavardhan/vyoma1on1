@@ -103,72 +103,28 @@ function App() {
   const [activeSession, setActiveSession] = useState(null);
   const [upcomingSession, setUpcomingSession] = useState(null);
 
-  // Handle authentication callback and state changes
+  // Simple effect to handle auth state changes and log for debugging
   useEffect(() => {
-    // Process auth code in URL immediately if present
-    const hasAuthCode = window.location.search.includes('code=');
-    
-    if (hasAuthCode) {
-      console.log("Found auth code in URL - processing callback");
-      
-      // Store auth completion flag for post-callback processing
-      if (!sessionStorage.getItem("auth_completed")) {
-        sessionStorage.setItem("auth_completed", "true");
-        console.log("Set auth_completed flag due to auth code in URL");
-      }
-      
-      // Clean up the URL if not already done by onSigninCallback
-      if (window.history && window.history.replaceState) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-        console.log("Cleaned up URL after auth callback");
-      }
-      
-      // The auth library should automatically process the callback through its internal mechanism
-      // We don't need to manually call signinCallback() as it might cause issues
-      console.log("Auth library will process the callback automatically");
-    }
-    
-    // Add debugging for auth state changes
-    console.log("Auth state:", { 
+    // Just log the current auth state for debugging
+    console.log("Auth state changed:", { 
       isAuthenticated: auth.isAuthenticated, 
       isLoading: auth.isLoading,
       user: auth.user ? 'User exists' : 'No user',
-      error: auth.error ? auth.error.message : 'No error',
-      hasAuthCode: hasAuthCode
+      error: auth.error ? auth.error.message : 'No error'
     });
     
-    // Check if we've completed authentication (from flag set in onSigninCallback)
-    const authCompleted = sessionStorage.getItem("auth_completed");
-    if (authCompleted === "true") {
-      console.log("Auth completed flag detected");
-      
-      // If we're authenticated, go to dashboard
-      if (auth.isAuthenticated) {
-        console.log("Auth completed and authenticated, redirecting to dashboard");
-        setActiveTab("dashboard");
-        // Remove the flag so we don't keep redirecting
-        sessionStorage.removeItem("auth_completed");
-      } 
-      // Clear flag if we're done loading but not authenticated (auth failed)
-      else if (!auth.isLoading && !auth.isAuthenticated) {
-        console.log("Auth completed but not authenticated - possible error");
-        sessionStorage.removeItem("auth_completed");
-      }
+    // If we're authenticated, make sure we're on the dashboard tab
+    if (auth.isAuthenticated && !auth.isLoading) {
+      // Set dashboard as active tab when authenticated
+      setActiveTab("dashboard");
     }
-    
-    // Cleanup function to handle component unmounting
-    return () => {
-      // We'll no longer clear the auth_completed flag on unmount, as it might
-      // be needed for the authentication flow to complete properly after a remount.
-      // Auth errors are already handled in the main effect logic.
-    };
-  }, [auth, auth.isAuthenticated, auth.isLoading, auth.user, auth.error, setActiveTab]);
+  }, [auth.isAuthenticated, auth.isLoading, auth.user, auth.error, setActiveTab]);
 
   // For users with multiple roles
   const [activeRole, setActiveRole] = useState(null);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
-  // Backward compatibility with existing code
+  // Cognito configuration
   const clientId = "12s8brrk9144uq23g3951mfvhl";
   const redirectUri = "https://yoursanskritteacher.com";
   const cognitoDomain = "https://auth.yoursanskritteacher.com";
@@ -178,6 +134,8 @@ function App() {
     const logoutURL = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
       redirectUri
     )}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+    console.log("Logout URL:", logoutURL); // Log for debugging
 
     try {
       // Clear local auth state
@@ -196,13 +154,9 @@ function App() {
     const signupURL = `${cognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=email+openid+phone&redirect_uri=${encodeURIComponent(
       redirectUri
     )}`;
-
-    // Log for debugging
-    console.log("Signup URL:", signupURL);
-    console.log("Cognito domain:", cognitoDomain);
-    console.log("Client ID:", clientId);
-    console.log("Redirect URI:", redirectUri);
-
+    
+    console.log("Signup URL:", signupURL); // Log for debugging
+    
     // Redirect directly to Cognito signup page
     window.location.href = signupURL;
   };
