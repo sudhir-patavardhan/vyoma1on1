@@ -77,6 +77,25 @@ const injectCustomStyles = () => {
   .alert-info {
     padding: 10px 15px;
   }
+  
+  .auth-fallback {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: rgba(198, 161, 71, 0.1);
+    border: 1px solid #c6a147;
+    text-align: center;
+  }
+  
+  .auth-fallback p {
+    margin: 0;
+  }
+  
+  .fallback-link {
+    color: #8a6d3b;
+    font-weight: bold;
+    text-decoration: underline;
+  }
   `;
 
   // Only add the styles once
@@ -149,20 +168,30 @@ function App() {
   const clientId = cognitoAuthConfig.client_id;
   const redirectUri = cognitoAuthConfig.redirect_uri;
   
-  // Setting up the Cognito domain correctly
-  // For hosted UI, use the app client's domain prefix (typically matching the user pool)
-  // Cognito hosted UI domain format is https://<domain-prefix>.auth.<region>.amazoncognito.com
-  const cognitoDomain = "https://yoursanskritteacher.auth.us-east-1.amazoncognito.com";
+  // Setting up the Cognito domains - primary custom domain and fallback
+  // Using the configured custom domain for Cognito hosted UI
+  const customCognitoDomain = "https://auth.yoursanskritteacher.com";
+  // Fallback to the default Cognito domain if custom domain isn't ready yet
+  const defaultCognitoDomain = "https://us-east-1-us1m8498l.auth.us-east-1.amazoncognito.com";
+  
+  // Try the custom domain first, with fallback logic in the redirect functions
+  const cognitoDomain = customCognitoDomain;
 
   const signOutRedirect = async () => {
     // Construct the logout URL with AWS Cognito format
     const logoutURL = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
       redirectUri
     )}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
+    
+    // Create a fallback logout URL using the default Cognito domain
+    const fallbackLogoutURL = `${defaultCognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
+      redirectUri
+    )}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
 
     // Enhanced debugging for auth URLs
-    console.log("Logout URL:", logoutURL);
-    console.log("Cognito domain:", cognitoDomain);
+    console.log("Primary Logout URL:", logoutURL);
+    console.log("Fallback Logout URL:", fallbackLogoutURL);
+    console.log("Cognito domains:", {custom: customCognitoDomain, default: defaultCognitoDomain});
     console.log("Client ID:", clientId);
     console.log("Redirect URI:", redirectUri);
 
@@ -172,8 +201,16 @@ function App() {
 
       // Redirect to Cognito logout endpoint
       window.location.href = logoutURL;
+      
+      // If redirect doesn't complete in reasonable time, try fallback
+      setTimeout(() => {
+        console.log("Fallback logout timer triggered - using default domain");
+        window.location.href = fallbackLogoutURL;
+      }, 5000); // 5-second timeout
     } catch (error) {
       console.error("Error during signout:", error);
+      // Try fallback URL in case of error
+      window.location.href = fallbackLogoutURL;
     }
   };
 
@@ -184,14 +221,40 @@ function App() {
       cognitoAuthConfig.scope.replace(/ /g, "+")
     }&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
+    // Also prepare fallback URL using the default Cognito domain
+    const fallbackSignupURL = `${defaultCognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=${
+      cognitoAuthConfig.scope.replace(/ /g, "+")
+    }&redirect_uri=${encodeURIComponent(redirectUri)}`;
+
     // Log for debugging to help troubleshoot auth issues
-    console.log("Signup URL:", signupURL);
-    console.log("Cognito domain:", cognitoDomain);
+    console.log("Primary Signup URL:", signupURL);
+    console.log("Fallback Signup URL:", fallbackSignupURL);
+    console.log("Cognito domains:", {custom: customCognitoDomain, default: defaultCognitoDomain});
     console.log("Client ID:", clientId);
     console.log("Redirect URI:", redirectUri);
 
-    // Redirect directly to Cognito signup page
-    window.location.href = signupURL;
+    // Try the custom domain first, but add a fallback option for users
+    try {
+      // Redirect to primary domain
+      window.location.href = signupURL;
+      
+      // If redirect fails or domain is not ready, show a fallback option after a delay
+      setTimeout(() => {
+        // Check if we're still on the same page (redirect didn't happen)
+        if (document.querySelector('.landing-heading')) {
+          console.log("Primary domain redirect may have failed, offering fallback...");
+          const fallbackDiv = document.createElement('div');
+          fallbackDiv.className = 'auth-fallback';
+          fallbackDiv.innerHTML = `
+            <p>If the signup page doesn't load, <a href="${fallbackSignupURL}" class="fallback-link">click here</a> to try an alternative signup method.</p>
+          `;
+          document.querySelector('.landing-buttons').appendChild(fallbackDiv);
+        }
+      }, 3000); // Wait 3 seconds before showing fallback
+    } catch (e) {
+      console.error("Error during signup redirect:", e);
+      window.location.href = fallbackSignupURL;
+    }
   };
 
   const renderHeader = () => (
