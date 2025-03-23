@@ -25,6 +25,8 @@ import {
   FaUserPlus,
   FaUser,
   FaGraduationCap,
+  FaPlus,
+  FaClipboardList,
 } from "react-icons/fa"; // Import icons
 
 // Add some custom styles for new elements
@@ -312,14 +314,24 @@ function App() {
                 (!activeRole &&
                   ((profile.roles && profile.roles.includes("teacher")) ||
                     profile.role === "teacher"))) && (
-                <button
-                  className={`header-link ${
-                    activeTab === "schedule" ? "active" : ""
-                  }`}
-                  onClick={() => setActiveTab("schedule")}
-                >
-                  <FaCalendarAlt className="header-icon" /> My Schedule
-                </button>
+                <>
+                  <button
+                    className={`header-link ${
+                      activeTab === "schedule" ? "active" : ""
+                    }`}
+                    onClick={() => setActiveTab("schedule")}
+                  >
+                    <FaCalendarAlt className="header-icon" /> My Classes
+                  </button>
+                  <button
+                    className={`header-link ${
+                      activeTab === "create-slots" ? "active" : ""
+                    }`}
+                    onClick={() => setActiveTab("create-slots")}
+                  >
+                    <FaPlus className="header-icon" /> Create Teaching Slots
+                  </button>
+                </>
               )}
 
             {profile && upcomingSession && (
@@ -1114,6 +1126,14 @@ function App() {
                       ((profile.roles && profile.roles.includes("teacher")) ||
                         profile.role === "teacher"))) &&
                   activeTab === "schedule" && <TeacherCalendarSchedule />}
+                  
+                {/* Show slot creation interface for teachers */}
+                {profile &&
+                  (activeRole === "teacher" ||
+                    (!activeRole &&
+                      ((profile.roles && profile.roles.includes("teacher")) ||
+                        profile.role === "teacher"))) &&
+                  activeTab === "create-slots" && <TeacherSchedule />}
 
                 {/* Admin Panel */}
                 {profile &&
