@@ -27,7 +27,72 @@ import {
   FaGraduationCap,
 } from "react-icons/fa"; // Import icons
 
+// Add some custom styles for new elements
+const injectCustomStyles = () => {
+  const styles = `
+  .teacher-link {
+    margin-top: 15px;
+    text-align: center;
+    color: #666;
+  }
+
+  .teacher-link a {
+    color: #004d99;
+    text-decoration: underline;
+  }
+
+  .profile-prompt {
+    margin-bottom: 20px;
+    border-radius: 8px;
+    background-color: #e8f4fd;
+    border-color: #a8d2f0;
+  }
+
+  .profile-prompt h4 {
+    color: #0056b3;
+    margin-bottom: 10px;
+  }
+
+  .profile-prompt a {
+    color: #0056b3;
+    font-weight: bold;
+    text-decoration: underline;
+  }
+
+  .text-link {
+    background: none;
+    border: none;
+    color: #004d99;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+  }
+
+  .icon-small {
+    margin-right: 5px;
+    font-size: 14px;
+  }
+
+  .alert-info {
+    padding: 10px 15px;
+  }
+  `;
+
+  // Only add the styles once
+  if (!document.getElementById('sanskrit-teacher-custom-styles')) {
+    const styleElement = document.createElement('style');
+    styleElement.id = 'sanskrit-teacher-custom-styles';
+    styleElement.innerHTML = styles;
+    document.head.appendChild(styleElement);
+  }
+};
+
 function App() {
+  // Inject custom styles on component mount
+  React.useEffect(() => {
+    injectCustomStyles();
+  }, []);
   const auth = useAuth();
 
   // Initialize with loading state
@@ -333,19 +398,31 @@ function App() {
             <div className="container">
               <div className="card">
                 <div className="card-body">
-                  {(!profile || activeTab === "profile") && (
+                  {/* Show dashboard as default for authenticated users, with profile completion prompt if needed */}
+                  {(activeTab === "dashboard" || !activeTab) && (
+                    <>
+                      {!profile && (
+                        <div className="alert alert-info profile-prompt">
+                          <h4>Welcome to Sanskrit Teacher!</h4>
+                          <p>Please <a href="#" onClick={(e) => {
+                            e.preventDefault();
+                            setActiveTab("profile");
+                          }}>complete your profile</a> to get the most out of your Sanskrit learning experience.</p>
+                        </div>
+                      )}
+                      <Dashboard
+                        profile={profile || { role: "student" }} // Provide minimal profile if none exists
+                        onTabChange={setActiveTab}
+                        onJoinSession={setActiveSession}
+                        upcomingSession={upcomingSession}
+                      />
+                    </>
+                  )}
+
+                  {activeTab === "profile" && (
                     <ProfileForm
                       saveUserProfile={saveUserProfile}
                       profile={profile}
-                    />
-                  )}
-
-                  {profile && activeTab === "dashboard" && (
-                    <Dashboard
-                      profile={profile}
-                      onTabChange={setActiveTab}
-                      onJoinSession={setActiveSession}
-                      upcomingSession={upcomingSession}
                     />
                   )}
 
@@ -401,6 +478,11 @@ function App() {
       // Reset states when authentication changes
       setLoadingProfile(true);
       setProfileError(null);
+      
+      // Set dashboard as the default tab for authenticated users
+      if (auth.isAuthenticated) {
+        setActiveTab("dashboard");
+      }
 
       if (auth.isAuthenticated && auth.user && auth.user.profile) {
         console.log("Auth authenticated, fetching profile");
@@ -761,17 +843,25 @@ function App() {
                         className="btn btn-primary btn-lg"
                         onClick={() => auth.signinRedirect()}
                       >
-                        Access Premium Classes
+                        Begin Your Sanskrit Journey
                       </button>
                       <button
                         className="btn btn-secondary btn-lg"
                         onClick={signupRedirect}
                       >
-                        Join Our Exclusive Network
+                        Create Student Account
                       </button>
                     </div>
                     <p className="premium-note">
                       Premium Sanskrit instruction with verified PhD scholars
+                    </p>
+                    <p className="teacher-link">
+                      <small>
+                        Are you a Sanskrit teacher? <a href="#" onClick={(e) => {
+                          e.preventDefault();
+                          signupRedirect();
+                        }}>Sign up</a> and select the teacher option in your profile.
+                      </small>
                     </p>
                   </div>
                 </div>
