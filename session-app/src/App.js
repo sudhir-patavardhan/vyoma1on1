@@ -32,6 +32,12 @@ import {
   FaSun,
   FaChevronLeft,
   FaChevronRight,
+  FaBars,
+  FaTimes,
+  FaCog,
+  FaChalkboardTeacher,
+  FaRegCalendarCheck,
+  FaRegCalendarPlus,
 } from "react-icons/fa"; // Import icons
 
 // Add some custom styles for new elements
@@ -88,9 +94,9 @@ const injectCustomStyles = () => {
   /* Theme Toggle Button */
   .theme-toggle {
     position: fixed;
-    bottom: 20px;
+    bottom: 70px;
     right: 20px;
-    background-color: var(--sanskrit-primary);
+    background-color: var(--vyoma-blue);
     color: white;
     border: none;
     width: 48px;
@@ -106,13 +112,322 @@ const injectCustomStyles = () => {
   }
 
   .theme-toggle:hover {
-    background-color: var(--sanskrit-primary-light);
+    background-color: var(--vyoma-blue-dark);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
   .theme-toggle .icon {
     font-size: 20px;
+  }
+
+  /* New Navigation Styles */
+  .main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    height: 60px;
+    background-color: var(--vyoma-blue);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .nav-brand img {
+    height: 32px;
+  }
+
+  .nav-links {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 5px;
+  }
+
+  .nav-item {
+    position: relative;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    font-weight: 500;
+    gap: 8px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: 1rem;
+  }
+
+  .nav-link:hover, .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .nav-link.active {
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .nav-icon {
+    font-size: 1.1rem;
+  }
+
+  /* Mobile Navigation */
+  .mobile-nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  .session-join-btn {
+    background-color: #e53935;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(229, 57, 53, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(229, 57, 53, 0);
+    }
+  }
+
+  /* Bottom Navigation for Mobile */
+  .bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+
+  .bottom-nav-links {
+    display: flex;
+    justify-content: space-around;
+    list-style: none;
+    margin: 0;
+    padding: 8px 0;
+  }
+
+  .bottom-nav-item {
+    flex: 1;
+    text-align: center;
+  }
+
+  .bottom-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--text-dark);
+    text-decoration: none;
+    padding: 8px 0;
+    font-size: 0.75rem;
+    gap: 4px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .bottom-nav-link.active {
+    color: var(--vyoma-blue);
+    font-weight: 500;
+  }
+
+  .bottom-nav-icon {
+    font-size: 1.25rem;
+  }
+
+  /* User Menu */
+  .user-menu {
+    position: relative;
+  }
+
+  .user-menu-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    color: white;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .user-menu-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .user-menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 240px;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    z-index: 1010;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .user-menu-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .user-menu-name {
+    font-weight: bold;
+    color: var(--text-dark);
+    margin-bottom: 4px;
+  }
+
+  .user-menu-role {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .user-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    color: var(--text-dark);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .user-menu-item:hover {
+    background-color: var(--gray-100);
+  }
+
+  .user-menu-icon {
+    font-size: 1rem;
+    color: var(--gray-600);
+  }
+
+  .user-menu-divider {
+    height: 1px;
+    background-color: var(--gray-200);
+    margin: 8px 0;
+  }
+
+  .role-switch-section {
+    padding: 8px 16px;
+    background-color: var(--gray-100);
+  }
+
+  .role-switch-title {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .role-switch-options {
+    display: flex;
+    gap: 8px;
+  }
+
+  .role-switch-btn {
+    padding: 4px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--gray-300);
+    background-color: white;
+    color: var(--text-dark);
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .role-switch-btn.active {
+    background-color: var(--vyoma-blue);
+    color: white;
+    border-color: var(--vyoma-blue);
+  }
+
+  /* Responsive styles */
+  @media (max-width: 992px) {
+    .main-nav {
+      padding: 0 16px;
+    }
+
+    .nav-links {
+      display: none;
+    }
+
+    .mobile-nav-toggle {
+      display: block;
+    }
+
+    .nav-links.mobile-visible {
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 60px;
+      left: 0;
+      right: 0;
+      background-color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      padding: 16px;
+      z-index: 1000;
+    }
+
+    .nav-links.mobile-visible .nav-link {
+      color: var(--text-dark);
+      padding: 12px 16px;
+    }
+
+    .nav-links.mobile-visible .nav-link:hover,
+    .nav-links.mobile-visible .nav-link.active {
+      background-color: var(--gray-100);
+    }
+
+    .bottom-nav {
+      display: block;
+    }
   }
   `;
 
@@ -133,6 +448,10 @@ function App() {
     return savedTheme === "dark";
   });
 
+  // State for mobile navigation
+  const [mobileNavVisible, setMobileNavVisible] = useState(false);
+  const [userMenuVisible, setUserMenuVisible] = useState(false);
+  
   // Effect to apply theme to document
   useEffect(() => {
     const theme = darkMode ? "dark" : "light";
@@ -189,6 +508,19 @@ function App() {
     const newTheme = !darkMode;
     setDarkMode(newTheme);
     localStorage.setItem("sanskritTeacherTheme", newTheme ? "dark" : "light");
+  };
+
+  // Close mobile navigation when a link is clicked
+  const handleNavLinkClick = (tab) => {
+    setActiveTab(tab);
+    setMobileNavVisible(false);
+    setUserMenuVisible(false);
+  };
+
+  // Toggle user menu visibility
+  const toggleUserMenu = () => {
+    setUserMenuVisible(!userMenuVisible);
+    if (mobileNavVisible) setMobileNavVisible(false);
   };
 
   // Inject custom styles on component mount
@@ -283,189 +615,308 @@ function App() {
     window.location.href = signupURL;
   };
 
-  const renderHeader = () => (
-    <header className="header">
-      <div
-        className="header-logo"
-        onClick={() =>
-          auth.isAuthenticated ? setActiveTab("dashboard") : null
-        }
-        style={{ cursor: "pointer" }}
-      >
-        <span className="app-name">संस्कृत Teacher</span>
-      </div>
-      <nav className="header-nav">
-        {!auth.isAuthenticated ? (
-          <>
-            <button
-              className="header-link"
-              onClick={() => auth.signinRedirect()}
-            >
-              <FaSignInAlt className="header-icon" /> Sign In
-            </button>
-            <button className="header-link" onClick={signupRedirect}>
-              <FaUserPlus className="header-icon" /> Sign Up
-            </button>
-          </>
-        ) : (
-          <>
-            {/* Dashboard button */}
-            <button
-              className={`header-link ${
-                activeTab === "dashboard" ? "active" : ""
-              }`}
-              onClick={() => setActiveTab("dashboard")}
-            >
-              <FaHome className="header-icon" /> Dashboard
-            </button>
+  const renderHeader = () => {
+    // Determine if user is a student, teacher, or admin based on roles
+    const isStudent = profile && 
+      (activeRole === "student" || 
+      (!activeRole && 
+        ((profile.roles && profile.roles.includes("student")) || 
+          profile.role === "student")));
+    
+    const isTeacher = profile && 
+      (activeRole === "teacher" || 
+      (!activeRole && 
+        ((profile.roles && profile.roles.includes("teacher")) || 
+          profile.role === "teacher")));
+    
+    const isAdmin = profile && 
+      (activeRole === "admin" || 
+      (!activeRole && 
+        ((profile.roles && profile.roles.includes("admin")) || 
+          profile.role === "admin")));
 
-            {/* Profile button */}
-            <button
-              className={`header-link ${
-                activeTab === "profile" ? "active" : ""
-              }`}
-              onClick={() => setActiveTab("profile")}
-            >
-              <FaUserCircle className="header-icon" />{" "}
-              {profile?.name || "Profile"}
-            </button>
+    return (
+      <header>
+        {/* Main Navigation */}
+        <nav className="main-nav">
+          {/* Brand/Logo */}
+          <div 
+            className="nav-brand"
+            onClick={() => auth.isAuthenticated ? handleNavLinkClick("dashboard") : null}
+          >
+            <span>संस्कृत Teacher</span>
+          </div>
 
-            {/* Role Switcher for multi-role users */}
-            {profile && profile.roles && profile.roles.length > 1 && (
-              <div className="role-switcher-container">
-                <button
-                  className="header-link role-switcher-btn"
-                  onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-                >
-                  <FaExchangeAlt className="header-icon" />
-                  {activeRole
-                    ? `${activeRole.charAt(0).toUpperCase()}${activeRole.slice(
-                        1
-                      )} Mode`
-                    : "Switch Role"}
-                </button>
+          {/* Desktop Navigation Links */}
+          <ul className={`nav-links ${mobileNavVisible ? 'mobile-visible' : ''}`}>
+            {!auth.isAuthenticated ? (
+              <>
+                {/* Public Navigation (Not Logged In) */}
+                <li className="nav-item">
+                  <button
+                    className="nav-link"
+                    onClick={() => auth.signinRedirect()}
+                  >
+                    <FaSignInAlt className="nav-icon" /> Sign In
+                  </button>
+                </li>
+                <li className="nav-item">
+                  <button 
+                    className="nav-link"
+                    onClick={signupRedirect}
+                  >
+                    <FaUserPlus className="nav-icon" /> Sign Up
+                  </button>
+                </li>
+              </>
+            ) : (
+              <>
+                {/* Authenticated User Navigation */}
+                <li className="nav-item">
+                  <button
+                    className={`nav-link ${activeTab === "dashboard" ? "active" : ""}`}
+                    onClick={() => handleNavLinkClick("dashboard")}
+                  >
+                    <FaHome className="nav-icon" /> Dashboard
+                  </button>
+                </li>
 
-                {showRoleSwitcher && (
-                  <div className="role-switcher-dropdown">
-                    {profile.roles.map((role) => (
+                {/* Student-specific Navigation */}
+                {isStudent && (
+                  <>
+                    <li className="nav-item">
                       <button
-                        key={role}
-                        className={`role-option ${
-                          activeRole === role ? "active" : ""
-                        }`}
-                        onClick={() => {
-                          setActiveRole(role);
-                          setShowRoleSwitcher(false);
-                          // When switching roles, go to dashboard
-                          setActiveTab("dashboard");
-                        }}
+                        className={`nav-link ${activeTab === "search" ? "active" : ""}`}
+                        onClick={() => handleNavLinkClick("search")}
                       >
-                        {role === "student" && (
-                          <FaUser className="role-icon-small" />
-                        )}
-                        {role === "teacher" && (
-                          <FaGraduationCap className="role-icon-small" />
-                        )}
-                        {role === "admin" && (
-                          <FaLock className="role-icon-small" />
-                        )}
-                        {role.charAt(0).toUpperCase() + role.slice(1)}
+                        <FaSearch className="nav-icon" /> Find Teachers
                       </button>
-                    ))}
-                  </div>
+                    </li>
+                    <li className="nav-item">
+                      <button
+                        className={`nav-link ${activeTab === "bookings" ? "active" : ""}`}
+                        onClick={() => handleNavLinkClick("bookings")}
+                      >
+                        <FaBookOpen className="nav-icon" /> My Classes
+                      </button>
+                    </li>
+                  </>
                 )}
-              </div>
+
+                {/* Teacher-specific Navigation */}
+                {isTeacher && (
+                  <>
+                    <li className="nav-item">
+                      <button
+                        className={`nav-link ${activeTab === "schedule" ? "active" : ""}`}
+                        onClick={() => handleNavLinkClick("schedule")}
+                      >
+                        <FaCalendarAlt className="nav-icon" /> My Classes
+                      </button>
+                    </li>
+                    <li className="nav-item">
+                      <button
+                        className={`nav-link ${activeTab === "create-slots" ? "active" : ""}`}
+                        onClick={() => handleNavLinkClick("create-slots")}
+                      >
+                        <FaRegCalendarPlus className="nav-icon" /> Add Slots
+                      </button>
+                    </li>
+                  </>
+                )}
+
+                {/* Admin-specific Navigation */}
+                {isAdmin && (
+                  <li className="nav-item">
+                    <button
+                      className={`nav-link ${activeTab === "admin" ? "active" : ""}`}
+                      onClick={() => handleNavLinkClick("admin")}
+                    >
+                      <FaLock className="nav-icon" /> Admin
+                    </button>
+                  </li>
+                )}
+
+                {/* Join Session Button (Prominent) */}
+                {profile && upcomingSession && (
+                  <li className="nav-item">
+                    <button
+                      className="session-join-btn"
+                      onClick={() => setActiveSession(upcomingSession)}
+                    >
+                      <FaVideo /> Join Live Session
+                    </button>
+                  </li>
+                )}
+              </>
             )}
+          </ul>
 
-            {/* Only show these buttons if profile is loaded and has appropriate role */}
-            {profile &&
-              (activeRole === "student" ||
-                (!activeRole &&
-                  ((profile.roles && profile.roles.includes("student")) ||
-                    profile.role === "student"))) && (
-                <button
-                  className={`header-link ${
-                    activeTab === "search" ? "active" : ""
-                  }`}
-                  onClick={() => setActiveTab("search")}
-                >
-                  <FaSearch className="header-icon" /> Find Teachers
-                </button>
+          {/* Right Side Controls */}
+          {auth.isAuthenticated && (
+            <div className="user-menu">
+              <button 
+                className="user-menu-toggle"
+                onClick={toggleUserMenu}
+              >
+                <FaUserCircle className="nav-icon" />
+                <span className="d-none d-md-inline">{profile?.name?.split(' ')[0] || "Account"}</span>
+              </button>
+
+              {/* User Menu Dropdown */}
+              {userMenuVisible && (
+                <div className="user-menu-dropdown">
+                  {/* User Info Header */}
+                  <div className="user-menu-header">
+                    <div className="user-menu-name">{profile?.name || "Profile"}</div>
+                    <div className="user-menu-role">
+                      {activeRole 
+                        ? `${activeRole.charAt(0).toUpperCase()}${activeRole.slice(1)}`
+                        : profile?.role?.charAt(0).toUpperCase() + profile?.role?.slice(1) || "User"}
+                    </div>
+                  </div>
+
+                  {/* Role Switcher (only for users with multiple roles) */}
+                  {profile && profile.roles && profile.roles.length > 1 && (
+                    <div className="role-switch-section">
+                      <div className="role-switch-title">Switch View</div>
+                      <div className="role-switch-options">
+                        {profile.roles.map((role) => (
+                          <button
+                            key={role}
+                            className={`role-switch-btn ${activeRole === role ? "active" : ""}`}
+                            onClick={() => {
+                              setActiveRole(role);
+                              handleNavLinkClick("dashboard");
+                            }}
+                          >
+                            {role === "student" && <FaUser />}
+                            {role === "teacher" && <FaGraduationCap />}
+                            {role === "admin" && <FaLock />}
+                            {role.charAt(0).toUpperCase() + role.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* User Menu Items */}
+                  <button 
+                    className="user-menu-item"
+                    onClick={() => handleNavLinkClick("profile")}
+                  >
+                    <FaUserCircle className="user-menu-icon" />
+                    Edit Profile
+                  </button>
+                  <button 
+                    className="user-menu-item"
+                    onClick={toggleTheme}
+                  >
+                    {darkMode 
+                      ? <><FaSun className="user-menu-icon" /> Light Mode</>
+                      : <><FaMoon className="user-menu-icon" /> Dark Mode</>
+                    }
+                  </button>
+                  <div className="user-menu-divider"></div>
+                  <button 
+                    className="user-menu-item"
+                    onClick={signOutRedirect}
+                  >
+                    <FaSignOutAlt className="user-menu-icon" />
+                    Sign Out
+                  </button>
+                </div>
               )}
+            </div>
+          )}
 
-            {profile &&
-              (activeRole === "student" ||
-                (!activeRole &&
-                  ((profile.roles && profile.roles.includes("student")) ||
-                    profile.role === "student"))) && (
-                <button
-                  className={`header-link ${
-                    activeTab === "bookings" ? "active" : ""
-                  }`}
-                  onClick={() => setActiveTab("bookings")}
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="mobile-nav-toggle"
+            onClick={() => {
+              setMobileNavVisible(!mobileNavVisible);
+              if (userMenuVisible) setUserMenuVisible(false);
+            }}
+          >
+            {mobileNavVisible ? <FaTimes /> : <FaBars />}
+          </button>
+        </nav>
+
+        {/* Bottom Navigation for Mobile */}
+        {auth.isAuthenticated && (
+          <nav className="bottom-nav">
+            <ul className="bottom-nav-links">
+              <li className="bottom-nav-item">
+                <button 
+                  className={`bottom-nav-link ${activeTab === "dashboard" ? "active" : ""}`}
+                  onClick={() => handleNavLinkClick("dashboard")}
                 >
-                  <FaBookOpen className="header-icon" /> My Classes
+                  <FaHome className="bottom-nav-icon" />
+                  <span>Home</span>
                 </button>
-              )}
+              </li>
 
-            {profile &&
-              (activeRole === "teacher" ||
-                (!activeRole &&
-                  ((profile.roles && profile.roles.includes("teacher")) ||
-                    profile.role === "teacher"))) && (
+              {isStudent && (
                 <>
-                  <button
-                    className={`header-link ${
-                      activeTab === "schedule" ? "active" : ""
-                    }`}
-                    onClick={() => setActiveTab("schedule")}
-                  >
-                    <FaCalendarAlt className="header-icon" /> My Classes
-                  </button>
-                  <button
-                    className={`header-link ${
-                      activeTab === "create-slots" ? "active" : ""
-                    }`}
-                    onClick={() => setActiveTab("create-slots")}
-                  >
-                    <FaPlus className="header-icon" /> Create Teaching Slots
-                  </button>
+                  <li className="bottom-nav-item">
+                    <button 
+                      className={`bottom-nav-link ${activeTab === "search" ? "active" : ""}`}
+                      onClick={() => handleNavLinkClick("search")}
+                    >
+                      <FaSearch className="bottom-nav-icon" />
+                      <span>Find</span>
+                    </button>
+                  </li>
+                  <li className="bottom-nav-item">
+                    <button 
+                      className={`bottom-nav-link ${activeTab === "bookings" ? "active" : ""}`}
+                      onClick={() => handleNavLinkClick("bookings")}
+                    >
+                      <FaBookOpen className="bottom-nav-icon" />
+                      <span>Classes</span>
+                    </button>
+                  </li>
                 </>
               )}
 
-            {profile && upcomingSession && (
-              <button
-                className="header-link join-session"
-                onClick={() => setActiveSession(upcomingSession)}
-              >
-                <FaVideo className="header-icon" /> Join Session
-              </button>
-            )}
-
-            {/* Admin Panel button - visible to users with admin role */}
-            {profile &&
-              (activeRole === "admin" ||
-                (!activeRole &&
-                  ((profile.roles && profile.roles.includes("admin")) ||
-                    profile.role === "admin"))) && (
-                <button
-                  className={`header-link ${
-                    activeTab === "admin" ? "active" : ""
-                  }`}
-                  onClick={() => setActiveTab("admin")}
-                >
-                  <FaLock className="header-icon" /> Admin
-                </button>
+              {isTeacher && (
+                <>
+                  <li className="bottom-nav-item">
+                    <button 
+                      className={`bottom-nav-link ${activeTab === "schedule" ? "active" : ""}`}
+                      onClick={() => handleNavLinkClick("schedule")}
+                    >
+                      <FaCalendarAlt className="bottom-nav-icon" />
+                      <span>Schedule</span>
+                    </button>
+                  </li>
+                  <li className="bottom-nav-item">
+                    <button 
+                      className={`bottom-nav-link ${activeTab === "create-slots" ? "active" : ""}`}
+                      onClick={() => handleNavLinkClick("create-slots")}
+                    >
+                      <FaRegCalendarPlus className="bottom-nav-icon" />
+                      <span>Add Slots</span>
+                    </button>
+                  </li>
+                </>
               )}
 
-            <button className="header-link" onClick={signOutRedirect}>
-              <FaSignOutAlt className="header-icon" /> Sign Out
-            </button>
-          </>
+              <li className="bottom-nav-item">
+                <button 
+                  className={`bottom-nav-link ${activeTab === "profile" ? "active" : ""}`}
+                  onClick={() => handleNavLinkClick("profile")}
+                >
+                  <FaUserCircle className="bottom-nav-icon" />
+                  <span>Profile</span>
+                </button>
+              </li>
+            </ul>
+          </nav>
         )}
-      </nav>
-    </header>
-  );
+      </header>
+    );
+  };
 
   const renderContent = () => {
     // If a session is active, show the virtual session component instead of normal content
