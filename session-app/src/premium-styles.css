@@ -112,7 +112,21 @@
   background: linear-gradient(135deg, var(--sanskrit-background) 0%, rgba(255,255,255,0.8) 100%);
   border-radius: 8px;
   border-left: 5px solid var(--sanskrit-primary-light);
-  box-shadow: 0 4px 20px rgba(70, 33, 26, 0.1);
+  box-shadow: 0 4px 20px rgba(30, 136, 229, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.sanskrit-hero:after {
+  content: "॥";
+  position: absolute;
+  right: -10px;
+  bottom: -40px;
+  font-size: 180px;
+  opacity: 0.04;
+  font-family: serif;
+  transform: rotate(10deg);
+  z-index: 0;
 }
 
 .vyoma-logo-container {
@@ -152,6 +166,18 @@
 /* Sanskrit Category Cards */
 .sanskrit-categories {
   margin: 3rem 0;
+  position: relative;
+}
+
+.sanskrit-categories:before {
+  content: "स";
+  position: absolute;
+  left: 0;
+  top: -20px;
+  font-size: 180px;
+  opacity: 0.03;
+  font-family: serif;
+  z-index: -1;
 }
 
 .categories-title {
@@ -188,6 +214,18 @@
   border: 1px solid var(--sanskrit-divider);
   position: relative;
   overflow: hidden;
+}
+
+.category-card:after {
+  content: "।";
+  position: absolute;
+  right: 10px;
+  bottom: 0;
+  font-size: 60px;
+  opacity: 0.04;
+  font-family: serif;
+  color: var(--vyoma-blue);
+  pointer-events: none;
 }
 
 .category-card:hover {
@@ -275,6 +313,18 @@
   padding: 2rem;
   border-radius: 8px;
   position: relative;
+  overflow: hidden;
+}
+
+.testimonials-section:before {
+  content: "॥";
+  position: absolute;
+  left: -15px;
+  top: -30px;
+  font-size: 200px;
+  opacity: 0.03;
+  font-family: serif;
+  transform: rotate(-10deg);
 }
 
 .testimonials-section h3 {
@@ -308,6 +358,17 @@
   opacity: 0.2;
   font-family: Georgia, serif;
   line-height: 1;
+}
+
+.testimonial:after {
+  content: "।।";
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+  font-size: 24px;
+  color: var(--vyoma-blue);
+  opacity: 0.1;
+  font-family: serif;
 }
 
 .testimonial p {
