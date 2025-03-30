@@ -925,6 +925,13 @@ function App() {
                     {/* Render theme toggle on landing page too */}
                     {renderThemeToggle()}
                     <div className="sanskrit-hero">
+                      <div className="vyoma-logo-container">
+                        <img
+                          src="/vyoma/Vyoma_Logo_Blue_500x243.png"
+                          alt="Vyoma Sanskrit"
+                          className="vyoma-logo"
+                        />
+                      </div>
                       <h1 className="landing-heading">
                         Experience Sanskrit Excellence
                       </h1>
