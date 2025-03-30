@@ -53,16 +53,16 @@
 .premium h1, 
 .premium h2, 
 .premium h3 {
-  color: var(--premium-dark);
+  color: var(--vyoma-blue-dark);
 }
 
 .premium-badge {
   display: flex;
   align-items: center;
   padding: 10px 15px;
-  background-color: var(--premium-gold);
+  background-color: var(--vyoma-blue);
   border-radius: 25px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(13, 71, 161, 0.2);
 }
 
 .premium-badge-icon {
@@ -88,17 +88,17 @@
 }
 
 .premium-btn {
-  background-color: var(--premium-gold) !important;
-  border-color: var(--premium-gold) !important;
+  background-color: var(--vyoma-blue) !important;
+  border-color: var(--vyoma-blue) !important;
 }
 
 .premium-btn:hover {
-  background-color: #b08b37 !important;
-  border-color: #b08b37 !important;
+  background-color: var(--vyoma-blue-dark) !important;
+  border-color: var(--vyoma-blue-dark) !important;
 }
 
 .premium-note {
-  color: var(--premium-accent);
+  color: var(--vyoma-blue-light);
   text-align: center;
   font-style: italic;
   margin: 15px 0;

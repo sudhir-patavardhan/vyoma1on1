@@ -42,24 +42,24 @@ const injectCustomStyles = () => {
   }
 
   .teacher-link a {
-    color: #8a6d3b;
+    color: #1565C0; /* Vyoma dark blue */
     text-decoration: underline;
   }
 
   .profile-prompt {
     margin-bottom: 20px;
     border-radius: 8px;
-    background-color: rgba(198, 161, 71, 0.1);
-    border-color: #c6a147;
+    background-color: rgba(30, 136, 229, 0.1); /* Vyoma blue with transparency */
+    border-color: #1E88E5; /* Vyoma blue */
   }
 
   .profile-prompt h4 {
-    color: #8a6d3b;
+    color: #0D47A1; /* Vyoma navy */
     margin-bottom: 10px;
   }
 
   .profile-prompt a {
-    color: #c6a147;
+    color: #1E88E5; /* Vyoma blue */
     font-weight: bold;
     text-decoration: underline;
   }
@@ -67,7 +67,7 @@ const injectCustomStyles = () => {
   .text-link {
     background: none;
     border: none;
-    color: #8a6d3b;
+    color: #1565C0; /* Vyoma dark blue */
     text-decoration: underline;
     cursor: pointer;
     padding: 0;
