@@ -134,8 +134,41 @@ function App() {
   // Effect to apply theme to document
   useEffect(() => {
     const theme = darkMode ? 'dark' : 'light';
+    
+    // Apply theme to multiple elements to ensure complete coverage
     document.documentElement.setAttribute('data-theme', theme);
     document.body.setAttribute('data-theme', theme);
+    
+    // Also set a class on body for additional styling options
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+      document.documentElement.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+      document.documentElement.classList.remove('dark-mode');
+    }
+    
+    // Directly apply background color to ensure it takes effect
+    if (darkMode) {
+      document.body.style.backgroundColor = '#151D1A';
+      document.documentElement.style.backgroundColor = '#151D1A';
+    } else {
+      document.body.style.backgroundColor = '';
+      document.documentElement.style.backgroundColor = '';
+    }
+    
+    // Apply to root element if it exists
+    const rootElement = document.getElementById('root');
+    if (rootElement) {
+      rootElement.setAttribute('data-theme', theme);
+      if (darkMode) {
+        rootElement.style.backgroundColor = '#151D1A';
+        rootElement.style.minHeight = '100vh';
+      } else {
+        rootElement.style.backgroundColor = '';
+        rootElement.style.minHeight = '';
+      }
+    }
     
     // Set meta theme-color for mobile browsers
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');

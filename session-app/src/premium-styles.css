@@ -859,16 +859,32 @@
 }
 
 /* Dark theme adjustments */
+/* Global dark mode background fixes - using !important to override any conflicting styles */
+
+/* Style for body and html with .dark-mode class */
+html.dark-mode,
+body.dark-mode {
+  background-color: #151D1A !important;
+  color: #DCD7C9 !important;
+}
 [data-theme="dark"] {
-  background-color: var(--sanskrit-background);
+  background-color: var(--sanskrit-background) !important;
 }
 
 [data-theme="dark"] body {
-  background-color: var(--sanskrit-background);
+  background-color: var(--sanskrit-background) !important;
+}
+
+html[data-theme="dark"] {
+  background-color: var(--sanskrit-background) !important;
+}
+
+body[data-theme="dark"] {
+  background-color: var(--sanskrit-background) !important;
 }
 
 [data-theme="dark"] .app-layout {
-  background-color: var(--sanskrit-background);
+  background-color: var(--sanskrit-background) !important;
   color: var(--sanskrit-text);
 }
 
@@ -947,8 +963,14 @@
   background-color: #A27B5C;
 }
 
-[data-theme="dark"] html {
-  background-color: var(--sanskrit-background);
+[data-theme="dark"] #root {
+  background-color: var(--sanskrit-background) !important;
+  min-height: 100vh;
+}
+
+/* Extra selectors to catch all possible elements */
+[data-theme="dark"] .main-content {
+  background-color: var(--sanskrit-background) !important;
 }
 
 /* Add a subtle pattern to dark mode */
