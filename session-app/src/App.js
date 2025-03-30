@@ -124,17 +124,36 @@ const injectCustomStyles = () => {
 };
 
 function App() {
-  // State for theme toggling
-  const [darkMode, setDarkMode] = useState(false);
+  // State for theme toggling with persistence
+  const [darkMode, setDarkMode] = useState(() => {
+    // Check localStorage for saved preference, default to light mode
+    const savedTheme = localStorage.getItem('sanskritTeacherTheme');
+    return savedTheme === 'dark';
+  });
 
   // Effect to apply theme to document
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+    const theme = darkMode ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-theme', theme);
+    
+    // Set meta theme-color for mobile browsers
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', darkMode ? '#151D1A' : '#DCD7C9');
+    } else {
+      const metaTag = document.createElement('meta');
+      metaTag.name = 'theme-color';
+      metaTag.content = darkMode ? '#151D1A' : '#DCD7C9';
+      document.head.appendChild(metaTag);
+    }
   }, [darkMode]);
 
-  // Toggle theme function
+  // Toggle theme function with localStorage persistence
   const toggleTheme = () => {
-    setDarkMode(!darkMode);
+    const newTheme = !darkMode;
+    setDarkMode(newTheme);
+    localStorage.setItem('sanskritTeacherTheme', newTheme ? 'dark' : 'light');
   };
 
   // Inject custom styles on component mount

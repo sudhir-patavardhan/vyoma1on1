@@ -36,8 +36,8 @@
   --sanskrit-secondary: #3F4F44;    /* Keep forest green as secondary */
   --sanskrit-text: #DCD7C9;         /* Light beige for main text */
   --sanskrit-text-light: #B0ACA0;   /* Muted beige for secondary text */
-  --sanskrit-background: #1E2923;   /* Very dark green for background */
-  --sanskrit-card-bg: #2C3930;      /* Dark green-gray for cards */
+  --sanskrit-background: #151D1A;   /* Darker green for background (darkened) */
+  --sanskrit-card-bg: #1E2923;      /* Dark green-gray for cards (darkened) */
   --sanskrit-accent: #A27B5C;       /* Keep sandstone as accent */
   --sanskrit-divider: #3F4F44;      /* Forest green for dividers */
   --sanskrit-success: #5A7D64;      /* Keep sage green for success */
@@ -859,6 +859,14 @@
 }
 
 /* Dark theme adjustments */
+[data-theme="dark"] {
+  background-color: var(--sanskrit-background);
+}
+
+[data-theme="dark"] body {
+  background-color: var(--sanskrit-background);
+}
+
 [data-theme="dark"] .app-layout {
   background-color: var(--sanskrit-background);
   color: var(--sanskrit-text);
@@ -912,9 +920,17 @@
 [data-theme="dark"] input,
 [data-theme="dark"] select,
 [data-theme="dark"] textarea {
-  background-color: #2A3329;
+  background-color: #1A2420;
   border-color: var(--sanskrit-divider);
   color: var(--sanskrit-text);
+}
+
+[data-theme="dark"] .container {
+  background-color: transparent;
+}
+
+[data-theme="dark"] .main-content {
+  background-color: var(--sanskrit-background);
 }
 
 [data-theme="dark"] .category-card,
@@ -925,6 +941,28 @@
 
 [data-theme="dark"] .category-icon {
   background-color: #364239;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background-color: #A27B5C;
+}
+
+[data-theme="dark"] html {
+  background-color: var(--sanskrit-background);
+}
+
+/* Add a subtle pattern to dark mode */
+[data-theme="dark"] .app-layout:before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E");
+  z-index: -1;
 }
 
 /* Animations */
