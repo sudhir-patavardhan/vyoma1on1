@@ -57,7 +57,7 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
   });
 
   const [photoPreview, setPhotoPreview] = useState(
-    profile?.photo_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23693d3d'/%3E%3Ctext x='50' y='65' font-family='serif' font-size='40' text-anchor='middle' fill='white'%3Eस%3C/text%3E%3C/svg%3E"
+    profile?.photo_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%233F4F44'/%3E%3Ctext x='50' y='65' font-family='serif' font-size='40' text-anchor='middle' fill='white'%3Eस%3C/text%3E%3C/svg%3E"
   );
 
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -83,7 +83,7 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
           : [],
         photo_url: profile.photo_url || "",
       });
-      setPhotoPreview(profile.photo_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23693d3d'/%3E%3Ctext x='50' y='65' font-family='serif' font-size='40' text-anchor='middle' fill='white'%3Eस%3C/text%3E%3C/svg%3E");
+      setPhotoPreview(profile.photo_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%233F4F44'/%3E%3Ctext x='50' y='65' font-family='serif' font-size='40' text-anchor='middle' fill='white'%3Eस%3C/text%3E%3C/svg%3E");
     }
   }, [profile]);
 

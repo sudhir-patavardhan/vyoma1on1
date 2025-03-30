@@ -5,28 +5,28 @@
 */
 
 :root {
-  /* New earthy color scheme */
-  --premium-dark: #46211A;          /* Crevice - deep brown */
-  --premium-medium: #693d3d;        /* Cloud shadow - rich brown */
-  --premium-accent: #ba5536;        /* Desert - terracotta */
-  --premium-highlight: #a43820;     /* Red clay - warm red */
-  --premium-light: #f0e6dd;         /* Off-white with hint of warmth */
-  --premium-gold: #ba5536;          /* Using desert as primary accent */
-  --premium-red: #a43820;           /* Using red clay */
+  /* New color palette based on colorhunt.co */
+  --premium-dark: #2C3930;          /* Dark green-gray */
+  --premium-medium: #3F4F44;        /* Medium forest green */
+  --premium-accent: #A27B5C;        /* Warm sandstone brown */
+  --premium-highlight: #A27B5C;     /* Warm sandstone highlight */
+  --premium-light: #DCD7C9;         /* Light beige */
+  --premium-gold: #A27B5C;          /* Using sandstone as gold accent */
+  --premium-red: #8B4C39;           /* Rust red for warnings/errors */
   
-  /* Sanskrit colors - rebranded */
-  --sanskrit-primary: #46211A;      /* Crevice - main color */
-  --sanskrit-primary-light: #ba5536; /* Desert - for highlights */
-  --sanskrit-secondary: #693d3d;    /* Cloud shadow - for contrast */
-  --sanskrit-text: #46211A;         /* Crevice - for text */
-  --sanskrit-text-light: #693d3d;   /* Cloud shadow - for secondary text */
-  --sanskrit-background: #f0e6dd;   /* Light earthy shade - main background */
+  /* Sanskrit colors - updated palette */
+  --sanskrit-primary: #2C3930;      /* Dark green-gray - main color */
+  --sanskrit-primary-light: #A27B5C; /* Sandstone - for highlights */
+  --sanskrit-secondary: #3F4F44;    /* Forest green - for contrast */
+  --sanskrit-text: #2C3930;         /* Dark green-gray - for text */
+  --sanskrit-text-light: #3F4F44;   /* Forest green - for secondary text */
+  --sanskrit-background: #DCD7C9;   /* Light beige - main background */
   --sanskrit-card-bg: #ffffff;      /* White - for cards/foreground */
-  --sanskrit-accent: #ba5536;       /* Desert - for accents/highlights */
-  --sanskrit-divider: #e0d8c9;      /* Light beige - for dividers */
-  --sanskrit-success: #5a8275;      /* Sage green - for success messages */
-  --sanskrit-warning: #ba5536;      /* Desert - for warnings */
-  --sanskrit-error: #a43820;        /* Red clay - for errors */
+  --sanskrit-accent: #A27B5C;       /* Sandstone - for accents/highlights */
+  --sanskrit-divider: #EAE6DD;      /* Lighter beige - for dividers */
+  --sanskrit-success: #5A7D64;      /* Sage green - for success messages */
+  --sanskrit-warning: #A27B5C;      /* Sandstone - for warnings */
+  --sanskrit-error: #8B4C39;        /* Rust red - for errors */
 }
 
 /* Existing premium styles */
