@@ -398,11 +398,11 @@
 }
 
 .teacher-invitation:before {
-  content: "ॐ";
+  content: "गुरु";
   position: absolute;
   right: -20px;
   top: -40px;
-  font-size: 180px;
+  font-size: 140px;
   opacity: 0.05;
   font-family: serif;
   transform: rotate(15deg);
@@ -635,6 +635,19 @@
   position: relative;
 }
 
+.teacher-card.sanskrit-scholar:before {
+  content: "गुरु";
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 80px;
+  opacity: 0.03;
+  font-family: serif;
+  color: var(--vyoma-blue);
+  z-index: 0;
+  pointer-events: none;
+}
+
 .scholar-badge {
   position: absolute;
   top: 1rem;
@@ -653,7 +666,7 @@
 }
 
 .scholar-badge:before {
-  content: "पं";  /* Sanskrit abbreviation for 'Pandit' */
+  content: "गु";  /* Sanskrit abbreviation for 'Guru' */
   font-family: serif;
   font-size: 1rem;
   margin-right: 5px;
