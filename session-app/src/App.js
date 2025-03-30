@@ -30,6 +30,8 @@ import {
   FaClipboardList,
   FaMoon,
   FaSun,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa"; // Import icons
 
 // Add some custom styles for new elements
@@ -952,7 +954,14 @@ function App() {
                       <h3 className="categories-title">
                         Explore Sanskrit Domains
                       </h3>
-                      <div className="category-grid">
+                      <div className="carousel-container">
+                        <button className="carousel-nav prev" onClick={() => document.querySelector('.category-grid').scrollBy({left: -300, behavior: 'smooth'})}>
+                          <FaChevronLeft className="carousel-nav-icon" />
+                        </button>
+                        <button className="carousel-nav next" onClick={() => document.querySelector('.category-grid').scrollBy({left: 300, behavior: 'smooth'})}>
+                          <FaChevronRight className="carousel-nav-icon" />
+                        </button>
+                        <div className="category-grid">
                         <div className="category-card">
                           <div className="category-icon vedic"></div>
                           <h4>Vedic Literature</h4>
@@ -1002,9 +1011,22 @@ function App() {
                           </p>
                         </div>
                       </div>
+                      <div className="carousel-indicators">
+                        <div className="carousel-indicator active" onClick={() => document.querySelector('.category-grid').scrollTo({left: 0, behavior: 'smooth'})}></div>
+                        <div className="carousel-indicator" onClick={() => document.querySelector('.category-grid').scrollTo({left: 300, behavior: 'smooth'})}></div>
+                        <div className="carousel-indicator" onClick={() => document.querySelector('.category-grid').scrollTo({left: 600, behavior: 'smooth'})}></div>
+                      </div>
+                      </div>
                     </div>
 
-                    <div className="landing-features">
+                    <div className="carousel-container">
+                      <button className="carousel-nav prev" onClick={() => document.querySelector('.landing-features').scrollBy({left: -300, behavior: 'smooth'})}>
+                        <FaChevronLeft className="carousel-nav-icon" />
+                      </button>
+                      <button className="carousel-nav next" onClick={() => document.querySelector('.landing-features').scrollBy({left: 300, behavior: 'smooth'})}>
+                        <FaChevronRight className="carousel-nav-icon" />
+                      </button>
+                      <div className="landing-features">
                       <div className="feature">
                         <FaGraduationCap className="feature-icon" />
                         <h3>Expert Sanskrit Scholars</h3>
@@ -1037,11 +1059,23 @@ function App() {
                           interests and learning goals
                         </p>
                       </div>
+                      <div className="carousel-indicators">
+                        <div className="carousel-indicator active" onClick={() => document.querySelector('.landing-features').scrollTo({left: 0, behavior: 'smooth'})}></div>
+                        <div className="carousel-indicator" onClick={() => document.querySelector('.landing-features').scrollTo({left: 300, behavior: 'smooth'})}></div>
+                      </div>
+                    </div>
                     </div>
 
                     <div className="testimonials-section">
                       <h3>Student Experiences</h3>
-                      <div className="testimonials-container">
+                      <div className="carousel-container">
+                        <button className="carousel-nav prev" onClick={() => document.querySelector('.testimonials-container').scrollBy({left: -350, behavior: 'smooth'})}>
+                          <FaChevronLeft className="carousel-nav-icon" />
+                        </button>
+                        <button className="carousel-nav next" onClick={() => document.querySelector('.testimonials-container').scrollBy({left: 350, behavior: 'smooth'})}>
+                          <FaChevronRight className="carousel-nav-icon" />
+                        </button>
+                        <div className="testimonials-container">
                         <div className="testimonial">
                           <p>
                             "The personalized approach to learning Vedic texts
@@ -1064,6 +1098,11 @@ function App() {
                             — Aruna S., India
                           </div>
                         </div>
+                        <div className="carousel-indicators">
+                          <div className="carousel-indicator active" onClick={() => document.querySelector('.testimonials-container').scrollTo({left: 0, behavior: 'smooth'})}></div>
+                          <div className="carousel-indicator" onClick={() => document.querySelector('.testimonials-container').scrollTo({left: 350, behavior: 'smooth'})}></div>
+                        </div>
+                      </div>
                       </div>
                     </div>
 

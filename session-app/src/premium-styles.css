@@ -180,6 +180,68 @@
   z-index: -1;
 }
 
+/* Carousel Controls */
+.carousel-container {
+  position: relative;
+}
+
+.carousel-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.carousel-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--sanskrit-divider);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.carousel-indicator.active {
+  background-color: var(--vyoma-blue);
+  transform: scale(1.2);
+}
+
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background-color: var(--vyoma-blue);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.carousel-nav:hover {
+  background-color: var(--vyoma-blue-dark);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-nav.prev {
+  left: -15px;
+}
+
+.carousel-nav.next {
+  right: -15px;
+}
+
+.carousel-nav-icon {
+  font-size: 18px;
+}
+
 .categories-title {
   text-align: center;
   color: var(--sanskrit-primary);
@@ -198,10 +260,34 @@
 }
 
 .category-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 1rem;
   margin-top: 1.5rem;
+  padding: 1rem 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--vyoma-blue-light) var(--sanskrit-background);
+}
+
+.category-grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.category-grid::-webkit-scrollbar-track {
+  background: var(--sanskrit-background);
+  border-radius: 10px;
+}
+
+.category-grid::-webkit-scrollbar-thumb {
+  background-color: var(--vyoma-blue-light);
+  border-radius: 10px;
+}
+
+/* Add smooth scrolling behavior */
+.category-grid {
+  scroll-behavior: smooth;
 }
 
 .category-card {
@@ -214,6 +300,10 @@
   border: 1px solid var(--sanskrit-divider);
   position: relative;
   overflow: hidden;
+  flex: 0 0 auto;
+  width: 250px;
+  scroll-snap-align: start;
+  margin-right: 0.5rem;
 }
 
 .category-card:after {
@@ -335,9 +425,29 @@
 }
 
 .testimonials-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
   gap: 1.5rem;
+  padding: 1rem 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--vyoma-blue-light) var(--sanskrit-background);
+  scroll-behavior: smooth;
+}
+
+.testimonials-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.testimonials-container::-webkit-scrollbar-track {
+  background: var(--sanskrit-background);
+  border-radius: 10px;
+}
+
+.testimonials-container::-webkit-scrollbar-thumb {
+  background-color: var(--vyoma-blue-light);
+  border-radius: 10px;
 }
 
 .testimonial {
@@ -346,6 +456,10 @@
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   position: relative;
+  flex: 0 0 auto;
+  width: 320px;
+  scroll-snap-align: start;
+  margin-right: 0.5rem;
 }
 
 .testimonial:before {
@@ -988,17 +1102,60 @@
     font-size: 1.2rem;
   }
   
-  .category-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  .category-card {
+    width: 220px;
   }
   
-  .testimonials-container {
-    grid-template-columns: 1fr;
+  .testimonial {
+    width: 260px;
+  }
+  
+  .carousel-nav {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .carousel-nav.prev {
+    left: -8px;
+  }
+  
+  .carousel-nav.next {
+    right: -8px;
+  }
+}
+
+@media (max-width: 576px) {
+  .category-card {
+    width: 180px;
+  }
+  
+  .testimonial {
+    width: 220px;
+  }
+  
+  .carousel-nav {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .carousel-indicator {
+    width: 8px;
+    height: 8px;
   }
 }
 
 /* Dark theme adjustments */
 /* Global dark mode background fixes - using !important to override any conflicting styles */
+
+/* Carousel dark mode adjustments */
+[data-theme="dark"] .carousel-nav {
+  background-color: var(--vyoma-blue-light);
+}
+
+[data-theme="dark"] .carousel-nav:hover {
+  background-color: white;
+  color: var(--vyoma-blue);
+}
 
 /* Style for body and html with .dark-mode class */
 html.dark-mode,

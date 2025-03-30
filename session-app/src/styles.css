@@ -403,16 +403,35 @@ body {
 
 .landing-features {
   display: flex;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
   gap: 24px;
-  justify-content: center;
   margin-bottom: 40px;
+  padding: 1rem 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--vyoma-blue-light) var(--sanskrit-background);
+  scroll-behavior: smooth;
+}
+
+.landing-features::-webkit-scrollbar {
+  height: 6px;
+}
+
+.landing-features::-webkit-scrollbar-track {
+  background: var(--sanskrit-background);
+  border-radius: 10px;
+}
+
+.landing-features::-webkit-scrollbar-thumb {
+  background-color: var(--vyoma-blue-light);
+  border-radius: 10px;
 }
 
 .feature {
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 250px;
-  max-width: 350px;
+  width: 280px;
   padding: 32px 24px;
   background-color: white;
   border-radius: 8px;
@@ -422,6 +441,8 @@ body {
   border: 1px solid rgba(0, 0, 0, 0.05);
   position: relative;
   overflow: hidden;
+  scroll-snap-align: start;
+  margin-right: 0.5rem;
 }
 
 .feature::before {
