@@ -150,11 +150,11 @@ function App() {
     
     // Directly apply background color to ensure it takes effect
     if (darkMode) {
-      document.body.style.backgroundColor = '#151D1A';
-      document.documentElement.style.backgroundColor = '#151D1A';
+      document.body.style.backgroundColor = '#0A1929'; // Vyoma dark navy
+      document.documentElement.style.backgroundColor = '#0A1929';
     } else {
-      document.body.style.backgroundColor = '';
-      document.documentElement.style.backgroundColor = '';
+      document.body.style.backgroundColor = '#E3F2FD'; // Vyoma light blue
+      document.documentElement.style.backgroundColor = '#E3F2FD';
     }
     
     // Apply to root element if it exists
@@ -162,22 +162,22 @@ function App() {
     if (rootElement) {
       rootElement.setAttribute('data-theme', theme);
       if (darkMode) {
-        rootElement.style.backgroundColor = '#151D1A';
+        rootElement.style.backgroundColor = '#0A1929'; // Vyoma dark navy
         rootElement.style.minHeight = '100vh';
       } else {
-        rootElement.style.backgroundColor = '';
-        rootElement.style.minHeight = '';
+        rootElement.style.backgroundColor = '#E3F2FD'; // Vyoma light blue
+        rootElement.style.minHeight = '100vh';
       }
     }
     
     // Set meta theme-color for mobile browsers
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', darkMode ? '#151D1A' : '#DCD7C9');
+      metaThemeColor.setAttribute('content', darkMode ? '#0A1929' : '#E3F2FD');
     } else {
       const metaTag = document.createElement('meta');
       metaTag.name = 'theme-color';
-      metaTag.content = darkMode ? '#151D1A' : '#DCD7C9';
+      metaTag.content = darkMode ? '#0A1929' : '#E3F2FD';
       document.head.appendChild(metaTag);
     }
   }, [darkMode]);
@@ -938,9 +938,15 @@ function App() {
                     {/* Render theme toggle on landing page too */}
                     {renderThemeToggle()}
                     <div className="sanskrit-hero">
-                      <div className="sanskrit-logo">संस्कृत</div>
+                      <div className="vyoma-logo-container">
+                        <img 
+                          src="/vyoma/Vyoma_Logo_Blue_500x243.png" 
+                          alt="Vyoma Sanskrit" 
+                          className="vyoma-logo"
+                        />
+                      </div>
                       <h1 className="landing-heading">
-                        Discover the Wisdom of Sanskrit
+                        Experience Sanskrit Excellence
                       </h1>
                       <h2 className="landing-subheading">
                         Learn from Renowned Sanskrit Scholars in Personalized 1:1 Sessions
@@ -1038,12 +1044,14 @@ function App() {
                         className="btn btn-primary btn-lg"
                         onClick={() => auth.signinRedirect()}
                       >
+                        <span className="btn-icon">॥</span>
                         Begin Your Sanskrit Journey
                       </button>
                       <button
                         className="btn btn-secondary btn-lg"
                         onClick={signupRedirect}
                       >
+                        <span className="btn-icon">ॐ</span>
                         Create Student Account
                       </button>
                     </div>

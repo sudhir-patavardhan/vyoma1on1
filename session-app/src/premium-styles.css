@@ -5,44 +5,48 @@
 */
 
 :root {
-  /* New color palette based on colorhunt.co */
-  --premium-dark: #2C3930;          /* Dark green-gray */
-  --premium-medium: #3F4F44;        /* Medium forest green */
-  --premium-accent: #A27B5C;        /* Warm sandstone brown */
-  --premium-highlight: #A27B5C;     /* Warm sandstone highlight */
-  --premium-light: #DCD7C9;         /* Light beige */
-  --premium-gold: #A27B5C;          /* Using sandstone as gold accent */
-  --premium-red: #8B4C39;           /* Rust red for warnings/errors */
+  /* Vyoma blue theme based on logo */
+  --vyoma-blue: #1E88E5;           /* Vyoma logo blue - main brand color */
+  --vyoma-blue-dark: #1565C0;      /* Darker blue for headers and primary elements */
+  --vyoma-blue-light: #64B5F6;     /* Lighter blue for accents and highlights */
+  --vyoma-blue-pale: #E3F2FD;      /* Very light blue for backgrounds */
+  --vyoma-navy: #0D47A1;           /* Deep navy for contrast elements */
+  --vyoma-text-dark: #263238;      /* Dark blue-gray for text */
+  --vyoma-text-light: #546E7A;     /* Medium blue-gray for secondary text */
+  --vyoma-white: #FFFFFF;          /* Pure white for cards and foreground */
+  --vyoma-error: #E53935;          /* Red for errors */
+  --vyoma-warning: #FB8C00;        /* Orange for warnings */
+  --vyoma-success: #43A047;        /* Green for success messages */
   
   /* Sanskrit colors - light theme (default) */
-  --sanskrit-primary: #2C3930;      /* Dark green-gray - main color */
-  --sanskrit-primary-light: #A27B5C; /* Sandstone - for highlights */
-  --sanskrit-secondary: #3F4F44;    /* Forest green - for contrast */
-  --sanskrit-text: #2C3930;         /* Dark green-gray - for text */
-  --sanskrit-text-light: #3F4F44;   /* Forest green - for secondary text */
-  --sanskrit-background: #DCD7C9;   /* Light beige - main background */
-  --sanskrit-card-bg: #ffffff;      /* White - for cards/foreground */
-  --sanskrit-accent: #A27B5C;       /* Sandstone - for accents/highlights */
-  --sanskrit-divider: #EAE6DD;      /* Lighter beige - for dividers */
-  --sanskrit-success: #5A7D64;      /* Sage green - for success messages */
-  --sanskrit-warning: #A27B5C;      /* Sandstone - for warnings */
-  --sanskrit-error: #8B4C39;        /* Rust red - for errors */
+  --sanskrit-primary: var(--vyoma-blue-dark);       /* Dark blue - main color */
+  --sanskrit-primary-light: var(--vyoma-blue);      /* Medium blue - for highlights */
+  --sanskrit-secondary: var(--vyoma-navy);          /* Navy - for contrast */
+  --sanskrit-text: var(--vyoma-text-dark);          /* Dark blue-gray - for text */
+  --sanskrit-text-light: var(--vyoma-text-light);   /* Medium blue-gray - for secondary text */
+  --sanskrit-background: var(--vyoma-blue-pale);    /* Light blue - main background */
+  --sanskrit-card-bg: var(--vyoma-white);           /* White - for cards/foreground */
+  --sanskrit-accent: var(--vyoma-blue-light);       /* Light blue - for accents/highlights */
+  --sanskrit-divider: #E1F5FE;                      /* Lightest blue - for dividers */
+  --sanskrit-success: var(--vyoma-success);         /* Green - for success messages */
+  --sanskrit-warning: var(--vyoma-warning);         /* Orange - for warnings */
+  --sanskrit-error: var(--vyoma-error);             /* Red - for errors */
 }
 
 /* Dark theme colors */
 [data-theme="dark"] {
-  --sanskrit-primary: #A27B5C;      /* Sandstone becomes primary in dark mode */
-  --sanskrit-primary-light: #BF9D7E; /* Lighter sandstone for highlights */
-  --sanskrit-secondary: #3F4F44;    /* Keep forest green as secondary */
-  --sanskrit-text: #DCD7C9;         /* Light beige for main text */
-  --sanskrit-text-light: #B0ACA0;   /* Muted beige for secondary text */
-  --sanskrit-background: #151D1A;   /* Darker green for background (darkened) */
-  --sanskrit-card-bg: #1E2923;      /* Dark green-gray for cards (darkened) */
-  --sanskrit-accent: #A27B5C;       /* Keep sandstone as accent */
-  --sanskrit-divider: #3F4F44;      /* Forest green for dividers */
-  --sanskrit-success: #5A7D64;      /* Keep sage green for success */
-  --sanskrit-warning: #CB9A76;      /* Brighter sandstone for warnings */
-  --sanskrit-error: #D27C65;        /* Brighter rust for errors */
+  --sanskrit-primary: var(--vyoma-blue);           /* Medium blue becomes primary in dark mode */
+  --sanskrit-primary-light: var(--vyoma-blue-light); /* Light blue for highlights */
+  --sanskrit-secondary: #0D47A1;                   /* Navy for secondary elements */
+  --sanskrit-text: #E1F5FE;                        /* Very light blue for main text */
+  --sanskrit-text-light: #B3E5FC;                  /* Light blue for secondary text */
+  --sanskrit-background: #0A1929;                  /* Very dark navy for background */
+  --sanskrit-card-bg: #102A43;                     /* Dark blue for cards */
+  --sanskrit-accent: var(--vyoma-blue-light);      /* Light blue for accents */
+  --sanskrit-divider: #1A374D;                     /* Medium-dark blue for dividers */
+  --sanskrit-success: #66BB6A;                     /* Bright green for success */
+  --sanskrit-warning: #FFA726;                     /* Bright orange for warnings */
+  --sanskrit-error: #EF5350;                       /* Bright red for errors */
 }
 
 /* Existing premium styles */
@@ -111,26 +115,16 @@
   box-shadow: 0 4px 20px rgba(70, 33, 26, 0.1);
 }
 
-.sanskrit-logo {
-  font-size: 4rem;
-  color: var(--sanskrit-primary);
-  margin-bottom: 1rem;
-  font-family: serif;
-  letter-spacing: 2px;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-  display: inline-block;
-  position: relative;
-  padding-bottom: 10px;
+.vyoma-logo-container {
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
 }
 
-.sanskrit-logo:after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 25%;
-  width: 50%;
-  height: 3px;
-  background-color: var(--sanskrit-primary-light);
+.vyoma-logo {
+  max-width: 300px;
+  height: auto;
+  margin-bottom: 1rem;
 }
 
 .sanskrit-hero h1 {
@@ -234,8 +228,13 @@
   font-family: serif;
   font-weight: 700;
   font-size: 2rem;
-  color: var(--sanskrit-primary);
-  background-color: var(--sanskrit-background);
+  color: var(--vyoma-white);
+  background-color: var(--vyoma-blue);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
 }
 
 /* Sanskrit letter-based icons */
@@ -246,7 +245,7 @@
 
 .category-icon.grammar:after {
   content: "व्या"; /* First characters of Vyākaraṇa (grammar) */
-  font-size: 1.8rem;
+  font-size: 1.7rem;
 }
 
 .category-icon.literature:after {
@@ -326,39 +325,60 @@
 
 /* Teacher Invitation Section */
 .teacher-invitation {
-  background-color: var(--sanskrit-secondary);
+  background-color: var(--vyoma-blue);
   color: white;
-  padding: 2rem;
+  padding: 2.5rem;
   border-radius: 8px;
   text-align: center;
   margin: 2rem 0;
+  box-shadow: 0 4px 15px rgba(30, 136, 229, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.teacher-invitation:before {
+  content: "ॐ";
+  position: absolute;
+  right: -20px;
+  top: -40px;
+  font-size: 180px;
+  opacity: 0.05;
+  font-family: serif;
+  transform: rotate(15deg);
 }
 
 .teacher-invitation h3 {
   color: white;
   margin-bottom: 1rem;
+  font-size: 1.8rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .teacher-invitation p {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.8rem;
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
+  font-size: 1.1rem;
+  line-height: 1.6;
 }
 
 .btn-outlined {
   background-color: transparent;
   border: 2px solid white;
   color: white;
-  padding: 0.5rem 1.5rem;
+  padding: 0.7rem 2rem;
   border-radius: 4px;
   font-weight: 600;
   transition: all 0.3s ease;
+  font-size: 1.1rem;
 }
 
 .btn-outlined:hover {
   background-color: white;
-  color: var(--sanskrit-secondary);
+  color: var(--vyoma-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Teacher Search Overrides */
@@ -834,9 +854,54 @@
 .landing-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.5rem;
   justify-content: center;
-  margin: 2rem 0;
+  margin: 2.5rem 0;
+}
+
+.btn-icon {
+  margin-right: 8px;
+  font-family: serif;
+  font-weight: normal;
+}
+
+.btn-primary {
+  background-color: var(--vyoma-blue);
+  border-color: var(--vyoma-blue);
+  padding: 0.8rem 1.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(21, 101, 192, 0.2);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--vyoma-blue-dark);
+  border-color: var(--vyoma-blue-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(21, 101, 192, 0.3);
+}
+
+.btn-secondary {
+  background-color: var(--vyoma-navy);
+  border-color: var(--vyoma-navy);
+  padding: 0.8rem 1.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(13, 71, 161, 0.2);
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background-color: #083983;
+  border-color: #083983;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(13, 71, 161, 0.3);
+}
+
+.btn-lg {
+  font-size: 1.1rem;
+  padding: 0.8rem 2rem;
 }
 
 /* Responsive adjustments */
@@ -992,7 +1057,7 @@ body[data-theme="dark"] {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background-color: var(--sanskrit-primary);
+  background-color: var(--vyoma-blue);
   color: white;
   border: none;
   width: 48px;
@@ -1002,25 +1067,29 @@ body[data-theme="dark"] {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 10px rgba(30, 136, 229, 0.3);
   transition: all 0.3s ease;
   z-index: 9999;
 }
 
 .theme-toggle:hover {
-  background-color: var(--sanskrit-primary-light);
+  background-color: var(--vyoma-blue-dark);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.4);
 }
 
 .theme-toggle:focus {
-  outline: 2px solid var(--sanskrit-accent);
-  box-shadow: 0 0 0 4px rgba(162, 123, 92, 0.4);
+  outline: 2px solid var(--vyoma-blue-light);
+  box-shadow: 0 0 0 4px rgba(100, 181, 246, 0.4);
 }
 
 .theme-toggle .icon {
   font-size: 20px;
   color: white;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background-color: var(--vyoma-blue-light);
 }
 
 /* Animations */
