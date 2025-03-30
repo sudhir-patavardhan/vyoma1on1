@@ -57,7 +57,7 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
   });
 
   const [photoPreview, setPhotoPreview] = useState(
-    profile?.photo_url || "/default-profile.png"
+    profile?.photo_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23693d3d'/%3E%3Ctext x='50' y='65' font-family='serif' font-size='40' text-anchor='middle' fill='white'%3Eस%3C/text%3E%3C/svg%3E"
   );
 
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -83,7 +83,7 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
           : [],
         photo_url: profile.photo_url || "",
       });
-      setPhotoPreview(profile.photo_url || "/default-profile.png");
+      setPhotoPreview(profile.photo_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23693d3d'/%3E%3Ctext x='50' y='65' font-family='serif' font-size='40' text-anchor='middle' fill='white'%3Eस%3C/text%3E%3C/svg%3E");
     }
   }, [profile]);
 
@@ -586,44 +586,208 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
             </div>
 
             <div className="form-group">
-              <label>Teaching Topics</label>
-              <div className="tags-input-container">
-                <div className="tags-list">
-                  {formData.topics.map((topic, index) => (
-                    <div key={index} className="tag">
-                      <span>{topic}</span>
-                      <button
-                        type="button"
-                        className="tag-remove"
-                        onClick={() => removeTopic(index)}
-                      >
-                        <FaTimes />
-                      </button>
+              <label><FaBook className="form-icon" /> Sanskrit Teaching Areas</label>
+              <div className="sanskrit-topic-selector">
+                <p className="topic-guidance">Select your areas of teaching expertise:</p>
+                
+                <div className="topic-categories-container">
+                  <div className="topic-category-group">
+                    <h5>Vedic Literature</h5>
+                    <div className="topic-checkbox-group">
+                      {["Rigveda", "Samaveda", "Yajurveda", "Atharvaveda", "Upanishads", "Vedangas"].map(topic => (
+                        <div key={topic} className="topic-checkbox">
+                          <input 
+                            type="checkbox" 
+                            id={`topic-${topic}`} 
+                            checked={formData.topics.includes(topic)}
+                            onChange={() => {
+                              if (formData.topics.includes(topic)) {
+                                const updatedTopics = formData.topics.filter(t => t !== topic);
+                                setFormData({...formData, topics: updatedTopics});
+                              } else {
+                                setFormData({...formData, topics: [...formData.topics, topic]});
+                              }
+                            }}
+                          />
+                          <label htmlFor={`topic-${topic}`}>{topic}</label>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <div className="tags-input">
-                  <input
-                    type="text"
-                    placeholder="Add a topic and press Enter"
-                    value={newTopic}
-                    onChange={(e) => setNewTopic(e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, addTopic)}
-                    className="form-control"
-                  />
-                  <button
-                    type="button"
-                    className="tag-add-btn"
-                    onClick={addTopic}
-                  >
-                    <FaPlus />
-                  </button>
+                  </div>
+                  
+                  <div className="topic-category-group">
+                    <h5>Sanskrit Grammar</h5>
+                    <div className="topic-checkbox-group">
+                      {["Ashtadhyayi", "Paninian Grammar", "Dhatupatha", "Sandhi Rules", "Vibhakti", "Sanskrit Syntax"].map(topic => (
+                        <div key={topic} className="topic-checkbox">
+                          <input 
+                            type="checkbox" 
+                            id={`topic-${topic}`} 
+                            checked={formData.topics.includes(topic)}
+                            onChange={() => {
+                              if (formData.topics.includes(topic)) {
+                                const updatedTopics = formData.topics.filter(t => t !== topic);
+                                setFormData({...formData, topics: updatedTopics});
+                              } else {
+                                setFormData({...formData, topics: [...formData.topics, topic]});
+                              }
+                            }}
+                          />
+                          <label htmlFor={`topic-${topic}`}>{topic}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="topic-category-group">
+                    <h5>Classical Literature</h5>
+                    <div className="topic-checkbox-group">
+                      {["Ramayana", "Mahabharata", "Bhagavad Gita", "Kavya", "Nataka", "Puranas"].map(topic => (
+                        <div key={topic} className="topic-checkbox">
+                          <input 
+                            type="checkbox" 
+                            id={`topic-${topic}`} 
+                            checked={formData.topics.includes(topic)}
+                            onChange={() => {
+                              if (formData.topics.includes(topic)) {
+                                const updatedTopics = formData.topics.filter(t => t !== topic);
+                                setFormData({...formData, topics: updatedTopics});
+                              } else {
+                                setFormData({...formData, topics: [...formData.topics, topic]});
+                              }
+                            }}
+                          />
+                          <label htmlFor={`topic-${topic}`}>{topic}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="topic-category-group">
+                    <h5>Philosophy (Darshana)</h5>
+                    <div className="topic-checkbox-group">
+                      {["Vedanta", "Advaita Vedanta", "Samkhya", "Yoga", "Nyaya", "Vaisheshika", "Mimamsa"].map(topic => (
+                        <div key={topic} className="topic-checkbox">
+                          <input 
+                            type="checkbox" 
+                            id={`topic-${topic}`} 
+                            checked={formData.topics.includes(topic)}
+                            onChange={() => {
+                              if (formData.topics.includes(topic)) {
+                                const updatedTopics = formData.topics.filter(t => t !== topic);
+                                setFormData({...formData, topics: updatedTopics});
+                              } else {
+                                setFormData({...formData, topics: [...formData.topics, topic]});
+                              }
+                            }}
+                          />
+                          <label htmlFor={`topic-${topic}`}>{topic}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="topic-category-group">
+                    <h5>Scientific & Practical Texts</h5>
+                    <div className="topic-checkbox-group">
+                      {["Ayurveda", "Jyotisha", "Mathematics", "Shilpa Shastra", "Natya Shastra"].map(topic => (
+                        <div key={topic} className="topic-checkbox">
+                          <input 
+                            type="checkbox" 
+                            id={`topic-${topic}`} 
+                            checked={formData.topics.includes(topic)}
+                            onChange={() => {
+                              if (formData.topics.includes(topic)) {
+                                const updatedTopics = formData.topics.filter(t => t !== topic);
+                                setFormData({...formData, topics: updatedTopics});
+                              } else {
+                                setFormData({...formData, topics: [...formData.topics, topic]});
+                              }
+                            }}
+                          />
+                          <label htmlFor={`topic-${topic}`}>{topic}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="topic-category-group">
+                    <h5>Modern & Practical Sanskrit</h5>
+                    <div className="topic-checkbox-group">
+                      {["Conversational Sanskrit", "Sanskrit Speaking", "Contemporary Literature", "Academic Sanskrit", "Devanagari Script"].map(topic => (
+                        <div key={topic} className="topic-checkbox">
+                          <input 
+                            type="checkbox" 
+                            id={`topic-${topic}`} 
+                            checked={formData.topics.includes(topic)}
+                            onChange={() => {
+                              if (formData.topics.includes(topic)) {
+                                const updatedTopics = formData.topics.filter(t => t !== topic);
+                                setFormData({...formData, topics: updatedTopics});
+                              } else {
+                                setFormData({...formData, topics: [...formData.topics, topic]});
+                              }
+                            }}
+                          />
+                          <label htmlFor={`topic-${topic}`}>{topic}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <small className="form-text">
-                Add topics you can teach (e.g., "Mathematics", "Python
-                Programming")
-              </small>
+              
+              <div className="custom-topics-section">
+                <h5>Additional Specialized Topics</h5>
+                <div className="tags-input-container">
+                  <div className="tags-list">
+                    {formData.topics.filter(topic => 
+                      ![
+                        "Rigveda", "Samaveda", "Yajurveda", "Atharvaveda", "Upanishads", "Vedangas",
+                        "Ashtadhyayi", "Paninian Grammar", "Dhatupatha", "Sandhi Rules", "Vibhakti", "Sanskrit Syntax",
+                        "Ramayana", "Mahabharata", "Bhagavad Gita", "Kavya", "Nataka", "Puranas",
+                        "Vedanta", "Advaita Vedanta", "Samkhya", "Yoga", "Nyaya", "Vaisheshika", "Mimamsa",
+                        "Ayurveda", "Jyotisha", "Mathematics", "Shilpa Shastra", "Natya Shastra",
+                        "Conversational Sanskrit", "Sanskrit Speaking", "Contemporary Literature", "Academic Sanskrit", "Devanagari Script"
+                      ].includes(topic)
+                    ).map((topic, index) => (
+                      <div key={index} className="tag">
+                        <span>{topic}</span>
+                        <button
+                          type="button"
+                          className="tag-remove"
+                          onClick={() => {
+                            const updatedTopics = formData.topics.filter(t => t !== topic);
+                            setFormData({...formData, topics: updatedTopics});
+                          }}
+                        >
+                          <FaTimes />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="tags-input">
+                    <input
+                      type="text"
+                      placeholder="Add a specialized topic and press Enter"
+                      value={newTopic}
+                      onChange={(e) => setNewTopic(e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, addTopic)}
+                      className="form-control"
+                    />
+                    <button
+                      type="button"
+                      className="tag-add-btn"
+                      onClick={addTopic}
+                    >
+                      <FaPlus />
+                    </button>
+                  </div>
+                </div>
+                <small className="form-text">
+                  Add any specialized topics not listed above
+                </small>
+              </div>
             </div>
 
             <div className="form-group">

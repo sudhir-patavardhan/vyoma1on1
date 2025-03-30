@@ -821,54 +821,102 @@ function App() {
               <div className="container">
                 <div className="card">
                   <div className="card-body">
-                    <h1 className="landing-heading">
-                      Welcome to Sanskrit Teacher
-                    </h1>
-                    <h2 className="landing-subheading">
-                      Premium Sanskrit Instruction by PhD Scholars
-                    </h2>
-                    <p className="landing-text">
-                      Connect with world-class Sanskrit scholars for exclusive,
-                      personalized 1:1 learning experiences. Our platform
-                      features PhD-holding experts specializing in rare and
-                      advanced Sanskrit topics, offering premium instruction for
-                      discerning international students and serious
-                      practitioners.
-                    </p>
+                    <div className="sanskrit-hero">
+                      <div className="sanskrit-logo">संस्कृत</div>
+                      <h1 className="landing-heading">
+                        Discover the Wisdom of Sanskrit
+                      </h1>
+                      <h2 className="landing-subheading">
+                        Learn from Renowned Sanskrit Scholars in Personalized 1:1 Sessions
+                      </h2>
+                      <p className="landing-text">
+                        Connect with expert Sanskrit instructors specializing in Vedic literature, classical texts, 
+                        grammar, philosophy, and more. Our platform brings together PhD-holding scholars offering 
+                        premium instruction for students at all levels—from beginners to advanced practitioners.
+                      </p>
+                    </div>
+                    
+                    <div className="sanskrit-categories">
+                      <h3 className="categories-title">Explore Sanskrit Domains</h3>
+                      <div className="category-grid">
+                        <div className="category-card">
+                          <div className="category-icon vedic"></div>
+                          <h4>Vedic Literature</h4>
+                          <p>Study Rigveda, Samaveda, Yajurveda, Atharvaveda, Upanishads and related texts</p>
+                        </div>
+                        <div className="category-card">
+                          <div className="category-icon grammar"></div>
+                          <h4>Sanskrit Grammar</h4>
+                          <p>Master Panini's Ashtadhyayi, syntax, verb forms, and composition rules</p>
+                        </div>
+                        <div className="category-card">
+                          <div className="category-icon literature"></div>
+                          <h4>Classical Literature</h4>
+                          <p>Explore Kavya, Nataka, Ramayana, Mahabharata, and great poetic works</p>
+                        </div>
+                        <div className="category-card">
+                          <div className="category-icon philosophy"></div>
+                          <h4>Darshana Philosophy</h4>
+                          <p>Delve into Vedanta, Samkhya, Yoga, Nyaya, and philosophical systems</p>
+                        </div>
+                        <div className="category-card">
+                          <div className="category-icon science"></div>
+                          <h4>Scientific Texts</h4>
+                          <p>Discover Ayurveda, Jyotisha, mathematics, and ancient sciences</p>
+                        </div>
+                        <div className="category-card">
+                          <div className="category-icon modern"></div>
+                          <h4>Conversational Sanskrit</h4>
+                          <p>Practice spoken Sanskrit and modern usage with fluent speakers</p>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div className="landing-features">
                       <div className="feature">
-                        <FaSearch className="feature-icon" />
-                        <h3>Elite Instructors</h3>
+                        <FaGraduationCap className="feature-icon" />
+                        <h3>Expert Sanskrit Scholars</h3>
                         <p>
-                          Access PhD-level Sanskrit scholars specializing in
-                          rare and advanced topics
-                        </p>
-                      </div>
-                      <div className="feature">
-                        <FaCalendarAlt className="feature-icon" />
-                        <h3>Exclusive Sessions</h3>
-                        <p>
-                          Book personalized instruction tailored to your
-                          specific scholarly interests
+                          Learn with verified scholars holding advanced degrees in traditional and modern Sanskrit studies
                         </p>
                       </div>
                       <div className="feature">
                         <FaVideo className="feature-icon" />
-                        <h3>Premium Experience</h3>
+                        <h3>Interactive Sessions</h3>
                         <p>
-                          Enjoy high-quality video sessions with advanced
-                          learning tools and resources
+                          Engage in immersive video lessons with pronunciation guidance, text analysis, and discussion
                         </p>
                       </div>
                       <div className="feature">
-                        <FaGraduationCap className="feature-icon" />
-                        <h3>Academic Excellence</h3>
+                        <FaCalendarAlt className="feature-icon" />
+                        <h3>Flexible Learning</h3>
                         <p>
-                          Achieve mastery through instruction aligned with
-                          prestigious academic standards
+                          Schedule sessions at your convenience across international time zones
+                        </p>
+                      </div>
+                      <div className="feature">
+                        <FaSearch className="feature-icon" />
+                        <h3>Personalized Instruction</h3>
+                        <p>
+                          Receive tailored teaching focused on your specific interests and learning goals
                         </p>
                       </div>
                     </div>
+                    
+                    <div className="testimonials-section">
+                      <h3>Student Experiences</h3>
+                      <div className="testimonials-container">
+                        <div className="testimonial">
+                          <p>"The personalized approach to learning Vedic texts has transformed my understanding of Sanskrit. My teacher provides context I couldn't find in any textbook."</p>
+                          <div className="testimonial-author">— Michael R., USA</div>
+                        </div>
+                        <div className="testimonial">
+                          <p>"As a philosophy researcher, the specialized instruction in Advaita Vedanta texts has been invaluable. The one-on-one format allows us to explore nuances of the language in depth."</p>
+                          <div className="testimonial-author">— Aruna S., India</div>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div className="text-center landing-buttons">
                       <button
                         className="btn btn-primary btn-lg"
@@ -883,24 +931,17 @@ function App() {
                         Create Student Account
                       </button>
                     </div>
-                    <p className="premium-note">
-                      Premium Sanskrit instruction with verified PhD scholars
-                    </p>
-                    <p className="teacher-link">
-                      <small>
-                        Are you a Sanskrit teacher?{" "}
-                        <a
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            signupRedirect();
-                          }}
-                        >
-                          Sign up
-                        </a>{" "}
-                        and select the teacher option in your profile.
-                      </small>
-                    </p>
+                    
+                    <div className="teacher-invitation">
+                      <h3>Are You a Sanskrit Scholar?</h3>
+                      <p>Join our community of distinguished teachers and share your expertise with dedicated students from around the world.</p>
+                      <button
+                        className="btn btn-outlined"
+                        onClick={signupRedirect}
+                      >
+                        Register as a Teacher
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

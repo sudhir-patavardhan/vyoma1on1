@@ -4,7 +4,7 @@ import axios from "axios";
 import { API_BASE_URL } from "../config";
 import "../styles.css";
 import "../premium-styles.css"; // Import premium styles
-import { FaGraduationCap, FaLock } from "react-icons/fa";
+import { FaGraduationCap, FaLock, FaCalendarAlt } from "react-icons/fa";
 import PaymentService from "../services/PaymentService";
 
 const TeacherSearch = () => {
@@ -270,69 +270,137 @@ const TeacherSearch = () => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const sanskritCategories = [
+    { id: "vedic", name: "Vedic Literature", subcategories: ["Rigveda", "Samaveda", "Yajurveda", "Atharvaveda", "Upanishads", "Vedangas"] },
+    { id: "grammar", name: "Sanskrit Grammar", subcategories: ["Ashtadhyayi", "Dhatupatha", "Sandhi", "Samasa", "Vibhakti"] },
+    { id: "literature", name: "Classical Literature", subcategories: ["Kavya", "Nataka", "Ramayana", "Mahabharata", "Puranas"] },
+    { id: "philosophy", name: "Philosophy", subcategories: ["Vedanta", "Samkhya", "Yoga", "Nyaya", "Vaisheshika", "Mimamsa"] },
+    { id: "scientific", name: "Scientific Texts", subcategories: ["Ayurveda", "Jyotisha", "Ganita", "Vastu Shastra"] },
+    { id: "religious", name: "Religious Texts", subcategories: ["Agamas", "Dharma Shastras", "Tantras"] },
+    { id: "modern", name: "Modern Sanskrit", subcategories: ["Conversational", "Contemporary Literature", "Academic Sanskrit"] }
+  ];
+
   return (
-    <div className="teacher-search">
-      <h2>Find a Teacher</h2>
+    <div className="teacher-search-container">
+      <div className="sanskrit-search-hero">
+        <h2>Find Your Perfect Sanskrit Teacher</h2>
+        <p>Connect with experts specializing in your areas of interest</p>
+      </div>
       
       {error && <div className="error-message">{error}</div>}
       
-      <form className="search-form" onSubmit={handleSearch}>
-        <div className="form-group">
-          <label htmlFor="searchTerm">Search for Teachers</label>
-          <input
-            type="text"
-            id="searchTerm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={searchType === "name" ? "e.g. John Smith, Jane Doe" : 
-                         searchType === "topic" ? "e.g. Math, Science, Programming" : 
-                         "Search by topic or teacher name"}
-            required
-          />
-        </div>
-        
-        <div className="form-group">
-          <label>Search by</label>
-          <div className="search-type-selector">
-            <div className="search-type-option">
-              <input
-                type="radio"
-                id="search-type-both"
-                name="search-type"
-                checked={searchType === "both"}
-                onChange={() => setSearchType("both")}
-              />
-              <label htmlFor="search-type-both">Both</label>
-            </div>
-            
-            <div className="search-type-option">
-              <input
-                type="radio"
-                id="search-type-topic"
-                name="search-type"
-                checked={searchType === "topic"}
-                onChange={() => setSearchType("topic")}
-              />
-              <label htmlFor="search-type-topic">Topic</label>
-            </div>
-            
-            <div className="search-type-option">
-              <input
-                type="radio"
-                id="search-type-name"
-                name="search-type"
-                checked={searchType === "name"}
-                onChange={() => setSearchType("name")}
-              />
-              <label htmlFor="search-type-name">Teacher Name</label>
-            </div>
+      <div className="search-tools">
+        <div className="category-explorer">
+          <h3>Browse by Category</h3>
+          <div className="category-buttons">
+            {sanskritCategories.map(category => (
+              <button 
+                key={category.id}
+                className={`category-button ${selectedCategory === category.id ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedCategory(category.id);
+                  setSearchType("topic");
+                  setSearchTerm(category.name);
+                }}
+              >
+                {category.name}
+              </button>
+            ))}
           </div>
+          
+          {selectedCategory && (
+            <div className="subcategory-chips">
+              {sanskritCategories.find(cat => cat.id === selectedCategory)?.subcategories.map(sub => (
+                <button 
+                  key={sub} 
+                  className="subcategory-chip"
+                  onClick={() => {
+                    setSearchTerm(sub);
+                    handleSearch({ preventDefault: () => {} });
+                  }}
+                >
+                  {sub}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? "Searching..." : "Search"}
-        </button>
-      </form>
+        <div className="text-search-section">
+          <form className="search-form" onSubmit={handleSearch}>
+            <div className="search-input-group">
+              <input
+                type="text"
+                id="searchTerm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by topic (e.g., Vedanta) or teacher name"
+                required
+              />
+              <button type="submit" className="btn btn-primary search-btn" disabled={loading}>
+                {loading ? "Searching..." : "Search"}
+              </button>
+            </div>
+            
+            <div className="search-options">
+              <div className="search-type-selector">
+                <div className="search-type-option">
+                  <input
+                    type="radio"
+                    id="search-type-both"
+                    name="search-type"
+                    checked={searchType === "both"}
+                    onChange={() => setSearchType("both")}
+                  />
+                  <label htmlFor="search-type-both">All</label>
+                </div>
+                
+                <div className="search-type-option">
+                  <input
+                    type="radio"
+                    id="search-type-topic"
+                    name="search-type"
+                    checked={searchType === "topic"}
+                    onChange={() => setSearchType("topic")}
+                  />
+                  <label htmlFor="search-type-topic">Topics Only</label>
+                </div>
+                
+                <div className="search-type-option">
+                  <input
+                    type="radio"
+                    id="search-type-name"
+                    name="search-type"
+                    checked={searchType === "name"}
+                    onChange={() => setSearchType("name")}
+                  />
+                  <label htmlFor="search-type-name">Teachers Only</label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <div className="popular-searches">
+        <h4>Popular Searches:</h4>
+        <div className="popular-search-tags">
+          {["Vedanta Philosophy", "Spoken Sanskrit", "Panini's Grammar", "Bhagavad Gita", "Ramayana", "Ayurveda"].map(tag => (
+            <button 
+              key={tag} 
+              className="popular-tag"
+              onClick={() => {
+                setSearchTerm(tag);
+                setSearchType("topic");
+                handleSearch({ preventDefault: () => {} });
+              }}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </div>
       
       {searchResults.length > 0 && !selectedTeacher && (
         <div className="search-results">
@@ -340,48 +408,85 @@ const TeacherSearch = () => {
           
           <div className="teacher-list">
             {searchResults.map((teacher) => (
-              <div key={teacher.user_id} className="teacher-card premium">
-                <div className="scholar-badge">PhD Sanskrit Scholar</div>
+              <div key={teacher.user_id} className="teacher-card sanskrit-scholar">
+                <div className="scholar-badge">
+                  <FaGraduationCap className="scholar-icon" />
+                  <span>Sanskrit Scholar</span>
+                </div>
                 <div className="teacher-card-header">
-                  {teacher.photo_url && (
+                  {teacher.photo_url ? (
                     <img 
                       src={teacher.photo_url} 
                       alt={`${teacher.name}`} 
                       className="teacher-photo"
                     />
+                  ) : (
+                    <div className="teacher-photo-placeholder">
+                      {teacher.name.charAt(0)}
+                    </div>
                   )}
-                  <h4>Dr. {teacher.name}</h4>
-                  <div className="teacher-credentials">
-                    <FaGraduationCap className="credential-icon" />
-                    <span>Verified Scholar</span>
+                  <div className="teacher-info">
+                    <h4>{teacher.name}{teacher.qualification?.includes("PhD") ? ", PhD" : ""}</h4>
+                    <div className="teacher-credentials">
+                      <span className="credential-pill">Verified</span>
+                      {teacher.years_of_experience && (
+                        <span className="credential-pill">{teacher.years_of_experience}+ Years Experience</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="teacher-expertise">
+                  <h5>Areas of Expertise</h5>
+                  <div className="expertise-tags">
+                    {teacher.topics.map((topic, index) => (
+                      <span key={index} className="expertise-tag">{topic}</span>
+                    ))}
                   </div>
                 </div>
                 
                 <div className="teacher-card-body">
-                  {teacher.bio && <p>{teacher.bio}</p>}
-                  
-                  <p><strong>Specialization:</strong> {teacher.topics.join(", ")}</p>
-                  
-                  <p className="academic-credentials">
-                    <strong>Academic Credentials:</strong> PhD in Sanskrit Studies
-                    {teacher.university ? ` from ${teacher.university}` : ''}
-                  </p>
-                  
-                  {teacher.years_of_experience && (
-                    <p><strong>Experience:</strong> {teacher.years_of_experience} years of scholarly instruction</p>
+                  {teacher.bio && (
+                    <div className="teacher-bio">
+                      <p>{teacher.bio.length > 150 ? `${teacher.bio.substring(0, 150)}...` : teacher.bio}</p>
+                      {teacher.bio.length > 150 && (
+                        <button className="bio-expand-btn" onClick={() => viewTeacherAvailability(teacher.user_id)}>
+                          Read more
+                        </button>
+                      )}
+                    </div>
                   )}
                   
-                  <p className="premium-rate">
-                    <strong>Premium Rate:</strong> <span className="premium-price">Exclusive Pricing</span>
-                  </p>
+                  <div className="teacher-credentials-detail">
+                    <div className="credential-item">
+                      <span className="credential-label">Background:</span>
+                      <span className="credential-value">
+                        {teacher.qualification || "Sanskrit Scholar"}
+                        {teacher.university ? ` from ${teacher.university}` : ''}
+                      </span>
+                    </div>
+                    
+                    {teacher.associations && (
+                      <div className="credential-item">
+                        <span className="credential-label">Affiliated with:</span>
+                        <span className="credential-value">{teacher.associations}</span>
+                      </div>
+                    )}
+                    
+                    <div className="session-rate">
+                      <span className="rate-label">Session Rate:</span>
+                      <span className="premium-price">Premium Pricing</span>
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="teacher-card-footer">
+                <div className="teacher-actions">
                   <button
-                    className="btn btn-primary premium-btn"
+                    className="btn btn-primary view-slots-btn"
                     onClick={() => viewTeacherAvailability(teacher.user_id)}
                   >
-                    View Premium Sessions
+                    <FaCalendarAlt className="btn-icon" />
+                    View Available Sessions
                   </button>
                 </div>
               </div>
