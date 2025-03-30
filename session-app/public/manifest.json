@@ -1,6 +1,6 @@
 {
-  "short_name": "Vyoma Learning",
-  "name": "Vyoma Learning - Connect with Sanskrit Teachers",
+  "short_name": "Sanskrit Teacher",
+  "name": "Your Sanskrit Teacher - Connect with Sanskrit Scholars",
   "icons": [
     {
       "src": "vyoma/vyoma-favicon.svg",
@@ -8,13 +8,18 @@
       "type": "image/svg+xml"
     },
     {
-      "src": "vyoma/vyoma-logo.svg",
+      "src": "favicon.svg",
       "type": "image/svg+xml",
-      "sizes": "512x512"
+      "sizes": "512x512 192x192 64x64 32x32 24x24 16x16"
+    },
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#770000",
-  "background_color": "#FAF7F2"
+  "theme_color": "#1E88E5",
+  "background_color": "#E3F2FD"
 }
