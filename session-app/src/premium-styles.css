@@ -14,7 +14,7 @@
   --premium-gold: #A27B5C;          /* Using sandstone as gold accent */
   --premium-red: #8B4C39;           /* Rust red for warnings/errors */
   
-  /* Sanskrit colors - updated palette */
+  /* Sanskrit colors - light theme (default) */
   --sanskrit-primary: #2C3930;      /* Dark green-gray - main color */
   --sanskrit-primary-light: #A27B5C; /* Sandstone - for highlights */
   --sanskrit-secondary: #3F4F44;    /* Forest green - for contrast */
@@ -27,6 +27,22 @@
   --sanskrit-success: #5A7D64;      /* Sage green - for success messages */
   --sanskrit-warning: #A27B5C;      /* Sandstone - for warnings */
   --sanskrit-error: #8B4C39;        /* Rust red - for errors */
+}
+
+/* Dark theme colors */
+[data-theme="dark"] {
+  --sanskrit-primary: #A27B5C;      /* Sandstone becomes primary in dark mode */
+  --sanskrit-primary-light: #BF9D7E; /* Lighter sandstone for highlights */
+  --sanskrit-secondary: #3F4F44;    /* Keep forest green as secondary */
+  --sanskrit-text: #DCD7C9;         /* Light beige for main text */
+  --sanskrit-text-light: #B0ACA0;   /* Muted beige for secondary text */
+  --sanskrit-background: #1E2923;   /* Very dark green for background */
+  --sanskrit-card-bg: #2C3930;      /* Dark green-gray for cards */
+  --sanskrit-accent: #A27B5C;       /* Keep sandstone as accent */
+  --sanskrit-divider: #3F4F44;      /* Forest green for dividers */
+  --sanskrit-success: #5A7D64;      /* Keep sage green for success */
+  --sanskrit-warning: #CB9A76;      /* Brighter sandstone for warnings */
+  --sanskrit-error: #D27C65;        /* Brighter rust for errors */
 }
 
 /* Existing premium styles */
@@ -840,6 +856,75 @@
   .testimonials-container {
     grid-template-columns: 1fr;
   }
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .app-layout {
+  background-color: var(--sanskrit-background);
+  color: var(--sanskrit-text);
+}
+
+[data-theme="dark"] .card {
+  background-color: var(--sanskrit-card-bg);
+  border-color: var(--sanskrit-divider);
+}
+
+[data-theme="dark"] .header {
+  background-color: var(--sanskrit-primary);
+}
+
+[data-theme="dark"] .header-link {
+  color: #fff;
+}
+
+[data-theme="dark"] .footer {
+  background-color: var(--sanskrit-primary);
+  color: #fff;
+}
+
+[data-theme="dark"] .footer-links a {
+  color: var(--sanskrit-background);
+}
+
+[data-theme="dark"] .card-body {
+  color: var(--sanskrit-text);
+}
+
+[data-theme="dark"] h1, 
+[data-theme="dark"] h2, 
+[data-theme="dark"] h3, 
+[data-theme="dark"] h4, 
+[data-theme="dark"] h5, 
+[data-theme="dark"] h6 {
+  color: var(--sanskrit-text);
+}
+
+[data-theme="dark"] .btn-primary {
+  background-color: var(--sanskrit-primary-light);
+  border-color: var(--sanskrit-primary-light);
+}
+
+[data-theme="dark"] .btn-secondary {
+  background-color: var(--sanskrit-secondary);
+  border-color: var(--sanskrit-secondary);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: #2A3329;
+  border-color: var(--sanskrit-divider);
+  color: var(--sanskrit-text);
+}
+
+[data-theme="dark"] .category-card,
+[data-theme="dark"] .testimonial {
+  background-color: var(--sanskrit-card-bg);
+  border-color: var(--sanskrit-divider);
+}
+
+[data-theme="dark"] .category-icon {
+  background-color: #364239;
 }
 
 /* Animations */

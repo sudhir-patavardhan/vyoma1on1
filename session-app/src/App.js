@@ -28,6 +28,8 @@ import {
   FaGraduationCap,
   FaPlus,
   FaClipboardList,
+  FaMoon,
+  FaSun,
 } from "react-icons/fa"; // Import icons
 
 // Add some custom styles for new elements
@@ -80,6 +82,36 @@ const injectCustomStyles = () => {
   .alert-info {
     padding: 10px 15px;
   }
+  
+  /* Theme Toggle Button */
+  .theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--sanskrit-primary);
+    color: white;
+    border: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    z-index: 1000;
+  }
+
+  .theme-toggle:hover {
+    background-color: var(--sanskrit-primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  .theme-toggle .icon {
+    font-size: 20px;
+  }
   `;
 
   // Only add the styles once
@@ -92,6 +124,19 @@ const injectCustomStyles = () => {
 };
 
 function App() {
+  // State for theme toggling
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Effect to apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
+
+  // Toggle theme function
+  const toggleTheme = () => {
+    setDarkMode(!darkMode);
+  };
+
   // Inject custom styles on component mount
   React.useEffect(() => {
     injectCustomStyles();
@@ -1151,6 +1196,19 @@ function App() {
                     profile={profile}
                   />
                 )}
+                
+                {/* Theme toggle button */}
+                <button 
+                  className="theme-toggle"
+                  onClick={toggleTheme}
+                  aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                >
+                  {darkMode ? (
+                    <FaSun className="icon" />
+                  ) : (
+                    <FaMoon className="icon" />
+                  )}
+                </button>
 
                 {profile && activeTab === "dashboard" && (
                   <Dashboard
