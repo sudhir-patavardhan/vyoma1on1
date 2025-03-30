@@ -650,8 +650,8 @@ body {
 
 /* Sidebar Stats */
 .dashboard-stats {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 12px;
 }
 
@@ -680,7 +680,59 @@ body {
   justify-content: center;
   border-radius: 8px;
   margin-right: 16px;
+}
+
+.open-slots-icon {
+  color: var(--vyoma-blue-dark);
+  background-color: rgba(100, 181, 246, 0.2);
   box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.stat-notification {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: var(--danger);
+  color: white;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: 2px solid white;
+}
+
+.stat-warning {
+  border-left: 3px solid var(--warning);
+  background-color: rgba(251, 140, 0, 0.1);
+}
+
+.stat-message {
+  font-size: 11px;
+  color: var(--warning);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.stat-action-btn {
+  background-color: var(--vyoma-blue);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  margin-top: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stat-action-btn:hover {
+  background-color: var(--vyoma-blue-dark);
+  transform: translateY(-1px);
 }
 
 .stat-details {

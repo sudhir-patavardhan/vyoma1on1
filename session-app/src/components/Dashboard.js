@@ -25,6 +25,7 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
     totalBookings: 0,
     upcomingBookings: 0,
     completedSessions: 0,
+    openSlots: 0,  // Add open slots count for teachers
   });
 
   useEffect(() => {
@@ -107,6 +108,13 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
           .filter(slot => slot.status === "available" && new Date(slot.start_time) > now)
           .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
         
+        // Update the openSlots count in stats
+        setStats(prevStats => ({
+          ...prevStats,
+          openSlots: availableSlots.length
+        }));
+        
+        // Display only the first 3 slots in the UI
         setAvailabilitySlots(availableSlots.slice(0, 3));
       }
     } catch (err) {
@@ -525,6 +533,31 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
                   <p className="stat-value">{stats.completedSessions}</p>
                 </div>
               </div>
+              
+              {/* Open Slots - Only for teachers */}
+              {profile.role === "teacher" && (
+                <div className={`stat-item ${stats.openSlots === 0 ? 'stat-warning' : ''}`}>
+                  <div className="stat-icon open-slots-icon">
+                    <FaChalkboardTeacher />
+                    {stats.openSlots === 0 && <span className="stat-notification">!</span>}
+                  </div>
+                  <div className="stat-details">
+                    <p className="stat-label">Open Slots</p>
+                    <p className="stat-value">{stats.openSlots}</p>
+                    {stats.openSlots === 0 && (
+                      <>
+                        <p className="stat-message">No open slots available</p>
+                        <button 
+                          className="stat-action-btn" 
+                          onClick={() => onTabChange('schedule')}
+                        >
+                          Add Slots
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           
