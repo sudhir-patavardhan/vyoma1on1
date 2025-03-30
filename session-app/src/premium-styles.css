@@ -987,6 +987,42 @@ body[data-theme="dark"] {
   z-index: -1;
 }
 
+/* Global theme toggle styling */
+.theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--sanskrit-primary);
+  color: white;
+  border: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  z-index: 9999;
+}
+
+.theme-toggle:hover {
+  background-color: var(--sanskrit-primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.theme-toggle:focus {
+  outline: 2px solid var(--sanskrit-accent);
+  box-shadow: 0 0 0 4px rgba(162, 123, 92, 0.4);
+}
+
+.theme-toggle .icon {
+  font-size: 20px;
+  color: white;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }

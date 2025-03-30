@@ -847,6 +847,23 @@ function App() {
     }
   };
 
+  // Theme toggle button component
+  const renderThemeToggle = () => {
+    return (
+      <button 
+        className="theme-toggle"
+        onClick={toggleTheme}
+        aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        {darkMode ? (
+          <FaSun className="icon" />
+        ) : (
+          <FaMoon className="icon" />
+        )}
+      </button>
+    );
+  };
+
   // Define the footer render function early
   const renderFooter = () => {
     // Format the build date in a user-friendly format
@@ -918,6 +935,8 @@ function App() {
               <div className="container">
                 <div className="card">
                   <div className="card-body">
+                    {/* Render theme toggle on landing page too */}
+                    {renderThemeToggle()}
                     <div className="sanskrit-hero">
                       <div className="sanskrit-logo">संस्कृत</div>
                       <h1 className="landing-heading">
@@ -1078,6 +1097,7 @@ function App() {
             </div>
           </div>
         </div>
+        {renderThemeToggle()}
         {renderFooter()}
       </div>
     );
@@ -1109,6 +1129,7 @@ function App() {
             </div>
           </div>
         </div>
+        {renderThemeToggle()}
         {renderFooter()}
       </div>
     );
@@ -1210,6 +1231,7 @@ function App() {
             </div>
           </div>
         </div>
+        {renderThemeToggle()}
         {renderFooter()}
       </div>
     );
@@ -1227,6 +1249,7 @@ function App() {
               sessionId={activeSession}
               onEndSession={() => setActiveSession(null)}
             />
+            {renderThemeToggle()}
           </div>
         </div>
       </div>
@@ -1249,18 +1272,7 @@ function App() {
                   />
                 )}
                 
-                {/* Theme toggle button */}
-                <button 
-                  className="theme-toggle"
-                  onClick={toggleTheme}
-                  aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-                >
-                  {darkMode ? (
-                    <FaSun className="icon" />
-                  ) : (
-                    <FaMoon className="icon" />
-                  )}
-                </button>
+                {renderThemeToggle()}
 
                 {profile && activeTab === "dashboard" && (
                   <Dashboard
