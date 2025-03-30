@@ -1,11 +1,11 @@
 /* Global Styles - Modern Professional Theme */
 :root {
-  /* Primary brand colors - Premium Gold palette */
-  --primary: #c6a147; /* Gold - primary */
-  --primary-light: #d9b661; /* Lighter gold - for hover states */
-  --primary-dark: #a88a39; /* Darker gold - for active states */
-  --secondary: #f7f3e9; /* Light gold-cream - secondary color */
-  --accent: #8a6d3b; /* Gold accent */
+  /* Primary brand colors - Vyoma Blue palette */
+  --primary: #1E88E5; /* Vyoma blue - primary */
+  --primary-light: #64B5F6; /* Lighter blue - for hover states */
+  --primary-dark: #1565C0; /* Darker blue - for active states */
+  --secondary: #E3F2FD; /* Light blue-white - secondary color */
+  --accent: #0D47A1; /* Navy blue accent */
   
   /* UI colors - light, clean and professional */
   --bg-light: #ffffff; /* Pure white background */
@@ -16,9 +16,9 @@
   --text-muted: #64748b; /* Muted slate text */
   
   /* Functional colors - professional palette */
-  --success: #38a169; /* Fresh green */
-  --warning: #b7791f; /* Amber */
-  --danger: #e53e3e; /* Vibrant red */
+  --success: #43A047; /* Green */
+  --warning: #FB8C00; /* Orange */
+  --danger: #E53935; /* Red */
   
   /* Gray scale - cool, professional tones */
   --gray-100: #f8fafc;
@@ -327,13 +327,13 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: rgba(9, 114, 211, 0.05);
+  background-color: rgba(30, 136, 229, 0.05);
 }
 
 .card-title {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
-  color: var(--primary-dark);
+  color: var(--vyoma-blue-dark);
   letter-spacing: 0.5px;
   font-family: var(--font-family-heading);
 }
@@ -357,7 +357,7 @@ body {
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-bold);
   margin-bottom: 24px;
-  color: var(--primary-dark);
+  color: var(--vyoma-blue-dark);
   font-family: var(--font-family-heading);
   position: relative;
   padding-bottom: 20px;
