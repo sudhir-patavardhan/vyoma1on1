@@ -82,7 +82,7 @@ const injectCustomStyles = () => {
   .alert-info {
     padding: 10px 15px;
   }
-  
+
   /* Theme Toggle Button */
   .theme-toggle {
     position: fixed;
@@ -108,7 +108,7 @@ const injectCustomStyles = () => {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
-  
+
   .theme-toggle .icon {
     font-size: 20px;
   }
@@ -127,57 +127,57 @@ function App() {
   // State for theme toggling with persistence
   const [darkMode, setDarkMode] = useState(() => {
     // Check localStorage for saved preference, default to light mode
-    const savedTheme = localStorage.getItem('sanskritTeacherTheme');
-    return savedTheme === 'dark';
+    const savedTheme = localStorage.getItem("sanskritTeacherTheme");
+    return savedTheme === "dark";
   });
 
   // Effect to apply theme to document
   useEffect(() => {
-    const theme = darkMode ? 'dark' : 'light';
-    
+    const theme = darkMode ? "dark" : "light";
+
     // Apply theme to multiple elements to ensure complete coverage
-    document.documentElement.setAttribute('data-theme', theme);
-    document.body.setAttribute('data-theme', theme);
-    
+    document.documentElement.setAttribute("data-theme", theme);
+    document.body.setAttribute("data-theme", theme);
+
     // Also set a class on body for additional styling options
     if (darkMode) {
-      document.body.classList.add('dark-mode');
-      document.documentElement.classList.add('dark-mode');
+      document.body.classList.add("dark-mode");
+      document.documentElement.classList.add("dark-mode");
     } else {
-      document.body.classList.remove('dark-mode');
-      document.documentElement.classList.remove('dark-mode');
+      document.body.classList.remove("dark-mode");
+      document.documentElement.classList.remove("dark-mode");
     }
-    
+
     // Directly apply background color to ensure it takes effect
     if (darkMode) {
-      document.body.style.backgroundColor = '#0A1929'; // Vyoma dark navy
-      document.documentElement.style.backgroundColor = '#0A1929';
+      document.body.style.backgroundColor = "#0A1929"; // Vyoma dark navy
+      document.documentElement.style.backgroundColor = "#0A1929";
     } else {
-      document.body.style.backgroundColor = '#E3F2FD'; // Vyoma light blue
-      document.documentElement.style.backgroundColor = '#E3F2FD';
+      document.body.style.backgroundColor = "#E3F2FD"; // Vyoma light blue
+      document.documentElement.style.backgroundColor = "#E3F2FD";
     }
-    
+
     // Apply to root element if it exists
-    const rootElement = document.getElementById('root');
+    const rootElement = document.getElementById("root");
     if (rootElement) {
-      rootElement.setAttribute('data-theme', theme);
+      rootElement.setAttribute("data-theme", theme);
       if (darkMode) {
-        rootElement.style.backgroundColor = '#0A1929'; // Vyoma dark navy
-        rootElement.style.minHeight = '100vh';
+        rootElement.style.backgroundColor = "#0A1929"; // Vyoma dark navy
+        rootElement.style.minHeight = "100vh";
       } else {
-        rootElement.style.backgroundColor = '#E3F2FD'; // Vyoma light blue
-        rootElement.style.minHeight = '100vh';
+        rootElement.style.backgroundColor = "#E3F2FD"; // Vyoma light blue
+        rootElement.style.minHeight = "100vh";
       }
     }
-    
+
     // Set meta theme-color for mobile browsers
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', darkMode ? '#0A1929' : '#E3F2FD');
+      metaThemeColor.setAttribute("content", darkMode ? "#0A1929" : "#E3F2FD");
     } else {
-      const metaTag = document.createElement('meta');
-      metaTag.name = 'theme-color';
-      metaTag.content = darkMode ? '#0A1929' : '#E3F2FD';
+      const metaTag = document.createElement("meta");
+      metaTag.name = "theme-color";
+      metaTag.content = darkMode ? "#0A1929" : "#E3F2FD";
       document.head.appendChild(metaTag);
     }
   }, [darkMode]);
@@ -186,7 +186,7 @@ function App() {
   const toggleTheme = () => {
     const newTheme = !darkMode;
     setDarkMode(newTheme);
-    localStorage.setItem('sanskritTeacherTheme', newTheme ? 'dark' : 'light');
+    localStorage.setItem("sanskritTeacherTheme", newTheme ? "dark" : "light");
   };
 
   // Inject custom styles on component mount
@@ -206,31 +206,39 @@ function App() {
   // Effect to handle auth state changes and logging
   useEffect(() => {
     // Get more detailed user info for debugging
-    const userInfo = auth.user ? {
-      exists: true,
-      hasProfile: !!auth.user.profile,
-      claims: auth.user.profile ? Object.keys(auth.user.profile) : []
-    } : 'No user';
-    
+    const userInfo = auth.user
+      ? {
+          exists: true,
+          hasProfile: !!auth.user.profile,
+          claims: auth.user.profile ? Object.keys(auth.user.profile) : [],
+        }
+      : "No user";
+
     // Enhanced logging for auth state
-    console.log("Auth state changed:", { 
-      isAuthenticated: auth.isAuthenticated, 
+    console.log("Auth state changed:", {
+      isAuthenticated: auth.isAuthenticated,
       isLoading: auth.isLoading,
       user: userInfo,
-      error: auth.error ? auth.error.message : 'No error'
+      error: auth.error ? auth.error.message : "No error",
     });
-    
+
     // Handle potential errors
     if (auth.error && !auth.isLoading) {
       console.error("Authentication error details:", auth.error);
     }
-    
+
     // If we're authenticated, make sure we're on the dashboard tab
     if (auth.isAuthenticated && !auth.isLoading && auth.user) {
       // Set dashboard as active tab when authenticated and user data is loaded
       setActiveTab("dashboard");
     }
-  }, [auth.isAuthenticated, auth.isLoading, auth.user, auth.error, setActiveTab]);
+  }, [
+    auth.isAuthenticated,
+    auth.isLoading,
+    auth.user,
+    auth.error,
+    setActiveTab,
+  ]);
 
   // For users with multiple roles
   const [activeRole, setActiveRole] = useState(null);
@@ -266,9 +274,9 @@ function App() {
     const signupURL = `${cognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=email+openid+phone&redirect_uri=${encodeURIComponent(
       redirectUri
     )}`;
-    
+
     console.log("Signup URL:", signupURL); // Log for debugging
-    
+
     // Redirect directly to Cognito signup page
     window.location.href = signupURL;
   };
@@ -282,15 +290,6 @@ function App() {
         }
         style={{ cursor: "pointer" }}
       >
-        <img
-          src="/vyoma/premium-logo.svg"
-          alt="Sanskrit Teacher Logo"
-          className="header-logo-full"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = "/vyoma/vyoma-logo.svg"; // Fallback to original SVG if new logo doesn't exist
-          }}
-        />
         <span className="app-name">Sanskrit Teacher</span>
       </div>
       <nav className="header-nav">
@@ -850,16 +849,12 @@ function App() {
   // Theme toggle button component
   const renderThemeToggle = () => {
     return (
-      <button 
+      <button
         className="theme-toggle"
         onClick={toggleTheme}
         aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
       >
-        {darkMode ? (
-          <FaSun className="icon" />
-        ) : (
-          <FaMoon className="icon" />
-        )}
+        {darkMode ? <FaSun className="icon" /> : <FaMoon className="icon" />}
       </button>
     );
   };
@@ -868,33 +863,24 @@ function App() {
   const renderFooter = () => {
     // Format the build date in a user-friendly format
     const formatDate = (dateString) => {
-      if (!dateString) return 'Unknown';
-      const options = { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+      if (!dateString) return "Unknown";
+      const options = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       };
       return new Date(dateString).toLocaleDateString(undefined, options);
     };
-    
+
     const buildDate = formatDate(VERSION.buildDate);
-    
+
     return (
       <footer className="footer">
         <div className="container">
           <div className="footer-content">
             <div className="footer-logo">
-              <img
-                src="/vyoma/premium-logo.svg"
-                alt="Sanskrit Teacher"
-                height="40"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "/vyoma/vyoma-logo.svg";
-                }}
-              />
               <span>Sanskrit Teacher</span>
             </div>
             <div className="footer-links">
@@ -903,10 +889,11 @@ function App() {
               <a href="#">Contact Us</a>
             </div>
             <div className="footer-copyright">
-              © {new Date().getFullYear()} Sanskrit Teacher. All rights reserved.
+              © {new Date().getFullYear()} Sanskrit Teacher. All rights
+              reserved.
               <div className="version-info">
                 Last updated: {buildDate}
-                {VERSION.buildId !== 'local' && (
+                {VERSION.buildId !== "local" && (
                   <span className="build-id"> • Build: {VERSION.buildId}</span>
                 )}
               </div>
@@ -938,107 +925,141 @@ function App() {
                     {/* Render theme toggle on landing page too */}
                     {renderThemeToggle()}
                     <div className="sanskrit-hero">
-                      <div className="vyoma-logo-container">
-                        <img 
-                          src="/vyoma/Vyoma_Logo_Blue_500x243.png" 
-                          alt="Vyoma Sanskrit" 
-                          className="vyoma-logo"
-                        />
-                      </div>
                       <h1 className="landing-heading">
                         Experience Sanskrit Excellence
                       </h1>
                       <h2 className="landing-subheading">
-                        Learn from Renowned Sanskrit Scholars in Personalized 1:1 Sessions
+                        Learn from Renowned Sanskrit Scholars in Personalized
+                        1:1 Sessions
                       </h2>
                       <p className="landing-text">
-                        Connect with expert Sanskrit instructors specializing in Vedic literature, classical texts, 
-                        grammar, philosophy, and more. Our platform brings together PhD-holding scholars offering 
-                        premium instruction for students at all levels—from beginners to advanced practitioners.
+                        Connect with expert Sanskrit instructors specializing in
+                        Vedic literature, classical texts, grammar, philosophy,
+                        and more. Our platform brings together PhD-holding
+                        scholars offering premium instruction for students at
+                        all levels—from beginners to advanced practitioners.
                       </p>
                     </div>
-                    
+
                     <div className="sanskrit-categories">
-                      <h3 className="categories-title">Explore Sanskrit Domains</h3>
+                      <h3 className="categories-title">
+                        Explore Sanskrit Domains
+                      </h3>
                       <div className="category-grid">
                         <div className="category-card">
                           <div className="category-icon vedic"></div>
                           <h4>Vedic Literature</h4>
-                          <p>Study Rigveda, Samaveda, Yajurveda, Atharvaveda, Upanishads and related texts</p>
+                          <p>
+                            Study Rigveda, Samaveda, Yajurveda, Atharvaveda,
+                            Upanishads and related texts
+                          </p>
                         </div>
                         <div className="category-card">
                           <div className="category-icon grammar"></div>
                           <h4>Sanskrit Grammar</h4>
-                          <p>Master Panini's Ashtadhyayi, syntax, verb forms, and composition rules</p>
+                          <p>
+                            Master Panini's Ashtadhyayi, syntax, verb forms, and
+                            composition rules
+                          </p>
                         </div>
                         <div className="category-card">
                           <div className="category-icon literature"></div>
                           <h4>Classical Literature</h4>
-                          <p>Explore Kavya, Nataka, Ramayana, Mahabharata, and great poetic works</p>
+                          <p>
+                            Explore Kavya, Nataka, Ramayana, Mahabharata, and
+                            great poetic works
+                          </p>
                         </div>
                         <div className="category-card">
                           <div className="category-icon philosophy"></div>
                           <h4>Darshana Philosophy</h4>
-                          <p>Delve into Vedanta, Samkhya, Yoga, Nyaya, and philosophical systems</p>
+                          <p>
+                            Delve into Vedanta, Samkhya, Yoga, Nyaya, and
+                            philosophical systems
+                          </p>
                         </div>
                         <div className="category-card">
                           <div className="category-icon science"></div>
                           <h4>Scientific Texts</h4>
-                          <p>Discover Ayurveda, Jyotisha, mathematics, and ancient sciences</p>
+                          <p>
+                            Discover Ayurveda, Jyotisha, mathematics, and
+                            ancient sciences
+                          </p>
                         </div>
                         <div className="category-card">
                           <div className="category-icon modern"></div>
                           <h4>Conversational Sanskrit</h4>
-                          <p>Practice spoken Sanskrit and modern usage with fluent speakers</p>
+                          <p>
+                            Practice spoken Sanskrit and modern usage with
+                            fluent speakers
+                          </p>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="landing-features">
                       <div className="feature">
                         <FaGraduationCap className="feature-icon" />
                         <h3>Expert Sanskrit Scholars</h3>
                         <p>
-                          Learn with verified scholars holding advanced degrees in traditional and modern Sanskrit studies
+                          Learn with verified scholars holding advanced degrees
+                          in traditional and modern Sanskrit studies
                         </p>
                       </div>
                       <div className="feature">
                         <FaVideo className="feature-icon" />
                         <h3>Interactive Sessions</h3>
                         <p>
-                          Engage in immersive video lessons with pronunciation guidance, text analysis, and discussion
+                          Engage in immersive video lessons with pronunciation
+                          guidance, text analysis, and discussion
                         </p>
                       </div>
                       <div className="feature">
                         <FaCalendarAlt className="feature-icon" />
                         <h3>Flexible Learning</h3>
                         <p>
-                          Schedule sessions at your convenience across international time zones
+                          Schedule sessions at your convenience across
+                          international time zones
                         </p>
                       </div>
                       <div className="feature">
                         <FaSearch className="feature-icon" />
                         <h3>Personalized Instruction</h3>
                         <p>
-                          Receive tailored teaching focused on your specific interests and learning goals
+                          Receive tailored teaching focused on your specific
+                          interests and learning goals
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="testimonials-section">
                       <h3>Student Experiences</h3>
                       <div className="testimonials-container">
                         <div className="testimonial">
-                          <p>"The personalized approach to learning Vedic texts has transformed my understanding of Sanskrit. My teacher provides context I couldn't find in any textbook."</p>
-                          <div className="testimonial-author">— Michael R., USA</div>
+                          <p>
+                            "The personalized approach to learning Vedic texts
+                            has transformed my understanding of Sanskrit. My
+                            teacher provides context I couldn't find in any
+                            textbook."
+                          </p>
+                          <div className="testimonial-author">
+                            — Michael R., USA
+                          </div>
                         </div>
                         <div className="testimonial">
-                          <p>"As a philosophy researcher, the specialized instruction in Advaita Vedanta texts has been invaluable. The one-on-one format allows us to explore nuances of the language in depth."</p>
-                          <div className="testimonial-author">— Aruna S., India</div>
+                          <p>
+                            "As a philosophy researcher, the specialized
+                            instruction in Advaita Vedanta texts has been
+                            invaluable. The one-on-one format allows us to
+                            explore nuances of the language in depth."
+                          </p>
+                          <div className="testimonial-author">
+                            — Aruna S., India
+                          </div>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="text-center landing-buttons">
                       <button
                         className="btn btn-primary btn-lg"
@@ -1055,10 +1076,14 @@ function App() {
                         Create Student Account
                       </button>
                     </div>
-                    
+
                     <div className="teacher-invitation">
                       <h3>Are You a Sanskrit Scholar?</h3>
-                      <p>Join our community of distinguished teachers and share your expertise with dedicated students from around the world.</p>
+                      <p>
+                        Join our community of distinguished teachers and share
+                        your expertise with dedicated students from around the
+                        world.
+                      </p>
                       <button
                         className="btn btn-outlined"
                         onClick={signupRedirect}
@@ -1279,7 +1304,7 @@ function App() {
                     profile={profile}
                   />
                 )}
-                
+
                 {renderThemeToggle()}
 
                 {profile && activeTab === "dashboard" && (
@@ -1321,7 +1346,7 @@ function App() {
                       ((profile.roles && profile.roles.includes("teacher")) ||
                         profile.role === "teacher"))) &&
                   activeTab === "schedule" && <TeacherCalendarSchedule />}
-                  
+
                 {/* Show slot creation interface for teachers */}
                 {profile &&
                   (activeRole === "teacher" ||
