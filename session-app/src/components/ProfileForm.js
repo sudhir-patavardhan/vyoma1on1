@@ -15,20 +15,32 @@ import { API_BASE_URL } from "../config";
 import "../styles.css";
 
 const ProfileForm = ({ saveUserProfile, profile }) => {
-  // For backward compatibility with existing profiles
-  const [roles, setRoles] = useState(
-    profile?.roles || (profile?.role ? [profile.role] : ["student"]) // Default to student role
-  );
+  // Always include student role, optionally add teacher role
+  const [roles, setRoles] = useState(() => {
+    // For existing profiles, preserve their roles
+    if (profile?.roles) return profile.roles;
+    if (profile?.role) return [profile.role];
+    // New profiles always start as student
+    return ["student"];
+  });
   
-  // For users switching between roles in the app
+  // Primary role (student by default)
   const [activeRole, setActiveRole] = useState(
-    profile?.role || (profile?.roles?.[0] || "student") // Default to student role
+    profile?.role || (profile?.roles?.[0] || "student")
   );
   
-  // Track if user is creating a teacher profile or upgrading to teacher
-  const [showTeacherFields, setShowTeacherFields] = useState(
-    roles.includes("teacher") || profile?.role === "teacher"
-  );
+  // Toggle for teacher profile section
+  const [showTeacherFields, setShowTeacherFields] = useState(() => {
+    const hasTeacherRole = roles.includes("teacher") || profile?.role === "teacher";
+    if (hasTeacherRole) {
+      // Ensure teacher role is in the roles array
+      if (!roles.includes("teacher")) {
+        setRoles(prev => [...prev, "teacher"]);
+      }
+      return true;
+    }
+    return false;
+  });
 
   // For the tag-style inputs
   const [newTopic, setNewTopic] = useState("");
@@ -245,19 +257,16 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
     setIsSaving(true);
     setSaveError(null);
 
-    // Validate that at least one role is selected
-    if (roles.length === 0) {
-      setSaveError("Please select at least one role (Student or Teacher)");
-      setIsSaving(false);
-      return;
-    }
-
     try {
-      // Create a new profile object with the updated fields
-      const rolesToSave = [...roles]; // Make a copy of roles array for modification
+      // Ensure student role is always included
+      let rolesToSave = ["student"];
       
-      // If the original profile had admin role, preserve it
-      // This ensures admin role can't be removed through the UI
+      // Add teacher role if enabled
+      if (showTeacherFields) {
+        rolesToSave.push("teacher");
+      }
+      
+      // Preserve admin role if it was in the original profile
       if (profile?.roles?.includes("admin") || profile?.role === "admin") {
         if (!rolesToSave.includes("admin")) {
           rolesToSave.push("admin");
@@ -265,10 +274,14 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
         }
       }
       
+      // Determine the active/primary role
+      // If user has teacher fields enabled, set active role based on what's showing
+      const primaryRole = showTeacherFields ? "teacher" : "student";
+      
       const profileToSave = { 
         ...formData,
         roles: rolesToSave,
-        role: activeRole || rolesToSave[0] // Set the primary role as the active role or the first role
+        role: primaryRole // Set primary role based on which section is active
       };
       
       await saveUserProfile(profileToSave);
@@ -312,83 +325,57 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
           </div>
         </div>
 
-        {/* For existing profiles that already have roles, show role selector */}
-        {profile && profile.roles && (
-          <div className="form-section">
-            <h3 className="section-title">Account Type</h3>
-            <p className="section-subtitle">Select your primary role</p>
-
-            <div className="role-selector">
-              <button
-                type="button"
-                className={`role-btn ${roles.includes("student") ? "active" : ""}`}
-                onClick={() => {
-                  // Ensure student role is included
-                  if (!roles.includes("student")) {
-                    setRoles([...roles, "student"]);
+        {/* Simplified account section with student as default and teacher as opt-in */}
+        <div className="form-section">
+          <h3 className="section-title">Complete Your Profile</h3>
+          <p className="section-subtitle">Get started as a Sanskrit student</p>
+          
+          {/* Teacher opt-in toggle */}
+          <div className="teacher-opt-in">
+            <label className="toggle-switch">
+              <input 
+                type="checkbox" 
+                checked={showTeacherFields}
+                onChange={() => {
+                  if (showTeacherFields) {
+                    // Remove teacher role if unchecked
+                    setRoles(roles.filter(r => r !== "teacher"));
+                    // If active role was teacher, set it to student
+                    if (activeRole === "teacher") {
+                      setActiveRole("student");
+                    }
+                  } else {
+                    // Add teacher role if checked
+                    if (!roles.includes("teacher")) {
+                      setRoles([...roles, "teacher"]);
+                    }
                   }
-                  setActiveRole("student");
+                  setShowTeacherFields(!showTeacherFields);
                 }}
-              >
-                <FaUser className="role-icon" />
-                <span>Student</span>
-              </button>
-              <button
-                type="button"
-                className={`role-btn ${roles.includes("teacher") ? "active" : ""}`}
-                onClick={() => {
-                  // Ensure teacher role is included
-                  if (!roles.includes("teacher")) {
-                    setRoles([...roles, "teacher"]);
-                  }
-                  setActiveRole("teacher");
-                  setShowTeacherFields(true);
-                }}
-              >
-                <FaGraduationCap className="role-icon" />
-                <span>Teacher</span>
-              </button>
-              {/* Admin role button removed - admin role can only be assigned from the backend */}
-              {/* Display admin badge if user already has admin role to show it's preserved */}
-              {roles.includes("admin") && (
-                <div className="role-btn admin-badge">
-                  <FaLock className="role-icon" />
-                  <span>Admin</span>
-                  <small className="admin-note">Assigned by system</small>
-                </div>
-              )}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+            <span className="opt-in-label">
+              <FaGraduationCap className="icon-small" /> I am also a Sanskrit teacher
+            </span>
+          </div>
+          
+          {/* If teacher role is selected, show status */}
+          {showTeacherFields && (
+            <div className="teacher-notice alert alert-info">
+              <FaGraduationCap className="icon-small" /> Teacher profile options are enabled below
             </div>
-          </div>
-        )}
-        
-        {/* For new users, simplify with just student by default, and offer teacher upgrade option */}
-        {!profile && (
-          <div className="form-section">
-            <h3 className="section-title">Complete Your Student Profile</h3>
-            <p className="section-subtitle">Get started as a Sanskrit student</p>
-            
-            {!showTeacherFields && (
-              <div className="teacher-upgrade-link">
-                <button 
-                  type="button" 
-                  className="text-link"
-                  onClick={() => {
-                    setRoles([...roles, "teacher"]);
-                    setShowTeacherFields(true);
-                  }}
-                >
-                  <FaGraduationCap className="icon-small" /> I am also a Sanskrit teacher
-                </button>
-              </div>
-            )}
-            
-            {showTeacherFields && (
-              <div className="teacher-notice alert alert-info">
-                <FaGraduationCap className="icon-small" /> Teacher profile options are now enabled below
-              </div>
-            )}
-          </div>
-        )}
+          )}
+          
+          {/* Display admin badge if user already has admin role */}
+          {roles.includes("admin") && (
+            <div className="admin-badge">
+              <FaLock className="icon-small" /> 
+              <span>Admin privileges enabled</span>
+              <small className="admin-note">(assigned by system)</small>
+            </div>
+          )}
+        </div>
 
         {roles.length > 0 && (
           <div className="form-section">
@@ -850,9 +837,9 @@ const ProfileForm = ({ saveUserProfile, profile }) => {
         <div className="form-actions">
           <button
             type="submit"
-            disabled={isSaving || roles.length === 0}
+            disabled={isSaving}
             className={`btn btn-primary ${
-              isSaving || roles.length === 0 ? "btn-disabled" : ""
+              isSaving ? "btn-disabled" : ""
             }`}
           >
             {isSaving ? "Saving Profile..." : "Save Profile"}
