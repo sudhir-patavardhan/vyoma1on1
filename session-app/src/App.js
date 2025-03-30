@@ -290,7 +290,7 @@ function App() {
         }
         style={{ cursor: "pointer" }}
       >
-        <span className="app-name">Sanskrit Teacher</span>
+        <span className="app-name">संस्कृत Teacher</span>
       </div>
       <nav className="header-nav">
         {!auth.isAuthenticated ? (
@@ -881,7 +881,7 @@ function App() {
         <div className="container">
           <div className="footer-content">
             <div className="footer-logo">
-              <span>Sanskrit Teacher</span>
+              <span>संस्कृत Teacher</span>
             </div>
             <div className="footer-links">
               <a href="#">Terms of Service</a>
@@ -889,7 +889,7 @@ function App() {
               <a href="#">Contact Us</a>
             </div>
             <div className="footer-copyright">
-              © {new Date().getFullYear()} Sanskrit Teacher. All rights
+              © {new Date().getFullYear()} संस्कृत Teacher. All rights
               reserved.
               <div className="version-info">
                 Last updated: {buildDate}
