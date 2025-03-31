@@ -585,33 +585,55 @@ function App() {
 
   const signOutRedirect = async () => {
     // Construct the logout URL with AWS Cognito format
+    const dynamicRedirectUri = window.location.origin;
     const logoutURL = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
-      redirectUri
-    )}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
+      dynamicRedirectUri
+    )}&post_logout_redirect_uri=${encodeURIComponent(dynamicRedirectUri)}`;
 
-    console.log("Logout URL:", logoutURL); // Log for debugging
+    console.log("Logout URL:", logoutURL);
 
     try {
+      // Clear all auth-related storage to prevent issues on next login
+      Object.keys(localStorage)
+        .filter(key => key.startsWith('oidc.') || key.startsWith('user.'))
+        .forEach(key => localStorage.removeItem(key));
+      
+      Object.keys(sessionStorage)
+        .filter(key => key.startsWith('oidc.') || key.startsWith('user.'))
+        .forEach(key => sessionStorage.removeItem(key));
+
       // Clear local auth state
-      await auth.removeUser(); // Removes the user session from oidc-context
+      await auth.removeUser();
 
       // Redirect to Cognito logout endpoint
       window.location.href = logoutURL;
     } catch (error) {
       console.error("Error during signout:", error);
+      // Force redirect even if error occurs
+      window.location.href = logoutURL;
     }
   };
 
   // Function to redirect users directly to the signup page
   const signupRedirect = () => {
-    // Construct the signup URL using the Cognito Hosted UI
+    // Clear any previous auth state to prevent conflicts
+    Object.keys(localStorage)
+      .filter(key => key.startsWith('oidc.'))
+      .forEach(key => localStorage.removeItem(key));
+    
+    Object.keys(sessionStorage)
+      .filter(key => key.startsWith('oidc.'))
+      .forEach(key => sessionStorage.removeItem(key));
+    
+    // Construct the signup URL using the Cognito Hosted UI with dynamic origin
+    const dynamicRedirectUri = window.location.origin;
     const signupURL = `${cognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=email+openid+phone&redirect_uri=${encodeURIComponent(
-      redirectUri
+      dynamicRedirectUri
     )}`;
 
-    console.log("Signup URL:", signupURL); // Log for debugging
+    console.log("Signup URL:", signupURL);
 
-    // Redirect directly to Cognito signup page
+    // Redirect to Cognito signup page
     window.location.href = signupURL;
   };
 
@@ -1635,6 +1657,14 @@ function App() {
 
   if (auth.error) {
     console.error("Authentication error:", auth.error);
+    
+    // Check if this is the state validation error
+    const isStateError = auth.error.message && (
+      auth.error.message.includes("No matching state found") || 
+      auth.error.message.includes("storage")
+    );
+    
+    // Improved error handling with specific guidance
     return (
       <div className="app-layout">
         {renderHeader()}
@@ -1644,16 +1674,56 @@ function App() {
               <div className="card">
                 <div className="card-body text-center">
                   <h2 className="text-danger mb-4">Authentication Error</h2>
-                  <div className="error-message mb-4">
-                    {auth.error.message ||
-                      "There was a problem with your authentication"}
-                  </div>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => auth.signinRedirect()}
-                  >
-                    Try Signing In Again
-                  </button>
+                  
+                  {isStateError ? (
+                    <>
+                      <div className="error-message mb-4">
+                        <p>Your login session data wasn't properly saved or was lost.</p>
+                        <p className="mt-2">This can happen if:</p>
+                        <ul className="text-left mt-2 mb-4 mx-auto" style={{maxWidth: "400px"}}>
+                          <li>Private browsing is enabled</li>
+                          <li>Cookies or local storage were cleared</li>
+                          <li>Your browser blocks third-party cookies</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <p>Please try these solutions:</p>
+                        <div className="d-flex justify-content-center gap-3 mt-3">
+                          <button
+                            className="btn btn-primary"
+                            onClick={() => window.location.href = "/"}
+                          >
+                            Return to Home
+                          </button>
+                          <button
+                            className="btn btn-outline-primary"
+                            onClick={() => {
+                              // Clear all storage first
+                              localStorage.clear();
+                              sessionStorage.clear();
+                              // Then try login again
+                              setTimeout(() => auth.signinRedirect(), 100);
+                            }}
+                          >
+                            Reset & Try Again
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="error-message mb-4">
+                        {auth.error.message || "There was a problem with your authentication"}
+                      </div>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => auth.signinRedirect()}
+                      >
+                        Try Signing In Again
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
