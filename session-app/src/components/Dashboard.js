@@ -255,16 +255,24 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
         <div className="premium-welcome">
           <h1>Namaste, {profile.name || profile.user_id}</h1>
           <p className="user-role">
-            You are signed in as a {profile.role === "teacher" ? "PhD Sanskrit Scholar" : "Premium Member"}
+            {profile.role === "teacher" ? (
+              <>Welcome to your teaching dashboard, <b>Guru</b></>
+            ) : (
+              <>You are signed in as a Premium Member</>
+            )}
           </p>
         </div>
         <div className="premium-badge">
           <div className="premium-badge-icon">
-            <FaGraduationCap />
+            {profile.role === "teacher" ? (
+              <FaChalkboardTeacher />
+            ) : (
+              <FaGraduationCap />
+            )}
           </div>
           <div className="premium-badge-text">
             Premium
-            <span>Collection</span>
+            <span>{profile.role === "teacher" ? "Teacher" : "Collection"}</span>
           </div>
         </div>
       </div>
@@ -439,17 +447,25 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
             </div>
           )}
           
-          {/* For Teachers - Availability Slots */}
+          {/* For Teachers - Availability Slots with improved actions */}
           {profile.role === "teacher" && (
             <div className="dashboard-availability">
               <div className="section-header">
                 <h2>Your Available Time Slots</h2>
-                <button 
-                  className="btn-link"
-                  onClick={() => onTabChange('schedule')}
-                >
-                  Manage
-                </button>
+                <div className="section-header-actions">
+                  <button 
+                    className="btn-link"
+                    onClick={() => onTabChange('schedule')}
+                  >
+                    Manage Calendar
+                  </button>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => onTabChange('create-slots')}
+                  >
+                    + Add Slots
+                  </button>
+                </div>
               </div>
               
               {availabilitySlots.length > 0 ? (
@@ -471,13 +487,19 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
                 </div>
               ) : (
                 <div className="no-slots">
-                  <p>You don't have any available time slots.</p>
-                  <button 
-                    className="btn btn-secondary"
-                    onClick={() => onTabChange('schedule')}
-                  >
-                    Add Availability
-                  </button>
+                  <div className="empty-state-message">
+                    <FaCalendarAlt className="empty-state-icon" />
+                    <p>You don't have any available teaching slots.</p>
+                    <p className="empty-state-hint">Students won't be able to book sessions with you until you add available slots.</p>
+                  </div>
+                  <div className="empty-state-actions">
+                    <button 
+                      className="btn btn-primary"
+                      onClick={() => onTabChange('create-slots')}
+                    >
+                      Create Teaching Slots
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -565,6 +587,7 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
           <div className="sidebar-card">
             <h3>Quick Actions</h3>
             <div className="sidebar-actions">
+              {/* Common actions for all users */}
               <button 
                 className="action-button"
                 onClick={() => onTabChange('profile')}
@@ -573,34 +596,46 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
                 <span>Edit Profile</span>
               </button>
               
+              {/* Student-specific actions */}
               {profile.role === "student" && (
-                <button 
-                  className="action-button"
-                  onClick={() => onTabChange('search')}
-                >
-                  <FaSearch className="action-icon" />
-                  <span>Find Teachers</span>
-                </button>
+                <>
+                  <button 
+                    className="action-button"
+                    onClick={() => onTabChange('search')}
+                  >
+                    <FaSearch className="action-icon" />
+                    <span>Find Teachers</span>
+                  </button>
+                  
+                  <button 
+                    className="action-button"
+                    onClick={() => onTabChange('bookings')}
+                  >
+                    <FaBookOpen className="action-icon" />
+                    <span>View All Classes</span>
+                  </button>
+                </>
               )}
               
-              {profile.role === "student" && (
-                <button 
-                  className="action-button"
-                  onClick={() => onTabChange('bookings')}
-                >
-                  <FaBookOpen className="action-icon" />
-                  <span>View All Classes</span>
-                </button>
-              )}
-              
+              {/* Teacher-specific actions */}
               {profile.role === "teacher" && (
-                <button 
-                  className="action-button"
-                  onClick={() => onTabChange('schedule')}
-                >
-                  <FaChalkboardTeacher className="action-icon" />
-                  <span>Manage Schedule</span>
-                </button>
+                <>
+                  <button 
+                    className="action-button"
+                    onClick={() => onTabChange('schedule')}
+                  >
+                    <FaChalkboardTeacher className="action-icon" />
+                    <span>Manage Calendar</span>
+                  </button>
+                  
+                  <button 
+                    className="action-button"
+                    onClick={() => onTabChange('create-slots')}
+                  >
+                    <FaCalendarAlt className="action-icon" />
+                    <span>Add Teaching Slots</span>
+                  </button>
+                </>
               )}
             </div>
           </div>
