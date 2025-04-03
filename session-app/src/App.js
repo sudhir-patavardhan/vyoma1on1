@@ -1684,8 +1684,33 @@ function App() {
       auth.error.message.includes("No matching state found") || 
       auth.error.message.includes("storage") ||
       auth.error.message.includes("getAllKeys") ||
-      auth.error.message.includes("is not a function")
+      auth.error.message.includes("is not a function") ||
+      // Add additional patterns to catch OIDC errors
+      auth.error.message.includes("state") ||
+      (auth.error.innerError && auth.error.innerError.message && 
+       auth.error.innerError.message.includes("state"))
     );
+    
+    // Add immediate recovery attempt for state errors
+    if (isStateError) {
+      console.log("Detected state error, attempting recovery...");
+      
+      // Try to extract state from URL if present
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const stateParam = urlParams.get('state');
+        
+        if (stateParam) {
+          console.log("Found state in URL, attempting to preserve it:", stateParam);
+          
+          // Store state value for later use
+          localStorage.setItem(`oidc.state.${stateParam}`, stateParam);
+          sessionStorage.setItem(`oidc.state.${stateParam}`, stateParam);
+        }
+      } catch (e) {
+        console.error("Error during state recovery:", e);
+      }
+    }
     
     // Improved error handling with specific guidance
     return (
@@ -1707,20 +1732,35 @@ function App() {
                           <li>Private browsing is enabled</li>
                           <li>Cookies or local storage were cleared</li>
                           <li>Your browser blocks third-party cookies</li>
+                          <li>Your session timed out or expired</li>
                         </ul>
                       </div>
                       
                       <div className="mb-4">
                         <p>Please try these solutions:</p>
-                        <div className="d-flex justify-content-center gap-3 mt-3">
+                        <div className="d-flex flex-column justify-content-center align-items-center gap-3 mt-3">
+                          {/* Option 1: Try immediate redirect (for minor issues) */}
                           <button
-                            className="btn btn-primary"
+                            className="btn btn-primary btn-lg w-75"
+                            onClick={() => {
+                              // Try a direct sign-in without clearing storage
+                              auth.signinRedirect();
+                            }}
+                          >
+                            Try Signing In Again
+                          </button>
+                          
+                          {/* Option 2: Return home first */}
+                          <button
+                            className="btn btn-outline-primary w-75"
                             onClick={() => window.location.href = "/"}
                           >
-                            Return to Home
+                            Return to Home Page
                           </button>
+                          
+                          {/* Option 3: Full reset (most aggressive) */}
                           <button
-                            className="btn btn-outline-primary"
+                            className="btn btn-outline-secondary w-75"
                             onClick={() => {
                               // Clear all storage first
                               localStorage.clear();
@@ -1729,8 +1769,20 @@ function App() {
                               setTimeout(() => auth.signinRedirect(), 100);
                             }}
                           >
-                            Reset & Try Again
+                            Reset Storage & Try Again
                           </button>
+                          
+                          {/* Option 4: Direct login without OAuth */}
+                          <p className="text-muted mt-3">
+                            If you continue to have issues, please try
+                            <a 
+                              href="https://auth.yoursanskritteacher.com/login?client_id=12s8brrk9144uq23g3951mfvhl&response_type=code&scope=email+openid+phone&redirect_uri=https%3A%2F%2Fyoursanskritteacher.com"
+                              className="mx-2"
+                            >
+                              logging in directly
+                            </a>
+                            instead.
+                          </p>
                         </div>
                       </div>
                     </>

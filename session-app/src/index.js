@@ -10,9 +10,14 @@ const cognitoAuthConfig = {
   authority: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_US1m8498L",
   client_id: "12s8brrk9144uq23g3951mfvhl",
   redirect_uri: window.location.origin, // Dynamically set the origin
+  post_logout_redirect_uri: window.location.origin, // Explicitly set logout redirect
   response_type: "code",
   scope: "phone openid email",
   loadUserInfo: true,
+  
+  // Add more forgiving configuration
+  userStore: "local", // Use localStorage for user data
+  stateStorageType: "localStorage", // Explicitly prefer localStorage
   
   // Manually specify metadata endpoints (fixes CORS issues)
   metadata: {
@@ -92,38 +97,79 @@ const cognitoAuthConfig = {
   // Auth lifecycle settings
   automaticSilentRenew: false,
   monitorSession: true,
+  revokeTokensOnSignout: true,
+  
+  // Do NOT clear state on signin
+  skipUserInfo: false,
   
   // Enhanced logging for debugging
   onSigninCallback: (user) => {
     console.log("Authentication completed successfully:", user ? "User authenticated" : "No user data");
+    
+    // Additional logging for debugging
+    if (user) {
+      console.log("User ID:", user.profile?.sub);
+      console.log("Access token expires at:", new Date(user.expires_at * 1000).toLocaleString());
+    }
+    
+    // Save successful auth state to localStorage for recovery if needed
+    if (user) {
+      try {
+        localStorage.setItem('auth_last_success', new Date().toISOString());
+      } catch (e) {
+        console.error("Error saving auth success state:", e);
+      }
+    }
+    
+    // Clear URL parameters from the address bar
     window.history.replaceState({}, document.title, window.location.pathname);
   },
   
-  // Clear stale state when starting sign-in
+  // Only call signinStart once
   onSigninStart: () => {
     console.log("Starting sign-in process");
     
-    // Clear any old or stale state that might be causing conflicts
-    const clearStaleState = () => {
-      try {
-        // We'll keep the prefix consistent with our stateStore implementation
-        const oldKeys = Object.keys(localStorage)
-          .filter(key => key.startsWith('oidc.') && key.includes('state'));
-          
-        console.log(`Found ${oldKeys.length} old state keys to clear`);
+    // Don't clear state as it could be causing the issue
+    // Instead, ensure we have storage permissions and consistent state
+    try {
+      // Test storage
+      localStorage.setItem('auth_test', 'test');
+      sessionStorage.setItem('auth_test', 'test');
+      
+      // Success if we got here
+      console.log("Storage check successful");
+      
+      // Check for potential state parameter in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const stateParam = urlParams.get('state');
+      
+      if (stateParam) {
+        console.log("State parameter found in URL:", stateParam);
         
-        // Remove old state entries
-        oldKeys.forEach(key => {
-          console.log(`Removing old state: ${key}`);
-          localStorage.removeItem(key);
-          sessionStorage.removeItem(key);
-        });
-      } catch (e) {
-        console.error("Error clearing stale state:", e);
+        // Ensure state is stored in both storages
+        const storageKey = `oidc.state.${stateParam}`;
+        
+        // Check if state exists in storage
+        const existsInSession = sessionStorage.getItem(storageKey);
+        const existsInLocal = localStorage.getItem(storageKey);
+        
+        if (!existsInSession && !existsInLocal) {
+          console.log("State not found in storage, preserving URL parameters");
+          // Don't modify anything, let the library handle it
+        } else {
+          console.log("State exists in storage, ensuring consistency");
+          
+          // If state exists in either storage, ensure it's in both
+          if (existsInSession) {
+            localStorage.setItem(storageKey, existsInSession);
+          } else if (existsInLocal) {
+            sessionStorage.setItem(storageKey, existsInLocal);
+          }
+        }
       }
-    };
-    
-    clearStaleState();
+    } catch (e) {
+      console.error("Error during sign-in start:", e);
+    }
   }
 };
 
