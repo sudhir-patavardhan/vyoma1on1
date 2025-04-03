@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "react-oidc-context";
 import axios from "axios";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL, PAYMENT_CONFIG } from "../config";
 import "../styles.css";
 import "../premium-styles.css"; // Import premium styles
-import { FaGraduationCap, FaLock, FaCalendarAlt } from "react-icons/fa";
+import { FaGraduationCap, FaLock, FaCalendarAlt, FaInfo } from "react-icons/fa";
 import PaymentService from "../services/PaymentService";
 
 const TeacherSearch = () => {
@@ -137,10 +137,6 @@ const TeacherSearch = () => {
 
   const handlePayment = async (availabilityId) => {
     try {
-      if (!razorpayLoaded) {
-        throw new Error("Payment gateway is still loading. Please try again in a moment.");
-      }
-
       setPaymentProcessing(true);
       setError("");
       
@@ -152,14 +148,14 @@ const TeacherSearch = () => {
 
       // Initialize payment
       const paymentDetails = {
-        amount: selectedSlot.price || 500, // Default to 500 if price not set
-        currency: selectedSlot.currency || 'INR',
+        amount: selectedSlot.price || PAYMENT_CONFIG.DEFAULT_PRICE,
+        currency: selectedSlot.currency || PAYMENT_CONFIG.CURRENCY,
         availabilityId: availabilityId,
         teacherId: selectedTeacher.user_id,
         topic: searchTerm
       };
 
-      // Call backend to create RazorPay order
+      // Call payment service to handle payment flow
       const orderData = await PaymentService.initializePayment(
         paymentDetails,
         auth.user,
@@ -170,12 +166,37 @@ const TeacherSearch = () => {
         throw new Error("Failed to initialize payment");
       }
 
+      // Check if payment is bypassed
+      if (PAYMENT_CONFIG.BYPASS_PAYMENT || orderData.bypass_enabled) {
+        console.log('PAYMENT BYPASS ENABLED: Skipping Razorpay checkout and proceeding directly to booking');
+        
+        // Create mock payment response for the completeBooking function
+        const mockPaymentResponse = {
+          razorpay_payment_id: `mock_payment_${Date.now()}`,
+          razorpay_order_id: orderData.order_id,
+          razorpay_signature: 'mock_signature_for_testing'
+        };
+        
+        // Directly proceed to booking completion
+        completeBooking(availabilityId, mockPaymentResponse);
+        
+        // Show a notice that payment was bypassed 
+        setError('TESTING MODE: Payment was bypassed. Your session was booked without actual payment processing.');
+        
+        return; // Exit early
+      }
+      
+      // For normal payment flow (when bypass is disabled), verify Razorpay is loaded
+      if (!razorpayLoaded) {
+        throw new Error("Payment gateway is still loading. Please try again in a moment.");
+      }
+
       // Configure RazorPay options
       const options = {
         key: orderData.razorpay_key_id,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "Sanskrit Teacher",
+        name: PAYMENT_CONFIG.RAZORPAY_OPTIONS.name,
         description: `Premium Session with Dr. ${selectedTeacher.name} on ${searchTerm}`,
         order_id: orderData.order_id,
         handler: function(response) {
@@ -194,7 +215,7 @@ const TeacherSearch = () => {
           topic: searchTerm
         },
         theme: {
-          color: "#c6a147" /* Premium gold instead of blue */
+          color: PAYMENT_CONFIG.RAZORPAY_OPTIONS.theme.color
         },
         modal: {
           ondismiss: function() {
@@ -286,9 +307,17 @@ const TeacherSearch = () => {
       <div className="sanskrit-search-hero">
         <h2>Find Your Perfect Sanskrit Teacher</h2>
         <p>Connect with experts specializing in your areas of interest</p>
+        
+        {/* Payment bypass indicator */}
+        {PAYMENT_CONFIG.BYPASS_PAYMENT && (
+          <div className="bypass-notice">
+            <FaInfo className="bypass-icon" />
+            <span>Testing Mode: Payments are currently bypassed for testing</span>
+          </div>
+        )}
       </div>
       
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className={`error-message ${error.includes('TESTING MODE') ? 'info-message' : ''}`}>{error}</div>}
       
       <div className="search-tools">
         <div className="category-explorer">

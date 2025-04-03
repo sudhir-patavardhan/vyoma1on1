@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL, PAYMENT_CONFIG } from '../config';
 
 /**
  * Payment Service
@@ -18,6 +18,22 @@ class PaymentService {
    */
   async initializePayment(paymentDetails, user, token) {
     try {
+      // Check if payment bypass is enabled
+      if (PAYMENT_CONFIG.BYPASS_PAYMENT) {
+        console.log('PAYMENT BYPASS ENABLED: Skipping payment initialization');
+        
+        // Return mock payment data for testing
+        return {
+          order_id: `mock_order_${Date.now()}`,
+          razorpay_key_id: 'mock_key_for_testing',
+          amount: paymentDetails.amount || PAYMENT_CONFIG.DEFAULT_PRICE,
+          currency: paymentDetails.currency || PAYMENT_CONFIG.CURRENCY,
+          payment_status: 'bypassed',
+          bypass_enabled: true
+        };
+      }
+      
+      // Normal payment flow
       const response = await axios.post(
         `${API_BASE_URL}/payments/initialize`,
         {
@@ -53,6 +69,26 @@ class PaymentService {
    */
   async verifyPayment(paymentData, token) {
     try {
+      // Check if payment bypass is enabled
+      if (PAYMENT_CONFIG.BYPASS_PAYMENT) {
+        console.log('PAYMENT BYPASS ENABLED: Skipping payment verification');
+        
+        // Return mock verification data for testing
+        return {
+          payment_id: paymentData.razorpay_payment_id || `mock_payment_${Date.now()}`,
+          order_id: paymentData.razorpay_order_id || `mock_order_${Date.now()}`,
+          signature: paymentData.razorpay_signature || 'mock_signature',
+          verification_status: 'success',
+          amount: paymentData.amount || PAYMENT_CONFIG.DEFAULT_PRICE,
+          currency: paymentData.currency || PAYMENT_CONFIG.CURRENCY,
+          student_id: paymentData.student_id,
+          teacher_id: paymentData.teacher_id,
+          availability_id: paymentData.availability_id,
+          bypass_enabled: true
+        };
+      }
+      
+      // Normal verification flow
       const response = await axios.post(
         `${API_BASE_URL}/payments/verify`,
         paymentData,

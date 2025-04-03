@@ -783,6 +783,30 @@ body {
   margin-top: 16px;
 }
 
+/* Payment Bypass Notice */
+.bypass-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(251, 140, 0, 0.1);
+  color: #FB8C00;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-top: 12px;
+  font-weight: 500;
+}
+
+.bypass-icon {
+  font-size: 1rem;
+}
+
+.info-message {
+  background-color: rgba(30, 136, 229, 0.1);
+  color: var(--vyoma-blue-dark);
+  border-color: var(--vyoma-blue-light);
+}
+
 .stat-details {
   flex: 1;
 }
