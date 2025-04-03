@@ -23,13 +23,14 @@ const cognitoAuthConfig = {
     userinfo_endpoint: "https://auth.yoursanskritteacher.com/oauth2/userInfo"
   },
   
-  // Storage settings (using sessionStorage fixes issues with persistence)
+  // Storage settings (with complete implementation including getAllKeys)
   stateStore: {
     set: (key, value) => {
       try {
-        console.log(`Storing state: ${key}`);
-        sessionStorage.setItem(key, value);
-        localStorage.setItem(key, value); // Backup in localStorage
+        const storageKey = `oidc.${key}`;
+        console.log(`Storing state: ${storageKey}`);
+        sessionStorage.setItem(storageKey, value);
+        localStorage.setItem(storageKey, value); // Backup in localStorage
         return Promise.resolve();
       } catch (e) {
         console.error('Error storing state:', e);
@@ -38,12 +39,13 @@ const cognitoAuthConfig = {
     },
     get: (key) => {
       try {
+        const storageKey = `oidc.${key}`;
         // Try sessionStorage first, then localStorage as fallback
-        const sessionValue = sessionStorage.getItem(key);
-        const localValue = localStorage.getItem(key);
+        const sessionValue = sessionStorage.getItem(storageKey);
+        const localValue = localStorage.getItem(storageKey);
         const value = sessionValue || localValue;
         
-        console.log(`Retrieved state: ${key} = ${value ? 'found' : 'not found'}`);
+        console.log(`Retrieved state: ${storageKey} = ${value ? 'found' : 'not found'}`);
         
         return Promise.resolve(value);
       } catch (e) {
@@ -53,12 +55,35 @@ const cognitoAuthConfig = {
     },
     remove: (key) => {
       try {
-        console.log(`Removing state: ${key}`);
-        sessionStorage.removeItem(key);
-        localStorage.removeItem(key);
+        const storageKey = `oidc.${key}`;
+        console.log(`Removing state: ${storageKey}`);
+        sessionStorage.removeItem(storageKey);
+        localStorage.removeItem(storageKey);
         return Promise.resolve();
       } catch (e) {
         console.error('Error removing state:', e);
+        return Promise.reject(e);
+      }
+    },
+    // This critical function needs to be implemented for clearing stale state
+    getAllKeys: () => {
+      try {
+        console.log('Getting all keys for state cleanup');
+        const sessionKeys = Object.keys(sessionStorage)
+          .filter(key => key.startsWith('oidc.'))
+          .map(key => key.replace('oidc.', ''));
+        
+        const localKeys = Object.keys(localStorage)
+          .filter(key => key.startsWith('oidc.'))
+          .map(key => key.replace('oidc.', ''));
+        
+        // Combine keys from both storage types, ensuring uniqueness
+        const allKeys = [...new Set([...sessionKeys, ...localKeys])];
+        console.log(`Found ${allKeys.length} state keys`);
+        
+        return Promise.resolve(allKeys);
+      } catch (e) {
+        console.error('Error getting all keys:', e);
         return Promise.reject(e);
       }
     }
@@ -74,10 +99,31 @@ const cognitoAuthConfig = {
     window.history.replaceState({}, document.title, window.location.pathname);
   },
   
-  // Don't clear storage on signin start, this is causing issues with state storage
+  // Clear stale state when starting sign-in
   onSigninStart: () => {
     console.log("Starting sign-in process");
-    // We'll keep existing storage to prevent state validation issues
+    
+    // Clear any old or stale state that might be causing conflicts
+    const clearStaleState = () => {
+      try {
+        // We'll keep the prefix consistent with our stateStore implementation
+        const oldKeys = Object.keys(localStorage)
+          .filter(key => key.startsWith('oidc.') && key.includes('state'));
+          
+        console.log(`Found ${oldKeys.length} old state keys to clear`);
+        
+        // Remove old state entries
+        oldKeys.forEach(key => {
+          console.log(`Removing old state: ${key}`);
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        });
+      } catch (e) {
+        console.error("Error clearing stale state:", e);
+      }
+    };
+    
+    clearStaleState();
   }
 };
 

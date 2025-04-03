@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanskrit Teacher - Auth Integration Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        h1, h2, h3 {
+            color: #1E88E5;
+        }
+        .test-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        button {
+            background-color: #1E88E5;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #1565C0;
+        }
+        button.secondary {
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        button.secondary:hover {
+            background-color: #e0e0e0;
+        }
+        button.warning {
+            background-color: #ff9800;
+        }
+        button.warning:hover {
+            background-color: #f57c00;
+        }
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f8f8f8;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #F44336;
+            font-weight: bold;
+        }
+        .info-box {
+            background-color: #E3F2FD;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .tab-controls {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            margin-right: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #757575;
+        }
+        .tab-button.active {
+            color: #1E88E5;
+            border-bottom: 2px solid #1E88E5;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .test-steps {
+            margin: 20px 0;
+            counter-reset: step;
+        }
+        .test-step {
+            margin-bottom: 15px;
+            position: relative;
+            padding-left: 35px;
+        }
+        .test-step:before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 25px;
+            height: 25px;
+            background-color: #1E88E5;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sanskrit Teacher - Auth Integration Test</h1>
+    
+    <div class="info-box">
+        <p>This tool provides comprehensive testing for the authentication system, focusing on the fixes for the <code>t.getAllKeys is not a function</code> error.</p>
+        <p>Please use the tabs below to navigate between different test scenarios.</p>
+    </div>
+    
+    <div class="tab-controls">
+        <button class="tab-button active" data-tab="storage-tests">Storage Tests</button>
+        <button class="tab-button" data-tab="error-simulation">Error Simulation</button>
+        <button class="tab-button" data-tab="auth-flow">Auth Flow</button>
+        <button class="tab-button" data-tab="cleanup">Storage Cleanup</button>
+    </div>
+    
+    <div id="storage-tests" class="tab-content active">
+        <h2>Authentication Storage Tests</h2>
+        
+        <div class="test-card">
+            <h3>State Store Implementation</h3>
+            <p>Tests the full implementation of the state store, including <code>set</code>, <code>get</code>, <code>remove</code>, and <code>getAllKeys</code> functions.</p>
+            <button id="run-storage-tests">Run Storage Tests</button>
+            <div id="storage-test-result" class="test-result"></div>
+        </div>
+        
+        <div class="test-card">
+            <h3>Storage Fallback Mechanism</h3>
+            <p>Tests the fallback mechanism where localStorage is used if sessionStorage data is missing.</p>
+            <button id="run-fallback-test">Test Fallback</button>
+            <div id="fallback-test-result" class="test-result"></div>
+        </div>
+    </div>
+    
+    <div id="error-simulation" class="tab-content">
+        <h2>Authentication Error Simulation</h2>
+        
+        <div class="test-card">
+            <h3>Simulate Auth Errors</h3>
+            <p>Simulates various authentication errors to test the error handling and recovery UI.</p>
+            <button id="simulate-state-error">State Error</button>
+            <button id="simulate-getallkeys-error">getAllKeys Error</button>
+            <button id="simulate-storage-error">Storage Error</button>
+            <button id="simulate-network-error">Network Error</button>
+            <button id="simulate-token-error">Token Expired</button>
+            <div id="error-simulation-result" class="test-result"></div>
+        </div>
+        
+        <div class="info-box">
+            <p><strong>Note:</strong> After clicking a button, the page will reload to demonstrate the error handling UI. Look for the error message and recovery options.</p>
+        </div>
+    </div>
+    
+    <div id="auth-flow" class="tab-content">
+        <h2>Authentication Flow Tests</h2>
+        
+        <div class="test-card">
+            <h3>Sign-in Process</h3>
+            <p>Test the complete sign-in flow to ensure it works correctly with the new auth implementation.</p>
+            
+            <div class="test-steps">
+                <div class="test-step">
+                    <p><strong>Clear Storage:</strong> First, clear all authentication storage to simulate a fresh session.</p>
+                    <button id="clear-auth-storage">Clear Auth Storage</button>
+                </div>
+                
+                <div class="test-step">
+                    <p><strong>Prepare Sign-in:</strong> Set up test data in storage to verify state manipulation.</p>
+                    <button id="prepare-signin-test">Prepare Test</button>
+                </div>
+                
+                <div class="test-step">
+                    <p><strong>Go to Main Application:</strong> Navigate to the main application to try signing in.</p>
+                    <button id="goto-main-app">Go to Main App</button>
+                </div>
+            </div>
+            
+            <div id="auth-flow-result" class="test-result"></div>
+        </div>
+    </div>
+    
+    <div id="cleanup" class="tab-content">
+        <h2>Storage Cleanup Tests</h2>
+        
+        <div class="test-card">
+            <h3>Stale State Cleanup</h3>
+            <p>Tests the cleanup of stale authentication state during sign-in.</p>
+            <button id="run-cleanup-test">Test Cleanup</button>
+            <div id="cleanup-test-result" class="test-result"></div>
+        </div>
+        
+        <div class="test-card">
+            <h3>Storage Inspection</h3>
+            <p>View all current auth-related storage keys and values.</p>
+            <button id="inspect-storage">Inspect Storage</button>
+            <button id="clear-all-storage" class="warning">Clear ALL Storage</button>
+            <div id="storage-inspection-result" class="test-result"></div>
+        </div>
+    </div>
+
+    <!-- Load the test scripts -->
+    <script src="../src/test-auth.js"></script>
+    <script src="../src/test-auth-error.js"></script>
+    
+    <script>
+        // Tab switching functionality
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                button.classList.add('active');
+                document.getElementById(button.dataset.tab).classList.add('active');
+            });
+        });
+        
+        // Storage Tests
+        document.getElementById('run-storage-tests').addEventListener('click', async () => {
+            const resultElement = document.getElementById('storage-test-result');
+            resultElement.innerHTML = 'Running tests...';
+            
+            try {
+                const testResults = await window.runAuthTests();
+                resultElement.innerHTML = `<span class="${testResults ? 'success' : 'error'}">${testResults ? 'All tests passed successfully!' : 'Some tests failed!'}</span> See browser console for details.`;
+            } catch (error) {
+                resultElement.innerHTML = `<span class="error">Error running tests: ${error.message}</span>`;
+            }
+        });
+        
+        // Fallback Test
+        document.getElementById('run-fallback-test').addEventListener('click', async () => {
+            const resultElement = document.getElementById('fallback-test-result');
+            resultElement.innerHTML = 'Testing fallback mechanism...';
+            
+            try {
+                // Set a value in both storages
+                localStorage.setItem('oidc.fallbackTest', 'fallback-value');
+                sessionStorage.setItem('oidc.fallbackTest', 'session-value');
+                
+                // Verify retrieval
+                let getValue = await testStateStore.get('fallbackTest');
+                resultElement.innerHTML = `<p>Initial value: ${getValue}</p>`;
+                
+                // Remove from sessionStorage only
+                sessionStorage.removeItem('oidc.fallbackTest');
+                
+                // Check fallback
+                getValue = await testStateStore.get('fallbackTest');
+                resultElement.innerHTML += `<p>After removing from sessionStorage: ${getValue}</p>`;
+                resultElement.innerHTML += `<p><span class="${getValue === 'fallback-value' ? 'success' : 'error'}">Fallback test ${getValue === 'fallback-value' ? 'PASSED' : 'FAILED'}</span></p>`;
+                
+                // Clean up
+                localStorage.removeItem('oidc.fallbackTest');
+            } catch (error) {
+                resultElement.innerHTML = `<span class="error">Error testing fallback: ${error.message}</span>`;
+            }
+        });
+        
+        // Error Simulation
+        document.getElementById('simulate-state-error').addEventListener('click', () => {
+            document.getElementById('error-simulation-result').innerHTML = 'Simulating state error...';
+            window.runAuthErrorTest('state');
+        });
+        
+        document.getElementById('simulate-getallkeys-error').addEventListener('click', () => {
+            document.getElementById('error-simulation-result').innerHTML = 'Simulating getAllKeys error...';
+            window.runAuthErrorTest('getAllKeys');
+        });
+        
+        document.getElementById('simulate-storage-error').addEventListener('click', () => {
+            document.getElementById('error-simulation-result').innerHTML = 'Simulating storage error...';
+            window.runAuthErrorTest('storage');
+        });
+        
+        document.getElementById('simulate-network-error').addEventListener('click', () => {
+            document.getElementById('error-simulation-result').innerHTML = 'Simulating network error...';
+            window.runAuthErrorTest('network');
+        });
+        
+        document.getElementById('simulate-token-error').addEventListener('click', () => {
+            document.getElementById('error-simulation-result').innerHTML = 'Simulating token expired error...';
+            window.runAuthErrorTest('expired');
+        });
+        
+        // Auth Flow Tests
+        document.getElementById('clear-auth-storage').addEventListener('click', () => {
+            const resultElement = document.getElementById('auth-flow-result');
+            resultElement.innerHTML = 'Clearing authentication storage...';
+            
+            // Clear all auth-related storage
+            let cleared = 0;
+            
+            // Clear localStorage
+            Object.keys(localStorage)
+                .filter(key => key.startsWith('oidc.'))
+                .forEach(key => {
+                    localStorage.removeItem(key);
+                    cleared++;
+                });
+            
+            // Clear sessionStorage
+            Object.keys(sessionStorage)
+                .filter(key => key.startsWith('oidc.'))
+                .forEach(key => {
+                    sessionStorage.removeItem(key);
+                    cleared++;
+                });
+            
+            resultElement.innerHTML = `<span class="success">Cleared ${cleared} auth-related storage items</span>`;
+        });
+        
+        document.getElementById('prepare-signin-test').addEventListener('click', () => {
+            const resultElement = document.getElementById('auth-flow-result');
+            resultElement.innerHTML = 'Preparing sign-in test...';
+            
+            // Create test state
+            const stateKey = 'state.' + Math.random().toString(36).substring(2, 15);
+            const stateValue = 'test-state-' + Date.now();
+            
+            // Store in both storages to verify fallback works
+            localStorage.setItem(`oidc.${stateKey}`, stateValue);
+            sessionStorage.setItem(`oidc.${stateKey}`, stateValue);
+            
+            resultElement.innerHTML = `<span class="success">Created test state key: ${stateKey}</span>`;
+        });
+        
+        document.getElementById('goto-main-app').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+        
+        // Cleanup Tests
+        document.getElementById('run-cleanup-test').addEventListener('click', async () => {
+            const resultElement = document.getElementById('cleanup-test-result');
+            resultElement.innerHTML = 'Testing stale state cleanup...';
+            
+            try {
+                // Create some test state entries
+                localStorage.setItem('oidc.state.test1', 'stale_test_data_1');
+                localStorage.setItem('oidc.state.test2', 'stale_test_data_2');
+                localStorage.setItem('oidc.other_key', 'should_not_be_removed');
+                
+                // Also in sessionStorage
+                sessionStorage.setItem('oidc.state.test3', 'stale_test_data_3');
+                
+                // Simulate the onSigninStart cleanup function
+                const clearStaleState = () => {
+                    try {
+                        // Find and count the keys before cleanup
+                        const beforeKeys = Object.keys(localStorage)
+                            .filter(key => key.startsWith('oidc.') && key.includes('state'));
+                        
+                        resultElement.innerHTML = `<p>Found ${beforeKeys.length} state keys before cleanup</p>`;
+                        
+                        // We'll keep the prefix consistent with our stateStore implementation
+                        const oldKeys = Object.keys(localStorage)
+                            .filter(key => key.startsWith('oidc.') && key.includes('state'));
+                            
+                        // Remove old state entries
+                        oldKeys.forEach(key => {
+                            localStorage.removeItem(key);
+                            sessionStorage.removeItem(key);
+                        });
+                        
+                        // Check what remains after cleanup
+                        const afterLocalKeys = Object.keys(localStorage)
+                            .filter(key => key.startsWith('oidc.') && key.includes('state'));
+                            
+                        const afterSessionKeys = Object.keys(sessionStorage)
+                            .filter(key => key.startsWith('oidc.') && key.includes('state'));
+                            
+                        // Check if non-state key was preserved
+                        const otherKeyExists = localStorage.getItem('oidc.other_key') !== null;
+                        
+                        resultElement.innerHTML += `<p>After cleanup: ${afterLocalKeys.length} localStorage state keys, ${afterSessionKeys.length} sessionStorage state keys</p>`;
+                        resultElement.innerHTML += `<p>Non-state key preserved: ${otherKeyExists ? 'Yes ✅' : 'No ❌'}</p>`;
+                        resultElement.innerHTML += `<p><span class="${afterLocalKeys.length === 0 && afterSessionKeys.length === 0 && otherKeyExists ? 'success' : 'error'}">Cleanup test ${afterLocalKeys.length === 0 && afterSessionKeys.length === 0 && otherKeyExists ? 'PASSED' : 'FAILED'}</span></p>`;
+                        
+                    } catch (e) {
+                        resultElement.innerHTML += `<p class="error">Error during cleanup: ${e.message}</p>`;
+                    }
+                };
+                
+                // Run the cleanup
+                clearStaleState();
+                
+            } catch (error) {
+                resultElement.innerHTML = `<span class="error">Error testing cleanup: ${error.message}</span>`;
+            }
+        });
+        
+        document.getElementById('inspect-storage').addEventListener('click', () => {
+            const resultElement = document.getElementById('storage-inspection-result');
+            resultElement.innerHTML = 'Inspecting storage...';
+            
+            try {
+                // Get all auth-related localStorage items
+                const localStorageItems = Object.keys(localStorage)
+                    .filter(key => key.startsWith('oidc.'))
+                    .map(key => ({ 
+                        storage: 'localStorage', 
+                        key, 
+                        value: localStorage.getItem(key).substring(0, 30) + 
+                              (localStorage.getItem(key).length > 30 ? '...' : '')
+                    }));
+                
+                // Get all auth-related sessionStorage items
+                const sessionStorageItems = Object.keys(sessionStorage)
+                    .filter(key => key.startsWith('oidc.'))
+                    .map(key => ({ 
+                        storage: 'sessionStorage', 
+                        key, 
+                        value: sessionStorage.getItem(key).substring(0, 30) + 
+                              (sessionStorage.getItem(key).length > 30 ? '...' : '')
+                    }));
+                
+                // Combine and display
+                const allItems = [...localStorageItems, ...sessionStorageItems];
+                
+                if (allItems.length === 0) {
+                    resultElement.innerHTML = '<p>No auth-related storage items found</p>';
+                } else {
+                    let html = `<p>Found ${allItems.length} auth-related storage items:</p><ul>`;
+                    allItems.forEach(item => {
+                        html += `<li><strong>${item.storage}:</strong> ${item.key} = ${item.value}</li>`;
+                    });
+                    html += '</ul>';
+                    resultElement.innerHTML = html;
+                }
+            } catch (error) {
+                resultElement.innerHTML = `<span class="error">Error inspecting storage: ${error.message}</span>`;
+            }
+        });
+        
+        document.getElementById('clear-all-storage').addEventListener('click', () => {
+            const resultElement = document.getElementById('storage-inspection-result');
+            
+            if (confirm('Are you sure you want to clear ALL browser storage? This will log you out.')) {
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    resultElement.innerHTML = '<span class="success">All storage cleared successfully</span>';
+                } catch (error) {
+                    resultElement.innerHTML = `<span class="error">Error clearing storage: ${error.message}</span>`;
+                }
+            } else {
+                resultElement.innerHTML = 'Storage clear operation cancelled';
+            }
+        });
+    </script>
+</body>
+</html>

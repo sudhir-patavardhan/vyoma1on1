@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanskrit Teacher - Manual Auth Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #1E88E5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .test-section {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #1E88E5;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #1565C0;
+        }
+        button.secondary {
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        .test-results {
+            background-color: #f8f8f8;
+            padding: 15px;
+            border-radius: 4px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            margin-top: 20px;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #F44336;
+            font-weight: bold;
+        }
+        .test-form {
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sanskrit Teacher - Manual Authentication Tests</h1>
+    <p>This page allows you to manually test the authentication components without needing to run the full application.</p>
+    
+    <div class="container">
+        <div>
+            <div class="test-section">
+                <h2>State Store Tests</h2>
+                <p>Test the implementation of the authentication state store:</p>
+                <button id="run-state-tests">Run State Store Tests</button>
+                <button id="run-getallkeys-test">Test getAllKeys</button>
+                <button id="run-cleanup-test">Test Stale State Cleanup</button>
+            </div>
+            
+            <div class="test-section">
+                <h2>Sign-in Simulation</h2>
+                <p>Simulate a sign-in with test credentials:</p>
+                <div class="test-form">
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" value="patavardhan@gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" value="W1234ard@">
+                    </div>
+                    <button id="simulate-signin">Simulate Sign-in</button>
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            <div class="test-section">
+                <h2>Authentication Actions</h2>
+                <p>Perform various authentication actions:</p>
+                <button id="simulate-signout">Simulate Sign-out</button>
+                <button id="simulate-error">Simulate Auth Error</button>
+                <button id="clear-storage">Clear Auth Storage</button>
+                <button id="inspect-storage">Inspect Auth Storage</button>
+            </div>
+            
+            <div class="test-section">
+                <h2>Test Results</h2>
+                <div id="test-results" class="test-results">Results will appear here...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../auth-tests/manual-test.js"></script>
+    <script>
+        // Intercept console.log to also output to the results div
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        
+        console.log = function() {
+            // Call original
+            originalConsoleLog.apply(console, arguments);
+            
+            // Output to UI
+            const resultsDiv = document.getElementById('test-results');
+            const line = document.createElement('div');
+            line.textContent = Array.from(arguments).join(' ');
+            
+            // Highlight passes and failures
+            if (line.textContent.includes('PASS ✅')) {
+                line.style.color = 'green';
+                line.style.fontWeight = 'bold';
+            } else if (line.textContent.includes('FAIL ❌')) {
+                line.style.color = 'red';
+                line.style.fontWeight = 'bold';
+            }
+            
+            resultsDiv.appendChild(line);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        };
+        
+        console.error = function() {
+            // Call original
+            originalConsoleError.apply(console, arguments);
+            
+            // Output to UI
+            const resultsDiv = document.getElementById('test-results');
+            const line = document.createElement('div');
+            line.textContent = 'ERROR: ' + Array.from(arguments).join(' ');
+            line.style.color = 'red';
+            
+            resultsDiv.appendChild(line);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        };
+        
+        // Event listeners for buttons
+        document.getElementById('run-state-tests').addEventListener('click', function() {
+            clearResults();
+            runAuthTests();
+        });
+        
+        document.getElementById('run-getallkeys-test').addEventListener('click', function() {
+            clearResults();
+            testGetAllKeys();
+        });
+        
+        document.getElementById('run-cleanup-test').addEventListener('click', function() {
+            clearResults();
+            testStaleStateCleanup();
+        });
+        
+        document.getElementById('simulate-signin').addEventListener('click', function() {
+            clearResults();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            simulateSignIn(email, password);
+        });
+        
+        document.getElementById('simulate-signout').addEventListener('click', function() {
+            clearResults();
+            simulateSignOut();
+        });
+        
+        document.getElementById('simulate-error').addEventListener('click', function() {
+            clearResults();
+            simulateAuthError();
+        });
+        
+        document.getElementById('clear-storage').addEventListener('click', function() {
+            clearResults();
+            clearAllAuthState();
+            console.log('Authentication storage cleared');
+        });
+        
+        document.getElementById('inspect-storage').addEventListener('click', function() {
+            clearResults();
+            inspectAuthStorage();
+        });
+        
+        // Helper function to clear results
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+        
+        // Simulate auth error
+        function simulateAuthError() {
+            console.log('Simulating authentication error...');
+            
+            // Create an invalid state
+            localStorage.setItem('oidc.state.invalid', 'invalid-state');
+            sessionStorage.setItem('oidc.state.invalid', 'invalid-state');
+            
+            console.log('Created invalid state data');
+            console.log('When you navigate to the application, the error recovery UI should appear');
+        }
+        
+        // Inspect authentication storage
+        function inspectAuthStorage() {
+            console.log('Inspecting authentication storage...');
+            
+            // Get all auth-related items from localStorage
+            const localStorageItems = Object.keys(localStorage)
+                .filter(key => key.startsWith('oidc.'));
+                
+            console.log(`Found ${localStorageItems.length} items in localStorage:`);
+            localStorageItems.forEach(key => {
+                const value = localStorage.getItem(key);
+                const displayValue = value.length > 50 ? value.substring(0, 50) + '...' : value;
+                console.log(`- ${key}: ${displayValue}`);
+            });
+            
+            // Get all auth-related items from sessionStorage
+            const sessionStorageItems = Object.keys(sessionStorage)
+                .filter(key => key.startsWith('oidc.'));
+                
+            console.log(`Found ${sessionStorageItems.length} items in sessionStorage:`);
+            sessionStorageItems.forEach(key => {
+                const value = sessionStorage.getItem(key);
+                const displayValue = value.length > 50 ? value.substring(0, 50) + '...' : value;
+                console.log(`- ${key}: ${displayValue}`);
+            });
+            
+            // Summary
+            const totalItems = localStorageItems.length + sessionStorageItems.length;
+            console.log(`Total authentication items: ${totalItems}`);
+        }
+    </script>
+</body>
+</html>

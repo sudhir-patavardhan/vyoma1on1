@@ -616,25 +616,46 @@ function App() {
 
   // Function to redirect users directly to the signup page
   const signupRedirect = () => {
-    // Clear any previous auth state to prevent conflicts
-    Object.keys(localStorage)
-      .filter(key => key.startsWith('oidc.'))
-      .forEach(key => localStorage.removeItem(key));
-    
-    Object.keys(sessionStorage)
-      .filter(key => key.startsWith('oidc.'))
-      .forEach(key => sessionStorage.removeItem(key));
-    
-    // Construct the signup URL using the Cognito Hosted UI with dynamic origin
-    const dynamicRedirectUri = window.location.origin;
-    const signupURL = `${cognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=email+openid+phone&redirect_uri=${encodeURIComponent(
-      dynamicRedirectUri
-    )}`;
-
-    console.log("Signup URL:", signupURL);
-
-    // Redirect to Cognito signup page
-    window.location.href = signupURL;
+    try {
+      // First try to end the current session if any
+      auth.removeUser().catch(e => console.error("Error removing user before signup:", e));
+      
+      // Clear ALL auth state to prevent conflicts (both localStorage and sessionStorage)
+      Object.keys(localStorage)
+        .filter(key => key.startsWith('oidc.'))
+        .forEach(key => {
+          console.log(`Clearing localStorage item: ${key}`);
+          localStorage.removeItem(key);
+        });
+      
+      Object.keys(sessionStorage)
+        .filter(key => key.startsWith('oidc.'))
+        .forEach(key => {
+          console.log(`Clearing sessionStorage item: ${key}`);
+          sessionStorage.removeItem(key);
+        });
+      
+      // Construct the signup URL using the Cognito Hosted UI with dynamic origin
+      const dynamicRedirectUri = window.location.origin;
+      const signupURL = `${cognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=email+openid+phone&redirect_uri=${encodeURIComponent(
+        dynamicRedirectUri
+      )}&state=${generateRandomState()}`;
+  
+      console.log("Signup URL:", signupURL);
+  
+      // Redirect to Cognito signup page
+      window.location.href = signupURL;
+    } catch (e) {
+      console.error("Error during signup redirect:", e);
+      // Fallback to direct auth method if our approach fails
+      auth.signinRedirect().catch(e => console.error("Error signing in:", e));
+    }
+  };
+  
+  // Generate a random state parameter for added security
+  const generateRandomState = () => {
+    return Math.random().toString(36).substring(2, 15) + 
+           Math.random().toString(36).substring(2, 15);
   };
 
   const renderHeader = () => {
@@ -1661,7 +1682,9 @@ function App() {
     // Check if this is the state validation error
     const isStateError = auth.error.message && (
       auth.error.message.includes("No matching state found") || 
-      auth.error.message.includes("storage")
+      auth.error.message.includes("storage") ||
+      auth.error.message.includes("getAllKeys") ||
+      auth.error.message.includes("is not a function")
     );
     
     // Improved error handling with specific guidance

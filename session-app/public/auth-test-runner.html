@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test Runner</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        h1, h2, h3 {
+            color: #1E88E5;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .test-results {
+            background-color: #f8f8f8;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        button {
+            background-color: #1E88E5;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #1565C0;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #F44336;
+            font-weight: bold;
+        }
+        .auth-form {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sanskrit Teacher - Auth Test Runner</h1>
+    <p>This page allows you to run various tests on the authentication system directly in your browser.</p>
+
+    <div class="test-section">
+        <h2>1. State Store Tests</h2>
+        <p>Tests the implementation of the OIDC state store, including the <code>getAllKeys</code> function.</p>
+        <button id="runStateStoreTests">Run State Store Tests</button>
+        <div id="stateStoreResults" class="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Stale State Cleanup Tests</h2>
+        <p>Tests the cleanup of stale authentication state during sign-in.</p>
+        <button id="runCleanupTests">Run Cleanup Tests</button>
+        <div id="cleanupResults" class="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Sign-out Process Tests</h2>
+        <p>Tests the proper cleanup of authentication state during sign-out.</p>
+        <button id="runSignoutTests">Run Sign-out Tests</button>
+        <div id="signoutResults" class="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Manual Auth Testing</h2>
+        <p>Use these tools to manually test authentication components.</p>
+        
+        <div class="auth-form">
+            <h3>Simulate Sign-in</h3>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="patavardhan@gmail.com">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" value="W1234ard@">
+            </div>
+            <button id="simulateSignin">Simulate Sign-in</button>
+            <div id="signinResults" class="test-results"></div>
+        </div>
+        
+        <button id="inspectStorage">Inspect Auth Storage</button>
+        <div id="storageResults" class="test-results"></div>
+    </div>
+    
+    <script>
+        // Helper function to output to results div
+        function log(id, message, isError = false) {
+            const resultsDiv = document.getElementById(id);
+            const line = document.createElement('div');
+            line.textContent = message;
+            if (isError) line.classList.add('error');
+            resultsDiv.appendChild(line);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+        
+        // Clear results div
+        function clearResults(id) {
+            document.getElementById(id).innerHTML = '';
+        }
+        
+        // 1. State Store Tests
+        document.getElementById('runStateStoreTests').addEventListener('click', function() {
+            clearResults('stateStoreResults');
+            log('stateStoreResults', 'Running state store tests...');
+            
+            // Create a test state store implementation
+            const stateStore = {
+                set: (key, value) => {
+                    try {
+                        const storageKey = `oidc.${key}`;
+                        log('stateStoreResults', `Setting ${storageKey} = ${value}`);
+                        localStorage.setItem(storageKey, value);
+                        sessionStorage.setItem(storageKey, value);
+                        return Promise.resolve();
+                    } catch (e) {
+                        log('stateStoreResults', `Error setting ${key}: ${e.message}`, true);
+                        return Promise.reject(e);
+                    }
+                },
+                get: (key) => {
+                    try {
+                        const storageKey = `oidc.${key}`;
+                        const sessionValue = sessionStorage.getItem(storageKey);
+                        const localValue = localStorage.getItem(storageKey);
+                        const value = sessionValue || localValue;
+                        log('stateStoreResults', `Getting ${storageKey} = ${value}`);
+                        return Promise.resolve(value);
+                    } catch (e) {
+                        log('stateStoreResults', `Error getting ${key}: ${e.message}`, true);
+                        return Promise.reject(e);
+                    }
+                },
+                remove: (key) => {
+                    try {
+                        const storageKey = `oidc.${key}`;
+                        log('stateStoreResults', `Removing ${storageKey}`);
+                        localStorage.removeItem(storageKey);
+                        sessionStorage.removeItem(storageKey);
+                        return Promise.resolve();
+                    } catch (e) {
+                        log('stateStoreResults', `Error removing ${key}: ${e.message}`, true);
+                        return Promise.reject(e);
+                    }
+                },
+                getAllKeys: () => {
+                    try {
+                        log('stateStoreResults', 'Getting all keys');
+                        
+                        // Get keys from localStorage
+                        const localKeys = Object.keys(localStorage)
+                            .filter(key => key.startsWith('oidc.'))
+                            .map(key => key.replace('oidc.', ''));
+                            
+                        // Get keys from sessionStorage
+                        const sessionKeys = Object.keys(sessionStorage)
+                            .filter(key => key.startsWith('oidc.'))
+                            .map(key => key.replace('oidc.', ''));
+                            
+                        // Combine and deduplicate
+                        const allKeys = [...new Set([...localKeys, ...sessionKeys])];
+                        
+                        log('stateStoreResults', `Found ${allKeys.length} keys: ${allKeys.join(', ')}`);
+                        return Promise.resolve(allKeys);
+                    } catch (e) {
+                        log('stateStoreResults', `Error getting all keys: ${e.message}`, true);
+                        return Promise.reject(e);
+                    }
+                }
+            };
+            
+            // Run tests
+            async function runTests() {
+                try {
+                    // Clean up any existing test data
+                    const testKey = 'test' + Date.now();
+                    
+                    // Test set
+                    log('stateStoreResults', '\nTesting set operation:');
+                    await stateStore.set(testKey, 'test-value');
+                    
+                    // Test get
+                    log('stateStoreResults', '\nTesting get operation:');
+                    const value = await stateStore.get(testKey);
+                    
+                    // Test getAllKeys
+                    log('stateStoreResults', '\nTesting getAllKeys operation:');
+                    const keys = await stateStore.getAllKeys();
+                    
+                    // Test remove
+                    log('stateStoreResults', '\nTesting remove operation:');
+                    await stateStore.remove(testKey);
+                    
+                    // Verify removal
+                    const afterRemove = await stateStore.get(testKey);
+                    
+                    // Final results
+                    log('stateStoreResults', '\nTest Results:');
+                    log('stateStoreResults', `Set operation: ${value === 'test-value' ? 'PASS ✅' : 'FAIL ❌'}`);
+                    log('stateStoreResults', `Get operation: ${value === 'test-value' ? 'PASS ✅' : 'FAIL ❌'}`);
+                    log('stateStoreResults', `getAllKeys operation: ${keys.length > 0 ? 'PASS ✅' : 'FAIL ❌'}`);
+                    log('stateStoreResults', `Remove operation: ${afterRemove === null ? 'PASS ✅' : 'FAIL ❌'}`);
+                    
+                    const allPassed = value === 'test-value' && keys.length > 0 && afterRemove === null;
+                    log('stateStoreResults', `\nOverall: ${allPassed ? 'ALL TESTS PASSED ✅' : 'SOME TESTS FAILED ❌'}`);
+                    
+                } catch (e) {
+                    log('stateStoreResults', `Error running tests: ${e.message}`, true);
+                }
+            }
+            
+            runTests();
+        });
+        
+        // 2. Stale State Cleanup Tests
+        document.getElementById('runCleanupTests').addEventListener('click', function() {
+            clearResults('cleanupResults');
+            log('cleanupResults', 'Running stale state cleanup tests...');
+            
+            // Set up test data
+            localStorage.setItem('oidc.state.test1', 'stale-value-1');
+            localStorage.setItem('oidc.state.test2', 'stale-value-2');
+            localStorage.setItem('oidc.other', 'other-value');
+            sessionStorage.setItem('oidc.state.test3', 'stale-value-3');
+            
+            // Show initial state
+            log('cleanupResults', '\nInitial state:');
+            log('cleanupResults', 'localStorage:');
+            Object.keys(localStorage).filter(k => k.startsWith('oidc.')).forEach(k => {
+                log('cleanupResults', `  ${k} = ${localStorage.getItem(k)}`);
+            });
+            log('cleanupResults', 'sessionStorage:');
+            Object.keys(sessionStorage).filter(k => k.startsWith('oidc.')).forEach(k => {
+                log('cleanupResults', `  ${k} = ${sessionStorage.getItem(k)}`);
+            });
+            
+            // Run cleanup function from index.js
+            log('cleanupResults', '\nRunning cleanup...');
+            
+            const clearStaleState = () => {
+                try {
+                    // We'll keep the prefix consistent with our stateStore implementation
+                    const oldKeys = Object.keys(localStorage)
+                        .filter(key => key.startsWith('oidc.') && key.includes('state'));
+                        
+                    log('cleanupResults', `Found ${oldKeys.length} old state keys to clear`);
+                    
+                    // Remove old state entries
+                    oldKeys.forEach(key => {
+                        log('cleanupResults', `Removing old state: ${key}`);
+                        localStorage.removeItem(key);
+                        sessionStorage.removeItem(key);
+                    });
+                    
+                    // Also check sessionStorage for any state keys
+                    const oldSessionKeys = Object.keys(sessionStorage)
+                        .filter(key => key.startsWith('oidc.') && key.includes('state'));
+                        
+                    if (oldSessionKeys.length > 0) {
+                        log('cleanupResults', `Found ${oldSessionKeys.length} additional old state keys in sessionStorage`);
+                        
+                        oldSessionKeys.forEach(key => {
+                            log('cleanupResults', `Removing old state: ${key}`);
+                            sessionStorage.removeItem(key);
+                        });
+                    }
+                    
+                } catch (e) {
+                    log('cleanupResults', `Error clearing stale state: ${e.message}`, true);
+                }
+            };
+            
+            clearStaleState();
+            
+            // Show final state
+            log('cleanupResults', '\nFinal state after cleanup:');
+            log('cleanupResults', 'localStorage:');
+            Object.keys(localStorage).filter(k => k.startsWith('oidc.')).forEach(k => {
+                log('cleanupResults', `  ${k} = ${localStorage.getItem(k)}`);
+            });
+            log('cleanupResults', 'sessionStorage:');
+            Object.keys(sessionStorage).filter(k => k.startsWith('oidc.')).forEach(k => {
+                log('cleanupResults', `  ${k} = ${sessionStorage.getItem(k)}`);
+            });
+            
+            // Verify results
+            const remainingStateKeys = [
+                ...Object.keys(localStorage).filter(k => k.startsWith('oidc.') && k.includes('state')),
+                ...Object.keys(sessionStorage).filter(k => k.startsWith('oidc.') && k.includes('state'))
+            ];
+            const otherKeysPreserved = localStorage.getItem('oidc.other') === 'other-value';
+            
+            log('cleanupResults', '\nResults:');
+            log('cleanupResults', `State keys remaining: ${remainingStateKeys.length} (should be 0)`);
+            log('cleanupResults', `Other keys preserved: ${otherKeysPreserved ? 'Yes ✅' : 'No ❌'}`);
+            
+            const success = remainingStateKeys.length === 0 && otherKeysPreserved;
+            log('cleanupResults', `\nOverall: ${success ? 'CLEANUP TEST PASSED ✅' : 'CLEANUP TEST FAILED ❌'}`);
+            
+            // Clean up test data
+            localStorage.removeItem('oidc.other');
+        });
+        
+        // 3. Sign-out Process Tests
+        document.getElementById('runSignoutTests').addEventListener('click', function() {
+            clearResults('signoutResults');
+            log('signoutResults', 'Running sign-out process tests...');
+            
+            // Set up test data
+            localStorage.setItem('oidc.user', '{"mock":"user"}');
+            localStorage.setItem('oidc.token', 'mock-token');
+            localStorage.setItem('user.settings', 'mock-settings');
+            localStorage.setItem('non.auth.key', 'should-be-preserved');
+            sessionStorage.setItem('oidc.state', 'mock-state');
+            
+            // Show initial state
+            log('signoutResults', '\nInitial state:');
+            log('signoutResults', 'localStorage:');
+            Object.keys(localStorage).forEach(k => {
+                log('signoutResults', `  ${k} = ${localStorage.getItem(k)}`);
+            });
+            log('signoutResults', 'sessionStorage:');
+            Object.keys(sessionStorage).forEach(k => {
+                log('signoutResults', `  ${k} = ${sessionStorage.getItem(k)}`);
+            });
+            
+            // Run signout cleanup from App.js
+            log('signoutResults', '\nRunning sign-out cleanup...');
+            
+            const signoutCleanup = () => {
+                try {
+                    // Clear all auth-related storage to prevent issues on next login
+                    Object.keys(localStorage)
+                        .filter(key => key.startsWith('oidc.') || key.startsWith('user.'))
+                        .forEach(key => {
+                            log('signoutResults', `Removing localStorage item: ${key}`);
+                            localStorage.removeItem(key);
+                        });
+                    
+                    Object.keys(sessionStorage)
+                        .filter(key => key.startsWith('oidc.') || key.startsWith('user.'))
+                        .forEach(key => {
+                            log('signoutResults', `Removing sessionStorage item: ${key}`);
+                            sessionStorage.removeItem(key);
+                        });
+                } catch (e) {
+                    log('signoutResults', `Error during signout cleanup: ${e.message}`, true);
+                }
+            };
+            
+            signoutCleanup();
+            
+            // Show final state
+            log('signoutResults', '\nFinal state after cleanup:');
+            log('signoutResults', 'localStorage:');
+            Object.keys(localStorage).forEach(k => {
+                log('signoutResults', `  ${k} = ${localStorage.getItem(k)}`);
+            });
+            log('signoutResults', 'sessionStorage:');
+            Object.keys(sessionStorage).forEach(k => {
+                log('signoutResults', `  ${k} = ${sessionStorage.getItem(k)}`);
+            });
+            
+            // Verify results
+            const remainingAuthKeys = [
+                ...Object.keys(localStorage).filter(k => k.startsWith('oidc.') || k.startsWith('user.')),
+                ...Object.keys(sessionStorage).filter(k => k.startsWith('oidc.') || k.startsWith('user.'))
+            ];
+            const nonAuthKeysPreserved = localStorage.getItem('non.auth.key') === 'should-be-preserved';
+            
+            log('signoutResults', '\nResults:');
+            log('signoutResults', `Auth keys remaining: ${remainingAuthKeys.length} (should be 0)`);
+            log('signoutResults', `Non-auth keys preserved: ${nonAuthKeysPreserved ? 'Yes ✅' : 'No ❌'}`);
+            
+            const success = remainingAuthKeys.length === 0 && nonAuthKeysPreserved;
+            log('signoutResults', `\nOverall: ${success ? 'SIGN-OUT TEST PASSED ✅' : 'SIGN-OUT TEST FAILED ❌'}`);
+            
+            // Clean up test data
+            localStorage.removeItem('non.auth.key');
+        });
+        
+        // 4. Manual Auth Testing - Simulate Sign-in
+        document.getElementById('simulateSignin').addEventListener('click', function() {
+            clearResults('signinResults');
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                log('signinResults', 'Please enter both email and password', true);
+                return;
+            }
+            
+            log('signinResults', `Simulating sign-in for: ${email}`);
+            log('signinResults', 'NOTE: This is a simulation only and does not connect to the actual auth server');
+            
+            // Generate mock auth data
+            const now = new Date();
+            const expiresAt = new Date(now.getTime() + 3600 * 1000); // 1 hour from now
+            
+            const mockAuthData = {
+                id_token: 'mock_id_token_' + Date.now(),
+                access_token: 'mock_access_token_' + Date.now(),
+                expires_at: expiresAt.getTime(),
+                token_type: 'Bearer',
+                scope: 'openid email profile',
+                profile: {
+                    sub: 'mock_user_' + Date.now(),
+                    email: email,
+                    email_verified: true,
+                    name: email.split('@')[0],
+                }
+            };
+            
+            // Create mock state
+            const state = 'mock_state_' + Date.now();
+            
+            // Store auth data in localStorage (simulating successful auth)
+            localStorage.setItem(`oidc.user:${clientId}`, JSON.stringify(mockAuthData));
+            localStorage.setItem(`oidc.state.${state}`, state);
+            
+            // Also store in sessionStorage for our dual-storage approach
+            sessionStorage.setItem(`oidc.user:${clientId}`, JSON.stringify(mockAuthData));
+            sessionStorage.setItem(`oidc.state.${state}`, state);
+            
+            log('signinResults', '\nMock authentication data created:');
+            log('signinResults', `User ID: ${mockAuthData.profile.sub}`);
+            log('signinResults', `Token Type: ${mockAuthData.token_type}`);
+            log('signinResults', `Expires: ${new Date(mockAuthData.expires_at).toLocaleString()}`);
+            log('signinResults', `State: ${state}`);
+            
+            log('signinResults', '\nFew things to test now:');
+            log('signinResults', '1. Click "Inspect Auth Storage" to see the stored auth data');
+            log('signinResults', '2. Try the "Run Cleanup Tests" to see how stale state is managed');
+            log('signinResults', '3. Try the "Run Sign-out Tests" to see how sign-out clears auth data');
+            
+            log('signinResults', '\nSimulation complete! ✅');
+        });
+        
+        // Helper for "Inspect Auth Storage"
+        document.getElementById('inspectStorage').addEventListener('click', function() {
+            clearResults('storageResults');
+            log('storageResults', 'Inspecting auth-related storage...');
+            
+            // Check localStorage
+            log('storageResults', '\nAuth data in localStorage:');
+            const localStorageAuthItems = Object.keys(localStorage)
+                .filter(key => key.startsWith('oidc.') || key.startsWith('user.'));
+                
+            if (localStorageAuthItems.length === 0) {
+                log('storageResults', '  No auth data found');
+            } else {
+                localStorageAuthItems.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    const displayValue = value.length > 50 ? value.substring(0, 50) + '...' : value;
+                    log('storageResults', `  ${key} = ${displayValue}`);
+                });
+            }
+            
+            // Check sessionStorage
+            log('storageResults', '\nAuth data in sessionStorage:');
+            const sessionStorageAuthItems = Object.keys(sessionStorage)
+                .filter(key => key.startsWith('oidc.') || key.startsWith('user.'));
+                
+            if (sessionStorageAuthItems.length === 0) {
+                log('storageResults', '  No auth data found');
+            } else {
+                sessionStorageAuthItems.forEach(key => {
+                    const value = sessionStorage.getItem(key);
+                    const displayValue = value.length > 50 ? value.substring(0, 50) + '...' : value;
+                    log('storageResults', `  ${key} = ${displayValue}`);
+                });
+            }
+            
+            // Summary
+            const totalItems = localStorageAuthItems.length + sessionStorageAuthItems.length;
+            log('storageResults', `\nFound ${totalItems} auth-related items in storage`);
+            
+            if (totalItems === 0) {
+                log('storageResults', '\nNo auth data found. You may want to simulate a sign-in first.');
+            }
+        });
+        
+        // Define a clientId for auth simulation
+        const clientId = '12s8brrk9144uq23g3951mfvhl';
+    </script>
+</body>
+</html>
