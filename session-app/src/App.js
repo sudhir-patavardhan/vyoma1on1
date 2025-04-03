@@ -540,52 +540,24 @@ function App() {
   // Don't try to handle auth callbacks manually - let the library do it
   // Our attempts to manipulate state storage are causing JSON parsing errors
 
-  // Effect to handle auth state changes and logging
+  // Simple effect to handle auth state changes
   useEffect(() => {
-    // Get more detailed user info for debugging
-    const userInfo = auth.user
-      ? {
-          exists: true,
-          hasProfile: !!auth.user.profile,
-          claims: auth.user.profile ? Object.keys(auth.user.profile) : [],
-          sub: auth.user.profile?.sub || "Unknown",
-          tokenType: auth.user.token_type,
-          expiresAt: auth.user.expires_at ? new Date(auth.user.expires_at * 1000).toISOString() : "Unknown"
-        }
-      : "No user";
-
-    // Enhanced logging for auth state
-    console.log("Auth state changed:", {
-      isAuthenticated: auth.isAuthenticated,
-      isLoading: auth.isLoading,
-      user: userInfo,
-      error: auth.error ? auth.error.message : "No error",
-    });
-
-    // Handle potential errors
-    if (auth.error && !auth.isLoading) {
-      console.error("Authentication error details:", auth.error);
-    }
-
-    // If we're authenticated, make sure we're on the dashboard tab
-    if (auth.isAuthenticated && !auth.isLoading && auth.user) {
-      // Set dashboard as active tab when authenticated and user data is loaded
+    // Basic authentication status logging
+    if (auth.isAuthenticated && !auth.isLoading) {
+      console.log("User is authenticated");
+      // Set dashboard as active tab when authenticated
       setActiveTab("dashboard");
-      
-      // Record successful authentication in local storage for debugging
-      try {
-        localStorage.setItem("auth_last_successful_login", new Date().toISOString());
-        if (auth.user.profile?.sub) {
-          localStorage.setItem("auth_last_user_id", auth.user.profile.sub);
-        }
-      } catch (e) {
-        console.error("Error recording successful authentication:", e);
-      }
+    } else if (!auth.isAuthenticated && !auth.isLoading) {
+      console.log("User is not authenticated");
+    }
+    
+    // Log any authentication errors
+    if (auth.error) {
+      console.error("Authentication error:", auth.error.message);
     }
   }, [
     auth.isAuthenticated,
     auth.isLoading,
-    auth.user,
     auth.error,
     setActiveTab,
   ]);
@@ -599,64 +571,18 @@ function App() {
   const redirectUri = "https://yoursanskritteacher.com";
   const cognitoDomain = "https://auth.yoursanskritteacher.com";
 
-  const signOutRedirect = async () => {
-    // Construct the logout URL with AWS Cognito format
-    const dynamicRedirectUri = window.location.origin;
-    const logoutURL = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
-      dynamicRedirectUri
-    )}&post_logout_redirect_uri=${encodeURIComponent(dynamicRedirectUri)}`;
-
-    console.log("Logout URL:", logoutURL);
-
-    try {
-      // Let the auth library handle its own cleanup
-      await auth.removeUser();
-      
-      // Wait a moment for cleanup to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Clear ALL browser storage to ensure a clean slate
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      console.log("Storage cleared, redirecting to logout endpoint");
-      
-      // Redirect to Cognito logout endpoint
-      window.location.href = logoutURL;
-    } catch (error) {
-      console.error("Error during signout:", error);
-      
-      // Even if there's an error, clear storage and redirect
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.href = logoutURL;
-    }
+  const signOutRedirect = () => {
+    // Use the library's built-in signoutRedirect method
+    auth.signoutRedirect();
   };
 
-  // Function to redirect users directly to the signup page
+  // Function to redirect users to the signup page
   const signupRedirect = () => {
-    try {
-      console.log("Redirecting to signup page");
-      
-      // Clear all storage to avoid any auth issues
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Let Cognito handle the state parameter generation
-      const dynamicRedirectUri = window.location.origin;
-      const signupURL = `${cognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=email+openid+phone&redirect_uri=${encodeURIComponent(
-        dynamicRedirectUri
-      )}`;
-  
-      console.log("Signup URL:", signupURL);
-  
-      // Redirect to Cognito signup page
-      window.location.href = signupURL;
-    } catch (e) {
-      console.error("Error during signup redirect:", e);
-      // Simple fallback if there's an error
-      window.location.href = `${cognitoDomain}/signup?client_id=${clientId}`;
-    }
+    // Use the library's built-in signinRedirect method with a signup hint
+    auth.signinRedirect({
+      prompt: 'login',
+      login_hint: 'signup'
+    });
   };
 
   const renderHeader = () => {
@@ -1678,24 +1604,9 @@ function App() {
   }
 
   if (auth.error) {
-    console.error("Authentication error:", auth.error);
+    console.error("Authentication error:", auth.error.message);
     
-    // Simple error type detection without trying to fix things
-    const isJsonError = auth.error.name === 'SyntaxError' && 
-                       (auth.error.message.includes('JSON') || 
-                        auth.error.message.includes('Unexpected'));
-                        
-    const isStateError = auth.error.message && 
-                        auth.error.message.includes("No matching state found");
-                        
-    // Log the error type for debugging
-    if (isJsonError) {
-      console.log("JSON parsing error detected in authentication");
-    } else if (isStateError) {
-      console.log("State validation error detected in authentication");
-    }
-    
-    // Improved error handling with specific guidance
+    // Simple error UI with minimal recovery options
     return (
       <div className="app-layout">
         {renderHeader()}
@@ -1707,49 +1618,27 @@ function App() {
                   <h2 className="text-danger mb-4">Authentication Error</h2>
                   
                   <div className="error-message mb-4">
-                    <p>We encountered an error during authentication:</p>
-                    <p className="text-danger mt-2 mb-3"><strong>{auth.error.message || "Unknown authentication error"}</strong></p>
-                    
-                    {isJsonError ? (
-                      <p className="mt-2">
-                        There was a problem processing authentication data.
-                        This is usually caused by corrupted browser storage.
-                      </p>
-                    ) : isStateError ? (
-                      <p className="mt-2">
-                        Unable to verify your authentication session.
-                        This is usually caused by expired authentication tokens or browser storage issues.
-                      </p>
-                    ) : (
-                      <p className="mt-2">
-                        An unexpected error occurred during authentication.
-                      </p>
-                    )}
+                    <p>We encountered an error during sign-in:</p>
+                    <p className="text-danger mt-2 mb-3">
+                      <strong>{auth.error.message || "Unknown error"}</strong>
+                    </p>
                   </div>
                   
-                  <div className="d-flex flex-column gap-3 align-items-center">
-                    {/* Simple, straightforward recovery options */}
-                    
-                    {/* Option 1: Clear everything and try again */}
+                  <div className="mt-4">
                     <button
-                      className="btn btn-primary btn-lg w-50"
+                      className="btn btn-primary btn-lg"
                       onClick={() => {
-                        // Clear ALL storage - the most reliable solution
-                        console.log("Clearing all storage before sign-in redirect");
-                        localStorage.clear();
-                        sessionStorage.clear();
-                        
-                        // Redirect to home page first to clear app state
+                        // Reload the page to restart the authentication flow
                         window.location.href = "/";
                       }}
                     >
-                      Start Over
+                      Return to Home
                     </button>
                     
-                    {/* Option 2: Try direct sign-in */}
                     <button
-                      className="btn btn-outline-primary w-50"
+                      className="btn btn-outline-primary ms-3"
                       onClick={() => {
+                        // Try sign-in again
                         auth.signinRedirect();
                       }}
                     >
