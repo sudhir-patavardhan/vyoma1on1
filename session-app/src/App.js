@@ -536,6 +536,35 @@ function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [activeSession, setActiveSession] = useState(null);
   const [upcomingSession, setUpcomingSession] = useState(null);
+  
+  // Check for authentication callback in URL and try to handle it
+  useEffect(() => {
+    const handleAuthCallback = () => {
+      // Check if this is an authentication callback (has code and state)
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+      
+      if (code && state) {
+        console.log("Detected authentication callback in URL");
+        
+        try {
+          // Ensure state parameter is stored for the OIDC library to find
+          localStorage.setItem(`oidc.state.${state}`, state);
+          sessionStorage.setItem(`oidc.state.${state}`, state);
+          localStorage.setItem(`state.${state}`, state);
+          sessionStorage.setItem(`state.${state}`, state);
+          
+          console.log("Auth callback - stored state for library to find:", state);
+        } catch (e) {
+          console.error("Error storing state from URL:", e);
+        }
+      }
+    };
+    
+    // Try to handle auth callback on component mount
+    handleAuthCallback();
+  }, []);
 
   // Effect to handle auth state changes and logging
   useEffect(() => {
@@ -545,6 +574,9 @@ function App() {
           exists: true,
           hasProfile: !!auth.user.profile,
           claims: auth.user.profile ? Object.keys(auth.user.profile) : [],
+          sub: auth.user.profile?.sub || "Unknown",
+          tokenType: auth.user.token_type,
+          expiresAt: auth.user.expires_at ? new Date(auth.user.expires_at * 1000).toISOString() : "Unknown"
         }
       : "No user";
 
@@ -565,6 +597,16 @@ function App() {
     if (auth.isAuthenticated && !auth.isLoading && auth.user) {
       // Set dashboard as active tab when authenticated and user data is loaded
       setActiveTab("dashboard");
+      
+      // Record successful authentication in local storage for debugging
+      try {
+        localStorage.setItem("auth_last_successful_login", new Date().toISOString());
+        if (auth.user.profile?.sub) {
+          localStorage.setItem("auth_last_user_id", auth.user.profile.sub);
+        }
+      } catch (e) {
+        console.error("Error recording successful authentication:", e);
+      }
     }
   }, [
     auth.isAuthenticated,
