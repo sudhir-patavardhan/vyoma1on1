@@ -537,34 +537,8 @@ function App() {
   const [activeSession, setActiveSession] = useState(null);
   const [upcomingSession, setUpcomingSession] = useState(null);
   
-  // Check for authentication callback in URL and try to handle it
-  useEffect(() => {
-    const handleAuthCallback = () => {
-      // Check if this is an authentication callback (has code and state)
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      const state = urlParams.get('state');
-      
-      if (code && state) {
-        console.log("Detected authentication callback in URL");
-        
-        try {
-          // Ensure state parameter is stored for the OIDC library to find
-          localStorage.setItem(`oidc.state.${state}`, state);
-          sessionStorage.setItem(`oidc.state.${state}`, state);
-          localStorage.setItem(`state.${state}`, state);
-          sessionStorage.setItem(`state.${state}`, state);
-          
-          console.log("Auth callback - stored state for library to find:", state);
-        } catch (e) {
-          console.error("Error storing state from URL:", e);
-        }
-      }
-    };
-    
-    // Try to handle auth callback on component mount
-    handleAuthCallback();
-  }, []);
+  // Don't try to handle auth callbacks manually - let the library do it
+  // Our attempts to manipulate state storage are causing JSON parsing errors
 
   // Effect to handle auth state changes and logging
   useEffect(() => {
@@ -635,23 +609,26 @@ function App() {
     console.log("Logout URL:", logoutURL);
 
     try {
-      // Clear all auth-related storage to prevent issues on next login
-      Object.keys(localStorage)
-        .filter(key => key.startsWith('oidc.') || key.startsWith('user.'))
-        .forEach(key => localStorage.removeItem(key));
-      
-      Object.keys(sessionStorage)
-        .filter(key => key.startsWith('oidc.') || key.startsWith('user.'))
-        .forEach(key => sessionStorage.removeItem(key));
-
-      // Clear local auth state
+      // Let the auth library handle its own cleanup
       await auth.removeUser();
-
+      
+      // Wait a moment for cleanup to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Clear ALL browser storage to ensure a clean slate
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      console.log("Storage cleared, redirecting to logout endpoint");
+      
       // Redirect to Cognito logout endpoint
       window.location.href = logoutURL;
     } catch (error) {
       console.error("Error during signout:", error);
-      // Force redirect even if error occurs
+      
+      // Even if there's an error, clear storage and redirect
+      localStorage.clear();
+      sessionStorage.clear();
       window.location.href = logoutURL;
     }
   };
@@ -659,29 +636,17 @@ function App() {
   // Function to redirect users directly to the signup page
   const signupRedirect = () => {
     try {
-      // First try to end the current session if any
-      auth.removeUser().catch(e => console.error("Error removing user before signup:", e));
+      console.log("Redirecting to signup page");
       
-      // Clear ALL auth state to prevent conflicts (both localStorage and sessionStorage)
-      Object.keys(localStorage)
-        .filter(key => key.startsWith('oidc.'))
-        .forEach(key => {
-          console.log(`Clearing localStorage item: ${key}`);
-          localStorage.removeItem(key);
-        });
+      // Clear all storage to avoid any auth issues
+      localStorage.clear();
+      sessionStorage.clear();
       
-      Object.keys(sessionStorage)
-        .filter(key => key.startsWith('oidc.'))
-        .forEach(key => {
-          console.log(`Clearing sessionStorage item: ${key}`);
-          sessionStorage.removeItem(key);
-        });
-      
-      // Construct the signup URL using the Cognito Hosted UI with dynamic origin
+      // Let Cognito handle the state parameter generation
       const dynamicRedirectUri = window.location.origin;
       const signupURL = `${cognitoDomain}/signup?client_id=${clientId}&response_type=code&scope=email+openid+phone&redirect_uri=${encodeURIComponent(
         dynamicRedirectUri
-      )}&state=${generateRandomState()}`;
+      )}`;
   
       console.log("Signup URL:", signupURL);
   
@@ -689,15 +654,9 @@ function App() {
       window.location.href = signupURL;
     } catch (e) {
       console.error("Error during signup redirect:", e);
-      // Fallback to direct auth method if our approach fails
-      auth.signinRedirect().catch(e => console.error("Error signing in:", e));
+      // Simple fallback if there's an error
+      window.location.href = `${cognitoDomain}/signup?client_id=${clientId}`;
     }
-  };
-  
-  // Generate a random state parameter for added security
-  const generateRandomState = () => {
-    return Math.random().toString(36).substring(2, 15) + 
-           Math.random().toString(36).substring(2, 15);
   };
 
   const renderHeader = () => {
@@ -1721,37 +1680,19 @@ function App() {
   if (auth.error) {
     console.error("Authentication error:", auth.error);
     
-    // Check if this is the state validation error
-    const isStateError = auth.error.message && (
-      auth.error.message.includes("No matching state found") || 
-      auth.error.message.includes("storage") ||
-      auth.error.message.includes("getAllKeys") ||
-      auth.error.message.includes("is not a function") ||
-      // Add additional patterns to catch OIDC errors
-      auth.error.message.includes("state") ||
-      (auth.error.innerError && auth.error.innerError.message && 
-       auth.error.innerError.message.includes("state"))
-    );
-    
-    // Add immediate recovery attempt for state errors
-    if (isStateError) {
-      console.log("Detected state error, attempting recovery...");
-      
-      // Try to extract state from URL if present
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const stateParam = urlParams.get('state');
-        
-        if (stateParam) {
-          console.log("Found state in URL, attempting to preserve it:", stateParam);
-          
-          // Store state value for later use
-          localStorage.setItem(`oidc.state.${stateParam}`, stateParam);
-          sessionStorage.setItem(`oidc.state.${stateParam}`, stateParam);
-        }
-      } catch (e) {
-        console.error("Error during state recovery:", e);
-      }
+    // Simple error type detection without trying to fix things
+    const isJsonError = auth.error.name === 'SyntaxError' && 
+                       (auth.error.message.includes('JSON') || 
+                        auth.error.message.includes('Unexpected'));
+                        
+    const isStateError = auth.error.message && 
+                        auth.error.message.includes("No matching state found");
+                        
+    // Log the error type for debugging
+    if (isJsonError) {
+      console.log("JSON parsing error detected in authentication");
+    } else if (isStateError) {
+      console.log("State validation error detected in authentication");
     }
     
     // Improved error handling with specific guidance
@@ -1765,82 +1706,56 @@ function App() {
                 <div className="card-body text-center">
                   <h2 className="text-danger mb-4">Authentication Error</h2>
                   
-                  {isStateError ? (
-                    <>
-                      <div className="error-message mb-4">
-                        <p>Your login session data wasn't properly saved or was lost.</p>
-                        <p className="mt-2">This can happen if:</p>
-                        <ul className="text-left mt-2 mb-4 mx-auto" style={{maxWidth: "400px"}}>
-                          <li>Private browsing is enabled</li>
-                          <li>Cookies or local storage were cleared</li>
-                          <li>Your browser blocks third-party cookies</li>
-                          <li>Your session timed out or expired</li>
-                        </ul>
-                      </div>
-                      
-                      <div className="mb-4">
-                        <p>Please try these solutions:</p>
-                        <div className="d-flex flex-column justify-content-center align-items-center gap-3 mt-3">
-                          {/* Option 1: Try immediate redirect (for minor issues) */}
-                          <button
-                            className="btn btn-primary btn-lg w-75"
-                            onClick={() => {
-                              // Try a direct sign-in without clearing storage
-                              auth.signinRedirect();
-                            }}
-                          >
-                            Try Signing In Again
-                          </button>
-                          
-                          {/* Option 2: Return home first */}
-                          <button
-                            className="btn btn-outline-primary w-75"
-                            onClick={() => window.location.href = "/"}
-                          >
-                            Return to Home Page
-                          </button>
-                          
-                          {/* Option 3: Full reset (most aggressive) */}
-                          <button
-                            className="btn btn-outline-secondary w-75"
-                            onClick={() => {
-                              // Clear all storage first
-                              localStorage.clear();
-                              sessionStorage.clear();
-                              // Then try login again
-                              setTimeout(() => auth.signinRedirect(), 100);
-                            }}
-                          >
-                            Reset Storage & Try Again
-                          </button>
-                          
-                          {/* Option 4: Direct login without OAuth */}
-                          <p className="text-muted mt-3">
-                            If you continue to have issues, please try
-                            <a 
-                              href="https://auth.yoursanskritteacher.com/login?client_id=12s8brrk9144uq23g3951mfvhl&response_type=code&scope=email+openid+phone&redirect_uri=https%3A%2F%2Fyoursanskritteacher.com"
-                              className="mx-2"
-                            >
-                              logging in directly
-                            </a>
-                            instead.
-                          </p>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="error-message mb-4">
-                        {auth.error.message || "There was a problem with your authentication"}
-                      </div>
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => auth.signinRedirect()}
-                      >
-                        Try Signing In Again
-                      </button>
-                    </>
-                  )}
+                  <div className="error-message mb-4">
+                    <p>We encountered an error during authentication:</p>
+                    <p className="text-danger mt-2 mb-3"><strong>{auth.error.message || "Unknown authentication error"}</strong></p>
+                    
+                    {isJsonError ? (
+                      <p className="mt-2">
+                        There was a problem processing authentication data.
+                        This is usually caused by corrupted browser storage.
+                      </p>
+                    ) : isStateError ? (
+                      <p className="mt-2">
+                        Unable to verify your authentication session.
+                        This is usually caused by expired authentication tokens or browser storage issues.
+                      </p>
+                    ) : (
+                      <p className="mt-2">
+                        An unexpected error occurred during authentication.
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="d-flex flex-column gap-3 align-items-center">
+                    {/* Simple, straightforward recovery options */}
+                    
+                    {/* Option 1: Clear everything and try again */}
+                    <button
+                      className="btn btn-primary btn-lg w-50"
+                      onClick={() => {
+                        // Clear ALL storage - the most reliable solution
+                        console.log("Clearing all storage before sign-in redirect");
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        
+                        // Redirect to home page first to clear app state
+                        window.location.href = "/";
+                      }}
+                    >
+                      Start Over
+                    </button>
+                    
+                    {/* Option 2: Try direct sign-in */}
+                    <button
+                      className="btn btn-outline-primary w-50"
+                      onClick={() => {
+                        auth.signinRedirect();
+                      }}
+                    >
+                      Try Again
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
