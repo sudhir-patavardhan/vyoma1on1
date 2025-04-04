@@ -17,7 +17,7 @@ const PAYMENT_CONFIG = {
   // Razorpay configuration 
   RAZORPAY_OPTIONS: {
     name: "Sanskrit Teacher",
-    description: "Premium Sanskrit Session",
+    description: "Sanskrit Scholar Session",
     theme: {
       color: "#1E88E5" // Vyoma blue
     }

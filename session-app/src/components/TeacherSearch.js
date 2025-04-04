@@ -3,7 +3,7 @@ import { useAuth } from "react-oidc-context";
 import axios from "axios";
 import { API_BASE_URL, PAYMENT_CONFIG } from "../config";
 import "../styles.css";
-import "../premium-styles.css"; // Import premium styles
+import "../enhanced-styles.css"; // Import enhanced styles
 import { FaGraduationCap, FaLock, FaCalendarAlt, FaInfo } from "react-icons/fa";
 import PaymentService from "../services/PaymentService";
 
@@ -197,7 +197,7 @@ const TeacherSearch = () => {
         amount: orderData.amount,
         currency: orderData.currency,
         name: PAYMENT_CONFIG.RAZORPAY_OPTIONS.name,
-        description: `Premium Session with Dr. ${selectedTeacher.name} on ${searchTerm}`,
+        description: `Scholar Session with Dr. ${selectedTeacher.name} on ${searchTerm}`,
         order_id: orderData.order_id,
         handler: function(response) {
           // This function is called when payment is successful
@@ -504,7 +504,7 @@ const TeacherSearch = () => {
                     
                     <div className="session-rate">
                       <span className="rate-label">Session Rate:</span>
-                      <span className="premium-price">Premium Pricing</span>
+                      <span className="scholar-price">Scholar Session Rate</span>
                     </div>
                   </div>
                 </div>
@@ -542,10 +542,10 @@ const TeacherSearch = () => {
           {availabilities.length > 0 ? (
             <div className="availability-list">
               {availabilities.map((slot) => (
-                <div key={slot.availability_id} className="slot-card premium">
-                  <div className="premium-tag">PhD Scholar Session</div>
+                <div key={slot.availability_id} className="slot-card scholar">
+                  <div className="scholar-tag">PhD Scholar Session</div>
                   <div className="slot-header">
-                    <h4>Premium Session with Dr. {selectedTeacher.name}</h4>
+                    <h4>Scholar Session with Dr. {selectedTeacher.name}</h4>
                     <div className="session-quality">
                       <span className="quality-badge">Exclusive</span>
                     </div>
@@ -562,20 +562,20 @@ const TeacherSearch = () => {
                     </p>
                   </div>
                   
-                  <div className="premium-price-display">
+                  <div className="scholar-price-display">
                     <div className="price-amount">
-                      <span className="premium-label">Premium Session</span>
+                      <span className="scholar-label">Scholar Session</span>
                     </div>
                     <span className="price-period">Exclusive Instruction</span>
                   </div>
                   
                   <button
-                    className="btn btn-primary premium-btn"
+                    className="btn btn-primary scholar-btn"
                     onClick={() => handlePayment(slot.availability_id)}
                     disabled={loading || paymentProcessing}
                   >
                     {paymentProcessing ? "Processing Payment..." : 
-                     loading ? "Reserving..." : "Reserve Premium Session"}
+                     loading ? "Reserving..." : "Reserve Scholar Session"}
                   </button>
                   <p className="secure-payment-note">
                     <FaLock style={{fontSize: '0.8rem', marginRight: '5px'}} /> Secure international payment

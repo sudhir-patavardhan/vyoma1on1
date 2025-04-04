@@ -1,0 +1,1380 @@
+/* Sanskrit Teacher Platform Enhanced Styles 
+------------------------------------------------------
+   This stylesheet contains enhanced styling for the Sanskrit Teacher platform,
+   with special designs for the landing page, teacher cards, and overall branding.
+*/
+
+:root {
+  /* Vyoma blue theme based on logo */
+  --vyoma-blue: #1E88E5;           /* Vyoma logo blue - main brand color */
+  --vyoma-blue-dark: #1565C0;      /* Darker blue for headers and primary elements */
+  --vyoma-blue-light: #64B5F6;     /* Lighter blue for accents and highlights */
+  --vyoma-blue-pale: #E3F2FD;      /* Very light blue for backgrounds */
+  --vyoma-navy: #0D47A1;           /* Deep navy for contrast elements */
+  --vyoma-text-dark: #263238;      /* Dark blue-gray for text */
+  --vyoma-text-light: #546E7A;     /* Medium blue-gray for secondary text */
+  --vyoma-white: #FFFFFF;          /* Pure white for cards and foreground */
+  --vyoma-error: #E53935;          /* Red for errors */
+  --vyoma-warning: #FB8C00;        /* Orange for warnings */
+  --vyoma-success: #43A047;        /* Green for success messages */
+  
+  /* Sanskrit colors - light theme (default) */
+  --sanskrit-primary: var(--vyoma-blue-dark);       /* Dark blue - main color */
+  --sanskrit-primary-light: var(--vyoma-blue);      /* Medium blue - for highlights */
+  --sanskrit-secondary: var(--vyoma-navy);          /* Navy - for contrast */
+  --sanskrit-text: var(--vyoma-text-dark);          /* Dark blue-gray - for text */
+  --sanskrit-text-light: var(--vyoma-text-light);   /* Medium blue-gray - for secondary text */
+  --sanskrit-background: var(--vyoma-blue-pale);    /* Light blue - main background */
+  --sanskrit-card-bg: var(--vyoma-white);           /* White - for cards/foreground */
+  --sanskrit-accent: var(--vyoma-blue-light);       /* Light blue - for accents/highlights */
+  --sanskrit-divider: #E1F5FE;                      /* Lightest blue - for dividers */
+  --sanskrit-success: var(--vyoma-success);         /* Green - for success messages */
+  --sanskrit-warning: var(--vyoma-warning);         /* Orange - for warnings */
+  --sanskrit-error: var(--vyoma-error);             /* Red - for errors */
+}
+
+/* Dark theme colors */
+[data-theme="dark"] {
+  --sanskrit-primary: var(--vyoma-blue);           /* Medium blue becomes primary in dark mode */
+  --sanskrit-primary-light: var(--vyoma-blue-light); /* Light blue for highlights */
+  --sanskrit-secondary: #0D47A1;                   /* Navy for secondary elements */
+  --sanskrit-text: #E1F5FE;                        /* Very light blue for main text */
+  --sanskrit-text-light: #B3E5FC;                  /* Light blue for secondary text */
+  --sanskrit-background: #0A1929;                  /* Very dark navy for background */
+  --sanskrit-card-bg: #102A43;                     /* Dark blue for cards */
+  --sanskrit-accent: var(--vyoma-blue-light);      /* Light blue for accents */
+  --sanskrit-divider: #1A374D;                     /* Medium-dark blue for dividers */
+  --sanskrit-success: #66BB6A;                     /* Bright green for success */
+  --sanskrit-warning: #FFA726;                     /* Bright orange for warnings */
+  --sanskrit-error: #EF5350;                       /* Bright red for errors */
+}
+
+/* Enhanced element styles */
+.featured h1, 
+.featured h2, 
+.featured h3 {
+  color: var(--vyoma-blue-dark);
+}
+
+.featured-badge {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: var(--vyoma-blue);
+  border-radius: 25px;
+  box-shadow: 0 2px 5px rgba(13, 71, 161, 0.2);
+}
+
+.featured-badge-icon {
+  font-size: 1.5rem;
+  color: white;
+  margin-right: 10px;
+}
+
+.featured-badge-text {
+  display: flex;
+  flex-direction: column;
+  color: white;
+  line-height: 1;
+}
+
+.featured-badge-text span {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.featured-welcome {
+  flex: 1;
+}
+
+.scholar-btn {
+  background-color: var(--vyoma-blue) !important;
+  border-color: var(--vyoma-blue) !important;
+}
+
+.scholar-btn:hover {
+  background-color: var(--vyoma-blue-dark) !important;
+  border-color: var(--vyoma-blue-dark) !important;
+}
+
+.featured-note {
+  color: var(--vyoma-blue-light);
+  text-align: center;
+  font-style: italic;
+  margin: 15px 0;
+}
+
+/* Sanskrit Hero Section */
+.sanskrit-hero {
+  text-align: center;
+  padding: 2rem 1rem;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, var(--sanskrit-background) 0%, rgba(255,255,255,0.8) 100%);
+  border-radius: 8px;
+  border-left: 5px solid var(--sanskrit-primary-light);
+  box-shadow: 0 4px 20px rgba(30, 136, 229, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.sanskrit-hero:after {
+  content: "॥";
+  position: absolute;
+  right: -10px;
+  bottom: -40px;
+  font-size: 180px;
+  opacity: 0.04;
+  font-family: serif;
+  transform: rotate(10deg);
+  z-index: 0;
+}
+
+.vyoma-logo-container {
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.vyoma-logo {
+  max-width: 300px;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+.sanskrit-hero h1 {
+  color: var(--sanskrit-primary);
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.sanskrit-hero h2 {
+  color: var(--sanskrit-secondary);
+  font-size: 1.4rem;
+  margin-bottom: 1.2rem;
+  font-weight: 500;
+}
+
+.sanskrit-hero p {
+  color: var(--sanskrit-text);
+  font-size: 1.1rem;
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Sanskrit Category Cards */
+.sanskrit-categories {
+  margin: 3rem 0;
+  position: relative;
+}
+
+.sanskrit-categories:before {
+  content: "स";
+  position: absolute;
+  left: 0;
+  top: -20px;
+  font-size: 180px;
+  opacity: 0.03;
+  font-family: serif;
+  z-index: -1;
+}
+
+/* Carousel Controls */
+.carousel-container {
+  position: relative;
+}
+
+.carousel-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.carousel-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--sanskrit-divider);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.carousel-indicator.active {
+  background-color: var(--vyoma-blue);
+  transform: scale(1.2);
+}
+
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background-color: var(--vyoma-blue);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.carousel-nav:hover {
+  background-color: var(--vyoma-blue-dark);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-nav.prev {
+  left: -15px;
+}
+
+.carousel-nav.next {
+  right: -15px;
+}
+
+.carousel-nav-icon {
+  font-size: 18px;
+}
+
+.categories-title {
+  text-align: center;
+  color: var(--sanskrit-primary);
+  margin-bottom: 1.5rem;
+  font-size: 1.6rem;
+  position: relative;
+}
+
+.categories-title:after {
+  content: "";
+  display: block;
+  width: 100px;
+  height: 3px;
+  background-color: var(--sanskrit-primary-light);
+  margin: 0.5rem auto 0;
+}
+
+.category-grid {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--vyoma-blue-light) var(--sanskrit-background);
+}
+
+.category-grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.category-grid::-webkit-scrollbar-track {
+  background: var(--sanskrit-background);
+  border-radius: 10px;
+}
+
+.category-grid::-webkit-scrollbar-thumb {
+  background-color: var(--vyoma-blue-light);
+  border-radius: 10px;
+}
+
+/* Add smooth scrolling behavior */
+.category-grid {
+  scroll-behavior: smooth;
+}
+
+.category-card {
+  background-color: var(--sanskrit-card-bg);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  text-align: center;
+  border: 1px solid var(--sanskrit-divider);
+  position: relative;
+  overflow: hidden;
+  flex: 0 0 auto;
+  width: 250px;
+  scroll-snap-align: start;
+  margin-right: 0.5rem;
+}
+
+.category-card:after {
+  content: "।";
+  position: absolute;
+  right: 10px;
+  bottom: 0;
+  font-size: 60px;
+  opacity: 0.04;
+  font-family: serif;
+  color: var(--vyoma-blue);
+  pointer-events: none;
+}
+
+.category-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border-color: var(--sanskrit-primary-light);
+}
+
+.category-card h4 {
+  color: var(--sanskrit-primary);
+  margin: 1rem 0 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.category-card p {
+  color: var(--sanskrit-text-light);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.category-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto;
+  background-color: var(--sanskrit-background);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.category-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: serif;
+  font-weight: 700;
+  font-size: 2rem;
+  color: var(--vyoma-white);
+  background-color: var(--vyoma-blue);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Sanskrit letter-based icons */
+.category-icon.vedic:after {
+  content: "ऋ";  /* Sanskrit letter for Rig Veda */
+  font-size: 2.2rem;
+}
+
+.category-icon.grammar:after {
+  content: "व्या"; /* First characters of Vyākaraṇa (grammar) */
+  font-size: 1.7rem;
+}
+
+.category-icon.literature:after {
+  content: "का"; /* First character of Kāvya (poetry) */
+  font-size: 2rem;
+}
+
+.category-icon.philosophy:after {
+  content: "द"; /* First character of Darshana (philosophy) */
+  font-size: 2.2rem;
+}
+
+.category-icon.science:after {
+  content: "आ"; /* First character of Āyurveda */
+  font-size: 2.2rem;
+}
+
+.category-icon.modern:after {
+  content: "भा"; /* First characters of Bhāṣā (language) */
+  font-size: 1.8rem;
+}
+
+/* Testimonials Section */
+.testimonials-section {
+  margin: 3rem 0;
+  background-color: var(--sanskrit-background);
+  padding: 2rem;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.testimonials-section:before {
+  content: "॥";
+  position: absolute;
+  left: -15px;
+  top: -30px;
+  font-size: 200px;
+  opacity: 0.03;
+  font-family: serif;
+  transform: rotate(-10deg);
+}
+
+.testimonials-section h3 {
+  text-align: center;
+  color: var(--sanskrit-primary);
+  margin-bottom: 1.5rem;
+  font-size: 1.4rem;
+}
+
+.testimonials-container {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 1.5rem;
+  padding: 1rem 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--vyoma-blue-light) var(--sanskrit-background);
+  scroll-behavior: smooth;
+}
+
+.testimonials-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.testimonials-container::-webkit-scrollbar-track {
+  background: var(--sanskrit-background);
+  border-radius: 10px;
+}
+
+.testimonials-container::-webkit-scrollbar-thumb {
+  background-color: var(--vyoma-blue-light);
+  border-radius: 10px;
+}
+
+.testimonial {
+  background-color: var(--sanskrit-card-bg);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+  flex: 0 0 auto;
+  width: 320px;
+  scroll-snap-align: start;
+  margin-right: 0.5rem;
+}
+
+.testimonial:before {
+  content: '"';
+  position: absolute;
+  top: -15px;
+  left: 15px;
+  font-size: 4rem;
+  color: var(--sanskrit-primary-light);
+  opacity: 0.2;
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+
+.testimonial:after {
+  content: "।।";
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+  font-size: 24px;
+  color: var(--vyoma-blue);
+  opacity: 0.1;
+  font-family: serif;
+}
+
+.testimonial p {
+  font-style: italic;
+  color: var(--sanskrit-text);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.testimonial-author {
+  color: var(--sanskrit-text-light);
+  font-weight: 600;
+  text-align: right;
+}
+
+/* Teacher Invitation Section */
+.teacher-invitation {
+  background-color: var(--vyoma-blue);
+  color: white;
+  padding: 2.5rem;
+  border-radius: 8px;
+  text-align: center;
+  margin: 2rem 0;
+  box-shadow: 0 4px 15px rgba(30, 136, 229, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.teacher-invitation:before {
+  content: "गुरु";
+  position: absolute;
+  right: -20px;
+  top: -40px;
+  font-size: 140px;
+  opacity: 0.05;
+  font-family: serif;
+  transform: rotate(15deg);
+}
+
+.teacher-invitation h3 {
+  color: white;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.teacher-invitation p {
+  margin-bottom: 1.8rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.btn-outlined {
+  background-color: transparent;
+  border: 2px solid white;
+  color: white;
+  padding: 0.7rem 2rem;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+}
+
+.btn-outlined:hover {
+  background-color: white;
+  color: var(--vyoma-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Teacher Search Overrides */
+.teacher-search-container {
+  padding: 0;
+  margin-bottom: 2rem;
+}
+
+.sanskrit-search-hero {
+  background-color: var(--sanskrit-background);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.sanskrit-search-hero h2 {
+  color: var(--sanskrit-primary);
+  margin-bottom: 0.5rem;
+}
+
+.sanskrit-search-hero p {
+  color: var(--sanskrit-text-light);
+}
+
+.search-tools {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 992px) {
+  .search-tools {
+    grid-template-columns: 2fr 3fr;
+  }
+}
+
+.category-explorer {
+  background-color: var(--sanskrit-card-bg);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.category-explorer h3 {
+  color: var(--sanskrit-primary);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.category-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.category-button {
+  background-color: var(--sanskrit-background);
+  border: 1px solid var(--sanskrit-divider);
+  color: var(--sanskrit-text);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.category-button:hover {
+  background-color: var(--sanskrit-primary-light);
+  color: white;
+  border-color: var(--sanskrit-primary-light);
+}
+
+.category-button.active {
+  background-color: var(--sanskrit-primary);
+  color: white;
+  border-color: var(--sanskrit-primary);
+}
+
+.subcategory-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.subcategory-chip {
+  background-color: white;
+  border: 1px solid var(--sanskrit-primary-light);
+  color: var(--sanskrit-primary);
+  padding: 0.3rem 0.8rem;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.subcategory-chip:hover {
+  background-color: var(--sanskrit-primary-light);
+  color: white;
+}
+
+.text-search-section {
+  background-color: var(--sanskrit-card-bg);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.search-input-group {
+  display: flex;
+  margin-bottom: 1rem;
+}
+
+.search-input-group input {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--sanskrit-divider);
+  border-radius: 4px 0 0 4px;
+  font-size: 1rem;
+}
+
+.search-input-group .search-btn {
+  border-radius: 0 4px 4px 0;
+  background-color: var(--sanskrit-primary);
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border: none;
+}
+
+.search-options {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.search-type-selector {
+  display: flex;
+  gap: 1rem;
+}
+
+.search-type-option {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.popular-searches {
+  margin-bottom: 2rem;
+}
+
+.popular-searches h4 {
+  color: var(--sanskrit-text);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.popular-search-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.popular-tag {
+  background-color: var(--sanskrit-background);
+  color: var(--sanskrit-primary);
+  border: 1px solid var(--sanskrit-primary-light);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.popular-tag:hover {
+  background-color: var(--sanskrit-primary-light);
+  color: white;
+  border-color: var(--sanskrit-primary-light);
+}
+
+/* Teacher Card Redesign */
+.teacher-card.sanskrit-scholar {
+  background-color: var(--sanskrit-card-bg);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 0;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  border: 1px solid var(--sanskrit-divider);
+  position: relative;
+}
+
+.teacher-card.sanskrit-scholar:before {
+  content: "गुरु";
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 80px;
+  opacity: 0.03;
+  font-family: serif;
+  color: var(--vyoma-blue);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.scholar-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: var(--sanskrit-primary);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  z-index: 1;
+  border-bottom: 2px solid var(--sanskrit-primary-light);
+}
+
+.scholar-badge:before {
+  content: "गु";  /* Sanskrit abbreviation for 'Guru' */
+  font-family: serif;
+  font-size: 1rem;
+  margin-right: 5px;
+}
+
+.scholar-icon {
+  font-size: 0.9rem;
+}
+
+.teacher-card-header {
+  padding: 1.5rem;
+  padding-right: 7rem; /* Make room for badge */
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid var(--sanskrit-divider);
+}
+
+.teacher-photo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--sanskrit-primary-light);
+}
+
+.teacher-photo-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: var(--sanskrit-primary-light);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.teacher-info {
+  flex: 1;
+}
+
+.teacher-info h4 {
+  color: var(--sanskrit-primary);
+  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+}
+
+.teacher-credentials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.credential-pill {
+  background-color: var(--sanskrit-background);
+  color: var(--sanskrit-text);
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  border: 1px solid var(--sanskrit-divider);
+}
+
+.teacher-expertise {
+  padding: 1rem 1.5rem;
+  background-color: var(--sanskrit-background);
+}
+
+.teacher-expertise h5 {
+  color: var(--sanskrit-primary);
+  margin-bottom: 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.expertise-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.expertise-tag {
+  background-color: white;
+  color: var(--sanskrit-primary);
+  border: 1px solid var(--sanskrit-primary-light);
+  padding: 0.3rem 0.8rem;
+  border-radius: 16px;
+  font-size: 0.8rem;
+}
+
+.teacher-card-body {
+  padding: 1.5rem;
+}
+
+.teacher-bio {
+  margin-bottom: 1.2rem;
+}
+
+.teacher-bio p {
+  color: var(--sanskrit-text);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.bio-expand-btn {
+  background: none;
+  border: none;
+  color: var(--sanskrit-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.teacher-credentials-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.credential-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.credential-label {
+  color: var(--sanskrit-text-light);
+  min-width: 100px;
+}
+
+.credential-value {
+  color: var(--sanskrit-text);
+  font-weight: 500;
+}
+
+.session-rate {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.rate-label {
+  color: var(--sanskrit-text-light);
+  font-size: 0.9rem;
+  min-width: 100px;
+}
+
+.scholar-price {
+  color: var(--sanskrit-primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.teacher-actions {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--sanskrit-divider);
+  display: flex;
+  justify-content: center;
+}
+
+.view-slots-btn {
+  background-color: var(--sanskrit-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-icon {
+  font-size: 0.9rem;
+}
+
+/* Session cards and booking flow */
+.slot-card.scholar {
+  position: relative;
+  border: 1px solid var(--sanskrit-primary-light);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  background-color: var(--sanskrit-card-bg);
+}
+
+.scholar-tag {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  background-color: var(--sanskrit-primary);
+  color: white;
+  font-size: 0.7rem;
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.scholar-price-display {
+  background-color: var(--sanskrit-background);
+  padding: 0.8rem;
+  border-radius: 6px;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.scholar-label {
+  display: block;
+  font-weight: 600;
+  color: var(--sanskrit-primary);
+  font-size: 1.1rem;
+}
+
+/* Sanskrit Topic Selector for Teacher Profile Form */
+.sanskrit-topic-selector {
+  background-color: var(--sanskrit-background);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.topic-guidance {
+  color: var(--sanskrit-text);
+  font-size: 0.95rem;
+  margin-bottom: 1.2rem;
+}
+
+.topic-categories-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.topic-category-group {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.topic-category-group h5 {
+  color: var(--sanskrit-primary);
+  margin-bottom: 0.8rem;
+  font-size: 1rem;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--sanskrit-divider);
+}
+
+.topic-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.topic-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.topic-checkbox input[type="checkbox"] {
+  accent-color: var(--sanskrit-primary);
+}
+
+.topic-checkbox label {
+  color: var(--sanskrit-text);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.custom-topics-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  margin-top: 1.5rem;
+}
+
+.custom-topics-section h5 {
+  color: var(--sanskrit-primary);
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.form-icon {
+  margin-right: 0.5rem;
+  color: var(--sanskrit-primary);
+}
+
+/* Enhanced Landing Page Buttons */
+.landing-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+  margin: 2.5rem 0;
+}
+
+.btn-icon {
+  margin-right: 8px;
+  font-family: serif;
+  font-weight: normal;
+}
+
+.btn-primary {
+  background-color: var(--vyoma-blue);
+  border-color: var(--vyoma-blue);
+  padding: 0.8rem 1.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(21, 101, 192, 0.2);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--vyoma-blue-dark);
+  border-color: var(--vyoma-blue-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(21, 101, 192, 0.3);
+}
+
+.btn-secondary {
+  background-color: var(--vyoma-navy);
+  border-color: var(--vyoma-navy);
+  padding: 0.8rem 1.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(13, 71, 161, 0.2);
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background-color: #083983;
+  border-color: #083983;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(13, 71, 161, 0.3);
+}
+
+.btn-lg {
+  font-size: 1.1rem;
+  padding: 0.8rem 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sanskrit-hero h1 {
+    font-size: 2rem;
+  }
+  
+  .sanskrit-hero h2 {
+    font-size: 1.2rem;
+  }
+  
+  .category-card {
+    width: 220px;
+  }
+  
+  .testimonial {
+    width: 260px;
+  }
+  
+  .carousel-nav {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .carousel-nav.prev {
+    left: -8px;
+  }
+  
+  .carousel-nav.next {
+    right: -8px;
+  }
+}
+
+@media (max-width: 576px) {
+  .category-card {
+    width: 180px;
+  }
+  
+  .testimonial {
+    width: 220px;
+  }
+  
+  .carousel-nav {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .carousel-indicator {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+/* Dark theme adjustments */
+/* Global dark mode background fixes - using !important to override any conflicting styles */
+
+/* Carousel dark mode adjustments */
+[data-theme="dark"] .carousel-nav {
+  background-color: var(--vyoma-blue-light);
+}
+
+[data-theme="dark"] .carousel-nav:hover {
+  background-color: white;
+  color: var(--vyoma-blue);
+}
+
+/* Style for body and html with .dark-mode class */
+html.dark-mode,
+body.dark-mode {
+  background-color: #151D1A !important;
+  color: #DCD7C9 !important;
+}
+[data-theme="dark"] {
+  background-color: var(--sanskrit-background) !important;
+}
+
+[data-theme="dark"] body {
+  background-color: var(--sanskrit-background) !important;
+}
+
+html[data-theme="dark"] {
+  background-color: var(--sanskrit-background) !important;
+}
+
+body[data-theme="dark"] {
+  background-color: var(--sanskrit-background) !important;
+}
+
+[data-theme="dark"] .app-layout {
+  background-color: var(--sanskrit-background) !important;
+  color: var(--sanskrit-text);
+}
+
+[data-theme="dark"] .card {
+  background-color: var(--sanskrit-card-bg);
+  border-color: var(--sanskrit-divider);
+}
+
+[data-theme="dark"] .header {
+  background-color: var(--sanskrit-primary);
+}
+
+[data-theme="dark"] .header-link {
+  color: #fff;
+}
+
+[data-theme="dark"] .footer {
+  background-color: var(--sanskrit-primary);
+  color: #fff;
+}
+
+[data-theme="dark"] .footer-links a {
+  color: var(--sanskrit-background);
+}
+
+[data-theme="dark"] .card-body {
+  color: var(--sanskrit-text);
+}
+
+[data-theme="dark"] h1, 
+[data-theme="dark"] h2, 
+[data-theme="dark"] h3, 
+[data-theme="dark"] h4, 
+[data-theme="dark"] h5, 
+[data-theme="dark"] h6 {
+  color: var(--sanskrit-text);
+}
+
+[data-theme="dark"] .btn-primary {
+  background-color: var(--sanskrit-primary-light);
+  border-color: var(--sanskrit-primary-light);
+}
+
+[data-theme="dark"] .btn-secondary {
+  background-color: var(--sanskrit-secondary);
+  border-color: var(--sanskrit-secondary);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: #1A2420;
+  border-color: var(--sanskrit-divider);
+  color: var(--sanskrit-text);
+}
+
+[data-theme="dark"] .container {
+  background-color: transparent;
+}
+
+[data-theme="dark"] .main-content {
+  background-color: var(--sanskrit-background);
+}
+
+[data-theme="dark"] .category-card,
+[data-theme="dark"] .testimonial {
+  background-color: var(--sanskrit-card-bg);
+  border-color: var(--sanskrit-divider);
+}
+
+[data-theme="dark"] .category-icon {
+  background-color: #364239;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background-color: #A27B5C;
+}
+
+[data-theme="dark"] #root {
+  background-color: var(--sanskrit-background) !important;
+  min-height: 100vh;
+}
+
+/* Extra selectors to catch all possible elements */
+[data-theme="dark"] .main-content {
+  background-color: var(--sanskrit-background) !important;
+}
+
+/* Add a subtle pattern to dark mode */
+[data-theme="dark"] .app-layout:before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E");
+  z-index: -1;
+}
+
+/* Global theme toggle styling */
+.theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--vyoma-blue);
+  color: white;
+  border: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(30, 136, 229, 0.3);
+  transition: all 0.3s ease;
+  z-index: 9999;
+}
+
+.theme-toggle:hover {
+  background-color: var(--vyoma-blue-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.4);
+}
+
+.theme-toggle:focus {
+  outline: 2px solid var(--vyoma-blue-light);
+  box-shadow: 0 0 0 4px rgba(100, 181, 246, 0.4);
+}
+
+.theme-toggle .icon {
+  font-size: 20px;
+  color: white;
+}
+
+[data-theme="dark"] .theme-toggle {
+  background-color: var(--vyoma-blue-light);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.category-card, .testimonial, .teacher-card {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* Staggered animation for cards */
+.category-card:nth-child(1) { animation-delay: 0.1s; }
+.category-card:nth-child(2) { animation-delay: 0.2s; }
+.category-card:nth-child(3) { animation-delay: 0.3s; }
+.category-card:nth-child(4) { animation-delay: 0.4s; }
+.category-card:nth-child(5) { animation-delay: 0.5s; }
+.category-card:nth-child(6) { animation-delay: 0.6s; }

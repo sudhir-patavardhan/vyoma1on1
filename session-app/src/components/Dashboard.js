@@ -251,28 +251,28 @@ const Dashboard = ({ profile, onTabChange, onJoinSession, upcomingSession }) => 
   
   return (
     <div className="dashboard-container">
-      <div className="dashboard-header premium">
-        <div className="premium-welcome">
+      <div className="dashboard-header featured">
+        <div className="featured-welcome">
           <h1>Namaste, {profile.name || profile.user_id}</h1>
           <p className="user-role">
             {profile.role === "teacher" ? (
               <>Welcome to your teaching dashboard, <b>Guru</b></>
             ) : (
-              <>You are signed in as a Premium Member</>
+              <>You are signed in as a Sanskrit Student</>
             )}
           </p>
         </div>
-        <div className="premium-badge">
-          <div className="premium-badge-icon">
+        <div className="featured-badge">
+          <div className="featured-badge-icon">
             {profile.role === "teacher" ? (
               <FaChalkboardTeacher />
             ) : (
               <FaGraduationCap />
             )}
           </div>
-          <div className="premium-badge-text">
-            Premium
-            <span>{profile.role === "teacher" ? "Teacher" : "Collection"}</span>
+          <div className="featured-badge-text">
+            Sanskrit
+            <span>{profile.role === "teacher" ? "Teacher" : "Student"}</span>
           </div>
         </div>
       </div>

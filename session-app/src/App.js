@@ -11,7 +11,7 @@ import AdminPanel from "./components/admin/AdminPanel";
 import { API_BASE_URL } from "./config";
 import VERSION from "./version";
 import "./styles.css";
-import "./premium-styles.css"; // Import premium styles
+import "./enhanced-styles.css"; // Import enhanced styles
 import {
   FaSearch,
   FaSignInAlt,
@@ -1080,18 +1080,25 @@ function App() {
             setProfile(data.profile);
 
             // Set the active role based on the profile
-            // Use the role field for backward compatibility, or the first role in the roles array
-            // If both exist, prioritize the role field as it's the primary role
-            if (data.profile.role) {
+            // If the user is a teacher, always default to the teacher role
+            // This ensures teachers see the teacher interface by default rather than student
+            // which provides a better experience for teachers using the platform
+            if (data.profile.role === "teacher" || 
+                (data.profile.roles && data.profile.roles.includes("teacher"))) {
+              setActiveRole("teacher");
+              console.log("User is a teacher, defaulting to teacher role");
+            }
+            // Otherwise use the role field for backward compatibility, or the first role in the roles array
+            else if (data.profile.role) {
               setActiveRole(data.profile.role);
             } else if (data.profile.roles && data.profile.roles.length > 0) {
               setActiveRole(data.profile.roles[0]);
             }
 
             // Check for upcoming sessions
-            // Still use profile.role for backward compatibility, but could be extended
-            // to check sessions for all roles a user has in the future
-            checkUpcomingSessions(userId, data.profile.role);
+            // Use the activeRole we just set or fall back to profile.role for backward compatibility
+            const roleForSessions = data.profile.role === "teacher" ? "teacher" : data.profile.role;
+            checkUpcomingSessions(userId, roleForSessions);
           } else {
             console.log("No profile found, showing profile form");
             setProfile(null); // No profile found, trigger profile form
@@ -1258,6 +1265,17 @@ function App() {
 
       // Update the profile state
       setProfile(profileData);
+      
+      // If this is a teacher profile, make sure to set the active role to teacher
+      if (profileData.role === "teacher" || 
+          (profileData.roles && profileData.roles.includes("teacher"))) {
+        setActiveRole("teacher");
+        console.log("New teacher profile created, defaulting to teacher role");
+      } else if (profileData.role) {
+        setActiveRole(profileData.role);
+      } else if (profileData.roles && profileData.roles.length > 0) {
+        setActiveRole(profileData.roles[0]);
+      }
 
       // Set to dashboard after creating profile
       setActiveTab("dashboard");
@@ -1366,7 +1384,7 @@ function App() {
                         Connect with expert Sanskrit instructors specializing in
                         Vedic literature, classical texts, grammar, philosophy,
                         and more. Our platform brings together PhD-holding
-                        scholars offering premium instruction for students at
+                        scholars offering expert instruction for students at
                         all levels—from beginners to advanced practitioners.
                       </p>
                     </div>
