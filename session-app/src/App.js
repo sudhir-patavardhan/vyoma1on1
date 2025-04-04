@@ -614,7 +614,7 @@ function App() {
             className="nav-brand"
             onClick={() => auth.isAuthenticated ? handleNavLinkClick("dashboard") : null}
           >
-            <span>संस्कृत Teacher</span>
+            <span>संस्कृत गुरु</span>
           </div>
 
           {/* Desktop Navigation Links */}
@@ -1322,7 +1322,7 @@ function App() {
         <div className="container">
           <div className="footer-content">
             <div className="footer-logo">
-              <span>संस्कृत Teacher</span>
+              <span>संस्कृत गुरु</span>
             </div>
             <div className="footer-links">
               <a href="#">Terms of Service</a>
@@ -1330,7 +1330,7 @@ function App() {
               <a href="#">Contact Us</a>
             </div>
             <div className="footer-copyright">
-              © {new Date().getFullYear()} संस्कृत Teacher. All rights
+              © {new Date().getFullYear()} संस्कृत गुरु. All rights
               reserved.
               <div className="version-info">
                 Last updated: {buildDate}
